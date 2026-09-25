@@ -33,6 +33,6 @@
 			$products = array_filter(array_map('wc_get_product', $ids), function($p){ return $p && $p->is_visible(); });
 			if (empty($products)) return '';
 
-			return '<div class="vk-related">'.\VasskisgepTheme\Shop::render_product_carousel(array_values($products), [ 'slidesToShow' => 4, 'slidesToScroll' => 1 ]).'</div>';
+			return '<div class="vk-related">'.\VasskisgepTheme\Shop::render_product_carousel(array_values($products), [ 'slidesToShow' => 3, 'slidesToScroll' => 1 ]).'</div>';
 		}
 	]);

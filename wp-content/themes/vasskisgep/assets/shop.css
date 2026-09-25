@@ -3150,3 +3150,132 @@ footer .iu-form-submit .iu-button-text:after {
 	font-size: 0;
 	margin: 0 .55rem;
 }
+
+/* ---------- Termékoldal a design szerint (Termékoldal-tab-1: tartalom 1640 px) ---------- */
+@media (min-width: 992px) {
+	.vk-product-top > .iu-row,
+	.vk-product > .iu-row,
+	.vk-product-details > .iu-row,
+	.vk-cofidis-section > .iu-row,
+	.vk-related-section > .iu-row,
+	.vk-recent-section > .iu-row {
+		width: 85.42%;
+	}
+	.vk-product > .iu-row {
+		gap: .9rem;
+	}
+	.vk-product > .iu-row > .iu-column-1-2 {
+		width: calc(50% - .45rem);
+	}
+	.vk-product-main {
+		grid-template-columns: minmax(0, 1fr) 14.45rem;
+		gap: .9rem;
+	}
+	.vk-product-gallery .woocommerce-product-gallery__image a {
+		padding-top: 59%;
+	}
+	.vk-product-gallery .woocommerce-product-gallery__wrapper,
+	.vk-product-gallery .flex-viewport {
+		border-radius: .45rem;
+		overflow: hidden;
+	}
+	.vk-product-summary .iu-title {
+		font-size: 3.15rem;
+		line-height: 1.03;
+	}
+	.vk-stock-rating .stock {
+		font-size: 1.05rem;
+	}
+	.vk-rating .vk-stars {
+		font-size: 1.05rem;
+	}
+	.vk-price-box {
+		padding: 1.1rem 1rem 1.2rem;
+		border-radius: .45rem;
+	}
+	.vk-price-current {
+		font-size: 4.1rem;
+		line-height: 1;
+	}
+	.vk-price-box-main {
+		justify-content: flex-start;
+		align-items: flex-end;
+		gap: .5rem;
+	}
+	.vk-price-vat {
+		font-size: 1rem;
+		padding-bottom: .35rem;
+	}
+	.vk-qty,
+	.vk-buy-button.iu-button {
+		height: 2.95rem;
+		min-height: 2.95rem;
+	}
+	.vk-buy-button.iu-button {
+		padding-left: 1.3rem;
+		padding-right: 1.3rem;
+		font-size: 1.05rem;
+	}
+	.vk-buy .vk-list-toggle {
+		font-size: 1.05rem;
+	}
+	.vk-buy .vk-list-toggle svg {
+		width: 1.45rem;
+		height: auto;
+	}
+	.vk-xs-heading {
+		font-size: 1.2rem;
+	}
+	.vk-xs-item {
+		padding: .5rem;
+		gap: .6rem;
+	}
+	.vk-xs-image,
+	.vk-xs-image img {
+		flex-basis: 4rem;
+		width: 4rem;
+		height: 5.6rem;
+	}
+	.vk-xs-title {
+		font-size: .72rem;
+	}
+	.vk-xs-price {
+		font-size: 1rem;
+	}
+	.vk-xs-cart {
+		width: 2.1rem;
+		height: 2.1rem;
+	}
+	.vk-xs-list {
+		max-height: 29.5rem;
+	}
+}
+@media (min-width: 992px) {
+	.vk-product-summary .iu-title {
+		font-size: 2.62rem;
+	}
+	.vk-price-box-main {
+		flex-wrap: nowrap;
+	}
+	.vk-price-vat {
+		white-space: nowrap;
+	}
+	.vk-buy {
+		flex-wrap: nowrap;
+		gap: .8rem;
+	}
+	.vk-qty-btn {
+		width: 1.9rem;
+	}
+	.vk-qty input.qty {
+		width: 1.8rem;
+	}
+	.vk-buy-lists {
+		gap: .8rem;
+		white-space: nowrap;
+	}
+}
+@media (min-width: 992px) {
+	.vk-price-vat { font-size: .92rem; }
+	.vk-product-summary { gap: 1rem; }
+}

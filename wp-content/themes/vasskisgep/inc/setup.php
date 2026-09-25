@@ -158,6 +158,18 @@ class Setup {
         return str_replace(untrailingslashit(home_url()), '{{home}}', $content);
     }
 
+    /**
+     * Igaz, ha a tartalom egy korábbi telepítői változat ($known md5-ök) vagy megegyezik a
+     * setup/ mappa jelenlegi fájljával – vagyis senki nem szerkesztette, felülírható.
+     */
+    static function is_setup_content($content, $file, $known = []){
+        if (trim($content) === '') return true;
+        $current = md5(self::collapse($content));
+        if (in_array($current, $known, true)) return true;
+        $path = get_stylesheet_directory().'/setup/'.$file;
+        return file_exists($path) && $current === md5(file_get_contents($path));
+    }
+
     /** A setup/media/<fájl> médiatárbeli azonosítója; ha még nincs feltöltve, feltölti. */
     static function media($name){
         static $cache = [];
@@ -918,8 +930,7 @@ class Setup {
             $this->upsert_page('rolunk', 'Rólunk', 'pages/rolunk.html');
             $page = get_page_by_path('rolunk');
         } else {
-            $current = md5(str_replace(untrailingslashit(home_url()), '{{home}}', $page->post_content));
-            if (trim($page->post_content) === '' || in_array($current, $previous, true)){
+            if (self::is_setup_content($page->post_content, 'pages/rolunk.html', $previous)){
                 wp_update_post([ 'ID' => $page->ID, 'post_content' => wp_slash(self::content_file('pages/rolunk.html')) ]);
                 $this->log[] = 'Oldal frissítve: Rólunk (design szerint)';
             } else {
@@ -943,8 +954,7 @@ class Setup {
             $this->upsert_page('rolunk', 'Rólunk', 'pages/rolunk.html');
             $page = get_page_by_path('rolunk');
         } else {
-            $current = md5(self::collapse($page->post_content));
-            if (trim($page->post_content) === '' || in_array($current, $previous, true)){
+            if (self::is_setup_content($page->post_content, 'pages/rolunk.html', $previous)){
                 wp_update_post([ 'ID' => $page->ID, 'post_content' => wp_slash(self::content_file('pages/rolunk.html')) ]);
                 $this->log[] = 'Oldal frissítve: Rólunk (Figma szerinti fotókkal, logókkal)';
             } else {
@@ -995,7 +1005,7 @@ class Setup {
             $footer = $found ? $found[0] : null;
         }
         if (!$footer) return;
-        if (!in_array(md5(self::collapse($footer->post_content)), $known, true)){
+        if (!self::is_setup_content($footer->post_content, 'managed/footer.html', $known)){
             $this->log[] = 'FIGYELEM: a láblécet szerkesztették, nem íródik felül – az új változat: setup/managed/footer.html';
             return;
         }

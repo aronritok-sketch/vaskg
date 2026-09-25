@@ -53,6 +53,9 @@ A `wp-content/plugins`, `uploads` és `languages` mappák nincsenek verzióköve
 | Tudástár | 3 cikk a lorem ipsum bejegyzések helyett, témák: Gépválasztás, Karbantartás, Szezonális teendők |
 | E-mailek | WooCommerce levelek színei az arculat szerint |
 | Termékoldal | értékelések bekapcsolva, tájékoztató doboz a bemutató gépeknél |
+| Rólunk | a Figma szerinti oldal a terv fotóival és 10 márkalogóval (`setup/media/` → médiatár), „Saját oldalfejléc” bekapcsolva |
+| WooCommerce oldalak | Fiókom iu/section → iu/row → iu/column keretben; a Termékek oldal régi szűrője helyett az új szűrős lista |
+| Lábléc, megamenü | a design szövegei; rövid menünevek (`vk_menu_label`) és „Összes …” linkek (`vk_menu_all`) kategória term metában |
 | Oldalak | Rólunk (Figma szerint), Szolgáltatások, Ajánlatkérés, Szerviz, Kapcsolat, Kedvencek, Összehasonlítás, Szállítás és fizetés, ÁSZF, Adatkezelési tájékoztató, Elállás és visszaküldés |
 | Menü | Főmenü linkjei, a Termékek alatt a főkategóriák |
 | Tartalom | fejléc: Kedvencek/Összehasonlítás link; lábléc: hibás adatkezelési link javítva; kezdőlap: gomb-linkek, válogatott karusszelek (kiemelt, szezonális, népszerű), valódi Google értékelések a lorem ipsum helyett; Termékek oldal: szűrős terméklista |
@@ -80,7 +83,10 @@ A `wp-content/plugins`, `uploads` és `languages` mappák nincsenek verzióköve
 - **Terméklista** (`vasskisgep/product-listing` blokk; Termékek oldal, kategória, márka, címke): felső szűrősáv (Kategória, Gyártó, Ár, Készlet/Akciós) legördülőkkel és „(N) termék megtekintése” előnézettel, rács/lista nézet, rendezés, „Részletes szűrés” tulajdonságok szerint, „Továbbiak mutatása”. A szűrés URL-paraméterekben van (megosztható link).
 - **Termékkártya**: kedvezmény, promó szöveg, Cofidis jelvény, márka, 3 fő tulajdonság, kedvencek/összehasonlítás ikonok a képen.
 - **Megamenü** (`inc/megamenu.php`): a főmenü Termékek pontja alatt fülek (főkategóriák + Gyártók), 4 szintű kategóriafa; mobilon a menü saját almenüje.
-- **Rólunk** oldal a Figma szerint.
+- **Rólunk** oldal a Figma szerint (saját fejléc: Oldal szerkesztése → „Oldal megjelenése” → Saját oldalfejléc).
+- **Kereső** (`inc/search.php`): gépelés közben teljes szélességű találati panel a fejléc alatt (termékek képpel/árral, kategóriák, Tudástár); Enter → találati oldal.
+- **Kedvencek tárolása**: vendégnél sütiben (1 év, a böngésző törölheti); belépett vásárlónál az adatbázisban is, és ha a süti elveszett, onnan áll vissza.
+- **Képek a setup tartalmakban**: `{{media:fajl.jpg}}`, `{{media-thumb:…}}`, `{{media-id:…}}` helyőrzők a `setup/media/` fájlaira; a telepítő tölti fel őket a médiatárba.
 - **Keresés**: termékek (név, leírás, cikkszám) és Tudástár cikkek.
 - **Kedvencek és összehasonlítás**: sütiben tárolva, bejelentkezett vásárlónál a fiókba is mentve; számláló a fejlécben; legfeljebb 4 termék hasonlítható össze.
 - **Űrlapok**: visszahívás (lábléc), ajánlatkérés, szervizbejelentés, kapcsolat, termékkérdés. Az e-mail minden kitöltött mezőt tartalmaz, a válaszcím a kitöltő e-mail címe. Címzett: `Forms::RECIPIENT` (`inc/forms.php`).
