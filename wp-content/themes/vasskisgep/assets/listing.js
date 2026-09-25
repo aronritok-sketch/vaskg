@@ -141,7 +141,7 @@
 	$(document).on('click', '.vk-more-btn', function(){
 		const $form = $(this).closest('.vk-listing');
 		const $btn = $(this).prop('disabled', true);
-		const page = Math.floor($form.find('.vk-results li.product').length / 12) + 1;
+		const page = Math.floor($form.find('.vk-results li.product').length / (parseInt($form.attr('data-per-page'), 10) || 9)) + 1;
 		request(params($form, { 'product-page': page }), 'results').done(function(response){
 			const $items = $('<div>').html(response.data.html).find('ul.products > li.product');
 			$form.find('.vk-results ul.products').append($items);

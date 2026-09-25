@@ -34,6 +34,7 @@ class Setup {
         15 => 'about_design',
         16 => 'wc_pages_layout',
         17 => 'footer_design',
+        18 => 'megamenu_labels',
     ];
 
     private $log = [];
@@ -1000,5 +1001,20 @@ class Setup {
         }
         wp_update_post([ 'ID' => $footer->ID, 'post_content' => wp_slash(self::content_file('managed/footer.html')) ]);
         $this->log[] = 'Lábléc frissítve a design szerint';
+    }
+
+    /** Megamenü a design szerint: rövid menünevek és „Összes …” linkek a csoportok alatt. */
+    function megamenu_labels(){
+        $labels = [ 'Fűgyűjtős fűnyíró traktorok' => 'Fűgyűjtős', 'Oldalkidobós fűnyíró traktorok' => 'Oldalkidobós' ];
+        $all = [ 'Láncfűrészek és ágnyesők' => 'Összes láncfűrész', 'Talajművelő gépek' => 'Összes talajművelő gép', 'Permetezés' => 'Összes permetező' ];
+        foreach([ 'vk_menu_label' => $labels, 'vk_menu_all' => $all ] as $meta => $map){
+            foreach($map as $name => $value){
+                $term = get_term_by('name', $name, 'product_cat');
+                if (!$term) continue;
+                if (get_term_meta($term->term_id, $meta, true) === '') update_term_meta($term->term_id, $meta, $value);
+            }
+        }
+        MegaMenu::flush();
+        $this->log[] = 'Megamenü feliratok beállítva';
     }
 }

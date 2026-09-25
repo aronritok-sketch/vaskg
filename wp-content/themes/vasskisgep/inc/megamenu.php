@@ -116,8 +116,10 @@ class MegaMenu {
         }));
     }
 
+    /** Menübeli név: a kategória „vk_menu_label” term metája (rövid név), különben a neve. */
     private static function link($term, $class){
-        return '<a class="'.esc_attr($class).'" href="'.esc_url(get_term_link($term)).'">'.esc_html($term->name).'</a>';
+        $label = trim((string)get_term_meta($term->term_id, 'vk_menu_label', true));
+        return '<a class="'.esc_attr($class).'" href="'.esc_url(get_term_link($term)).'">'.esc_html($label !== '' ? $label : $term->name).'</a>';
     }
 
     private static function category_tab($top){
@@ -133,14 +135,16 @@ class MegaMenu {
                 }
                 $links = '';
                 foreach($items as $item) $links .= '<li>'.self::link($item, 'vk-mega-link').'</li>';
+                // „Összes …” link a csoport alatt, ha a kategóriának van ilyen felirata (vk_menu_all).
+                $all = trim((string)get_term_meta($group->term_id, 'vk_menu_all', true));
+                if ($all !== '') $links .= '<li class="vk-mega-more"><a href="'.esc_url(get_term_link($group)).'">'.esc_html($all).' <span aria-hidden="true">›</span></a></li>';
                 $groups .= '<div class="vk-mega-group">'.self::link($group, 'vk-mega-group-title').'<ul>'.$links.'</ul></div>';
             }
             if ($loose !== '') $groups = '<div class="vk-mega-group"><ul>'.$loose.'</ul></div>'.$groups;
             $columns .= '<div class="vk-mega-col">'.self::link($column, 'vk-mega-col-title').$groups.'</div>';
         }
 
-        return '<div class="vk-mega-cols">'.$columns.'</div>
-            <div class="vk-mega-foot"><a class="vk-mega-all" href="'.esc_url(get_term_link($top)).'">Összes termék: '.esc_html($top->name).' <span aria-hidden="true">›</span></a></div>';
+        return '<div class="vk-mega-cols">'.$columns.'</div>';
     }
 
     private static function brands_tab(){

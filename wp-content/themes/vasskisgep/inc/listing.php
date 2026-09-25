@@ -14,7 +14,7 @@ namespace VasskisgepTheme;
  * A lista frissítése ugyanarra az URL-re küldött `vk_listing=results|count` kéréssel történik.
  */
 class Listing {
-    const PER_PAGE = 12;
+    const PER_PAGE = 9;
     const COLUMNS = 3;
 
     private static $total = null;

@@ -105,7 +105,7 @@
 
 			$shown = min($total, \VasskisgepTheme\Listing::PER_PAGE * max(1, (int)$L::param('product-page')));
 
-			return '<div class="vk-listing" data-total="'.esc_attr($total).'">
+			return '<div class="vk-listing" data-total="'.esc_attr($total).'" data-per-page="'.\VasskisgepTheme\Listing::PER_PAGE.'">
 				<div class="vk-filter-bar">
 					<div class="vk-filter-bar-left">'.$bar.'</div>
 					<div class="vk-filter-bar-right">'.$bar_right.'</div>

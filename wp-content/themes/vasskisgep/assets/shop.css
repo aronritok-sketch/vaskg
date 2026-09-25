@@ -3013,3 +3013,140 @@ footer .iu-form-submit .iu-button-text:after {
 	margin-left: .45rem;
 	vertical-align: middle;
 }
+
+/* ---------- Megamenü a design szerint (Kategóriák-termékek-tab-1: 1920 px-en) ---------- */
+@media (min-width: 992px) {
+	.vk-mega {
+		padding: 1.3rem 2.4rem 1.3rem;
+		border-radius: .3rem;
+	}
+	.vk-mega-head {
+		margin-bottom: 2.4rem;
+	}
+	.vk-mega-tabs {
+		gap: 1.8rem;
+	}
+	.iu-menu-block .vk-mega-tab,
+	.vk-mega-tab {
+		padding: .2rem 0 .45rem;
+		font-family: var(--iu-heading-font-family);
+		font-size: 1.33rem;
+		font-weight: 500;
+	}
+	.vk-mega-close {
+		top: .6rem;
+		right: -.4rem;
+	}
+	.vk-mega-close svg {
+		width: 1.4rem;
+		height: 1.4rem;
+	}
+	.vk-mega-cols {
+		max-width: 79.1rem;
+	}
+	.vk-mega-col {
+		padding: 0 1.4rem 0 1.4rem;
+	}
+	.vk-mega-col:first-child {
+		padding-left: 0;
+	}
+	.iu-menu-block .vk-mega .vk-mega-col-title {
+		margin-bottom: 1.05rem;
+		font-family: var(--iu-heading-font-family);
+		font-size: 1.22rem;
+	}
+	.vk-mega-group {
+		margin-bottom: 1.2rem;
+	}
+	.iu-menu-block .vk-mega .vk-mega-group-title {
+		margin-bottom: .45rem;
+		font-family: var(--iu-heading-font-family);
+		font-size: 1.1rem;
+		font-weight: 500;
+	}
+	.vk-mega-group ul {
+		padding-left: .45rem;
+	}
+	.iu-menu-block .vk-mega .vk-mega-link {
+		padding: .35rem 0;
+		line-height: 1.25;
+		font-size: 1rem;
+		color: #6b7280;
+	}
+	.iu-menu-block .vk-mega .vk-mega-more a {
+		padding: .1rem 0 0;
+		font-size: .68rem;
+		color: var(--iu-text-color);
+	}
+}
+
+/* ---------- Terméklista a design szerint (Alkategóriák-termékek: tartalom 1640 px, 3×3 kártya) ---------- */
+@media (min-width: 992px) {
+	.vk-listing-section > .iu-row,
+	.iu-section:has(.vk-listing) > .iu-row {
+		width: 85.42%;
+	}
+	.vk-listing-body {
+		grid-template-columns: 14.8rem minmax(0, 1fr);
+		gap: 8.1rem;
+	}
+}
+/* A cím csak a képernyőolvasóknak (a designban a morzsamenü után közvetlenül a szűrősáv jön). */
+.vk-listing-section .vk-listing-title,
+.vk-listing-section h1.iu-title {
+	position: absolute !important;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+}
+.vk-listing-section .iu-breadcrumbs {
+	margin-bottom: 1.3rem;
+}
+
+/* Morzsamenü a design szerint: „>” elválasztó */
+.vk-listing-section .iu-breadcrumbs-separator,
+.vk-product-top .iu-breadcrumbs-separator {
+	font-size: 0;
+}
+.vk-listing-section .iu-breadcrumbs-separator:before,
+.vk-product-top .iu-breadcrumbs-separator:before {
+	content: '›';
+	font-size: .9rem;
+}
+@media (min-width: 992px) {
+	.vk-listing .vk-filter-bar .vk-dd-toggle {
+		padding: .6rem 1.15rem;
+		font-size: 1.05rem;
+	}
+	.vk-listing .vk-filter-side .vk-dd-toggle {
+		padding: .55rem 1rem;
+		font-size: 1rem;
+	}
+	.vk-listing .vk-filter-side .vk-dd {
+		margin-bottom: .55rem;
+	}
+	.vk-listing .vk-filter-side .iu-heading {
+		font-family: var(--iu-text-font-family);
+		font-size: 1.05rem;
+	}
+}
+.vk-listing-section .iu-breadcrumbs a,
+.vk-listing-section .iu-breadcrumbs span,
+.vk-product-top .iu-breadcrumbs a,
+.vk-product-top .iu-breadcrumbs span {
+	color: #4b5563;
+	font-size: .78rem;
+	letter-spacing: .12em;
+}
+.vk-listing-section .iu-breadcrumbs .iu-breadcrumbs-current,
+.vk-product-top .iu-breadcrumbs .iu-breadcrumbs-current {
+	color: var(--iu-text-color);
+	font-weight: 600;
+}
+.vk-listing-section .iu-breadcrumbs span.iu-breadcrumbs-separator,
+.vk-product-top .iu-breadcrumbs span.iu-breadcrumbs-separator {
+	font-size: 0;
+	margin: 0 .55rem;
+}
