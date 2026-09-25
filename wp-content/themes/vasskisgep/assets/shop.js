@@ -131,3 +131,93 @@
 	});
 
 })(jQuery);
+
+/* ---------- Termékoldal (design: Termékoldal) ---------- */
+(function($){
+
+	// Mennyiségválasztó: a WooCommerce AJAX kosárba rakása a gomb data-quantity értékét használja.
+	const syncQty = function($form){
+		const $input = $form.find('input.qty');
+		const min = parseInt($input.attr('min'), 10) || 1;
+		const max = parseInt($input.attr('max'), 10) || Infinity;
+		let value = parseInt($input.val(), 10);
+		if (isNaN(value) || value < min) value = min;
+		if (value > max) value = max;
+		$input.val(value);
+		$form.find('.vk-buy-button').attr('data-quantity', value).data('quantity', value);
+	};
+	$(document).on('click', '.vk-qty-btn', function(){
+		const $form = $(this).closest('.vk-buy');
+		const $input = $form.find('input.qty');
+		$input.val((parseInt($input.val(), 10) || 0) + parseInt(this.dataset.step, 10));
+		syncQty($form);
+	});
+	$(document).on('change input', '.vk-buy input.qty', function(){
+		syncQty($(this).closest('.vk-buy'));
+	});
+
+	// Kapcsolódó termékek oldalsáv: fel / le léptetés.
+	const xsUpdate = function($box){
+		const list = $box.find('.vk-xs-list')[0];
+		if (!list) return;
+		$box.find('.vk-xs-prev').prop('disabled', list.scrollTop <= 0);
+		$box.find('.vk-xs-next').prop('disabled', list.scrollTop + list.clientHeight >= list.scrollHeight - 2);
+	};
+	$(document).on('click', '.vk-xs-prev, .vk-xs-next', function(){
+		const $box = $(this).closest('.vk-cross-sells');
+		const list = $box.find('.vk-xs-list')[0];
+		const step = ($box.find('.vk-xs-item').outerHeight(true) || 80) + 8;
+		list.scrollTop += $(this).hasClass('vk-xs-next') ? step : -step;
+		setTimeout(function(){ xsUpdate($box); }, 350);
+	});
+
+	// Csillagokra kattintva a Vélemények fül nyílik meg.
+	const openTab = function(title){
+		const $tab = $('.vk-product-tabs .iu-tabs-tabs a').filter(function(){ return $(this).text().trim() === title; }).first();
+		if (!$tab.length) return false;
+		$tab.trigger('click');
+		$('html, body').animate({ scrollTop: $tab.offset().top - 120 }, 300);
+		return true;
+	};
+	$(document).on('click', '[data-vk-tab="reviews"]', function(e){
+		if (openTab('Vélemények')) e.preventDefault();
+	});
+
+	// Cofidis kalkulátor.
+	const format = function(value){
+		return Math.round(value).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' Ft';
+	};
+	const cofidis = function($box){
+		const config = $box.data('config');
+		const months = parseInt($box.find('input[name="vk-cof-term"]:checked').val(), 10) || 12;
+		const $down = $box.find('#vk-cof-down');
+		let down = Math.max(0, Math.min(config.price, parseInt($down.val(), 10) || 0));
+		let loan = config.price - down;
+		if (config.max > 0 && loan > config.max){
+			loan = config.max;
+			down = config.price - loan;
+		}
+		const rate = config.interest !== null && config.interest !== undefined
+			? config.interest / 100 / 12
+			: Math.pow(1 + config.thm / 100, 1 / 12) - 1;
+		let monthly = 0;
+		if (loan > 0) monthly = rate > 0 ? Math.ceil(loan * rate / (1 - Math.pow(1 + rate, -months))) : Math.ceil(loan / months);
+		const tooSmall = config.min > 0 && loan < config.min;
+
+		$box.find('.vk-cof-loan').text(format(loan));
+		$box.find('.vk-cof-months').text(months + ' hó');
+		$box.find('.vk-cof-monthly').text(tooSmall ? '–' : format(monthly));
+		$box.find('.vk-cof-total').text(tooSmall ? '–' : format(monthly * months + down));
+	};
+	$(document).on('change input', '.vk-cofidis input', function(){
+		cofidis($(this).closest('.vk-cofidis'));
+	});
+
+	$(function(){
+		$('.vk-buy').each(function(){ syncQty($(this)); });
+		$('.vk-cross-sells').each(function(){ xsUpdate($(this)); });
+		$('.vk-cofidis').each(function(){ cofidis($(this)); });
+		if (window.location.hash === '#vk-reviews' || window.location.hash.indexOf('#comment') === 0 || window.location.hash === '#reviews') openTab('Vélemények');
+	});
+
+})(jQuery);

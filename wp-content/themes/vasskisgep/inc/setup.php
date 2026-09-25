@@ -29,6 +29,7 @@ class Setup {
         10 => 'blog_posts',
         11 => 'email_branding',
         12 => 'demo_products',
+        13 => 'product_page',
     ];
 
     private $log = [];
@@ -789,5 +790,53 @@ class Setup {
         update_option('tag_base', 'tudastar/cimke');
         flush_rewrite_rules(false);
         $this->log[] = 'Permalinkek: /tudastar/%postname%/';
+    }
+
+    /**
+     * Termékoldal: értékelések bekapcsolása minden terméken, a bemutató gépeknél
+     * tájékoztató doboz és néhány minta értékelés (a DEMO termékekkel együtt törlendők).
+     */
+    function product_page(){
+        global $wpdb;
+        update_option('woocommerce_enable_reviews', 'yes');
+        update_option('woocommerce_enable_review_rating', 'yes');
+        update_option('woocommerce_review_rating_required', 'yes');
+        $opened = $wpdb->query("UPDATE {$wpdb->posts} SET comment_status = 'open' WHERE post_type = 'product' AND comment_status <> 'open'");
+        $this->log[] = 'Értékelések bekapcsolva ('.(int)$opened.' termék)';
+
+        $notice = "Személyes átvétel esetén az ár tartalmazza a gép összeszerelését és beüzemelését.\nMotorolaj nélkül szállítva.";
+        $reviews = [
+            [ 5, 'Gyorsan megérkezett, a gép elsőre indult. Az üzletben mindent elmagyaráztak.' ],
+            [ 4, 'Jó ár-érték arány, a kezelése egyszerű. A fűgyűjtő lehetne nagyobb.' ],
+            [ 5, 'Harmadik szezonja használom gond nélkül, a szerviz is gyors volt.' ]
+        ];
+
+        foreach(get_posts([ 'post_type' => 'product', 'numberposts' => -1, 'post_status' => 'any', 'meta_key' => '_sku', 'meta_value' => 'DEMO-', 'meta_compare' => 'LIKE' ]) as $post){
+            $product = wc_get_product($post->ID);
+            if (!$product) continue;
+
+            $engine = wc_get_product_terms($post->ID, 'pa_loketterfogat', [ 'fields' => 'ids' ]);
+            if (!empty($engine) && $product->get_meta('_vk_notice') === ''){
+                $product->update_meta_data('_vk_notice', $notice);
+                $product->save();
+            }
+
+            // Minta értékelések a kiemelt bemutató termékekre.
+            if (!$product->is_featured() || get_comments([ 'post_id' => $post->ID, 'type' => 'review', 'count' => true ])) continue;
+            foreach($reviews as $index => [$rating, $text]){
+                $comment_id = wp_insert_comment([
+                    'comment_post_ID' => $post->ID,
+                    'comment_author' => 'Teszt vásárló '.($index + 1),
+                    'comment_author_email' => 'teszt'.($index + 1).'@example.com',
+                    'comment_content' => $text,
+                    'comment_type' => 'review',
+                    'comment_approved' => 1,
+                    'comment_date' => gmdate('Y-m-d H:i:s', time() - ($index + 1) * 20 * DAY_IN_SECONDS)
+                ]);
+                if ($comment_id) add_comment_meta($comment_id, 'rating', $rating);
+            }
+            \WC_Comments::clear_transients($post->ID);
+            $this->log[] = 'Minta értékelések: '.$product->get_name();
+        }
     }
 }

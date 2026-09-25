@@ -11,6 +11,7 @@ require_once(__DIR__.'/reviews.php');
 require_once(__DIR__.'/catalog.php');
 require_once(__DIR__.'/listing.php');
 require_once(__DIR__.'/megamenu.php');
+require_once(__DIR__.'/product.php');
 
 class Theme {
     private static $instance;
@@ -31,6 +32,7 @@ class Theme {
         Catalog::get_instance();
         Listing::get_instance();
         MegaMenu::get_instance();
+        ProductPage::get_instance();
 
         add_action('after_setup_theme', [$this, 'editor_styles'], 999);
         add_action('wp_enqueue_scripts', [$this, 'enqueue'], 99);
