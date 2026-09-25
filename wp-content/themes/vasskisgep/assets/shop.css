@@ -1,0 +1,792 @@
+/*
+ * Vasskisgép – webshop kiegészítések (termékoldal, archívumok, kedvencek,
+ * összehasonlítás, keresés). A színek és betűk a theme.json / vars.css változóit használják.
+ */
+
+:root {
+	--vk-border: #e3e5e8;
+	--vk-muted: #6b7280;
+	--vk-radius: .21rem;
+	--vk-success: #1f8a3b;
+	--vk-warning: #b45309;
+}
+
+.vk-muted {
+	color: var(--vk-muted);
+}
+
+/* ---------- Fejléc: kedvencek / összehasonlítás számláló ---------- */
+
+.vk-has-count {
+	position: relative;
+}
+.vk-count {
+	position: absolute;
+	top: -.5rem;
+	right: -.6rem;
+	min-width: 1rem;
+	height: 1rem;
+	padding: 0 .25rem;
+	border-radius: 1rem;
+	background: var(--wp--preset--color--primary);
+	color: var(--wp--preset--color--white);
+	font-size: .65rem;
+	font-weight: 600;
+	line-height: 1rem;
+	text-align: center;
+}
+.vk-count.vk-count-empty {
+	display: none;
+}
+
+/* ---------- Értesítés (toast) ---------- */
+
+.vk-toast {
+	position: fixed;
+	left: 50%;
+	bottom: 1.5rem;
+	z-index: 10000;
+	display: flex;
+	gap: .6rem;
+	align-items: center;
+	padding: .75rem 1.2rem;
+	border-radius: var(--vk-radius);
+	background: var(--wp--preset--color--dark);
+	color: var(--wp--preset--color--white);
+	font-size: .9rem;
+	box-shadow: 0 10px 30px rgba(0, 0, 0, .2);
+	transform: translate(-50%, 150%);
+	opacity: 0;
+	transition: transform .25s ease, opacity .25s ease;
+}
+.vk-toast.vk-toast-show {
+	transform: translate(-50%, 0);
+	opacity: 1;
+}
+.vk-toast a {
+	color: var(--wp--preset--color--primary);
+	text-decoration: underline;
+}
+
+/* ---------- Kedvencek / összehasonlítás gombok ---------- */
+
+.vk-product-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: .6rem 1.5rem;
+	margin: 1.2rem 0 0;
+}
+.vk-list-toggle {
+	display: inline-flex;
+	align-items: center;
+	gap: .45rem;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: var(--iu-text-color);
+	font: inherit;
+	font-size: .9rem;
+	cursor: pointer;
+	transition: color .2s;
+}
+.vk-list-toggle:hover, .vk-list-toggle.vk-active {
+	color: var(--wp--preset--color--primary);
+}
+.vk-list-toggle[data-list="wishlist"].vk-active svg path {
+	fill: currentColor;
+}
+.vk-list-toggle .vk-on, .vk-list-toggle.vk-active .vk-off {
+	display: none;
+}
+.vk-list-toggle.vk-active .vk-on {
+	display: inline;
+}
+
+/* Terméklista kártyán: ikonok a kártya jobb felső sarkában. */
+li.product {
+	position: relative;
+}
+.vk-product-actions-compact {
+	position: absolute;
+	top: .6rem;
+	right: .6rem;
+	z-index: 3;
+	flex-direction: column;
+	gap: .4rem;
+	margin: 0;
+	opacity: 0;
+	transition: opacity .2s;
+}
+li.product:hover .vk-product-actions-compact,
+.vk-product-actions-compact:focus-within,
+.vk-product-actions-compact:has(.vk-active) {
+	opacity: 1;
+}
+.vk-product-actions-compact .vk-list-toggle {
+	justify-content: center;
+	width: 2.1rem;
+	height: 2.1rem;
+	border-radius: 50%;
+	background: var(--wp--preset--color--white);
+	box-shadow: 0 2px 8px rgba(0, 0, 0, .12);
+}
+.vk-product-actions-compact .vk-list-toggle-label {
+	display: none;
+}
+@media (hover: none) {
+	.vk-product-actions-compact {
+		opacity: 1;
+	}
+}
+
+/* ---------- Termékoldal ---------- */
+
+.vk-product-top .iu-breadcrumbs {
+	margin: 0;
+}
+.vk-product > .iu-row {
+	align-items: flex-start;
+}
+.vk-product-gallery {
+	position: relative;
+}
+.vk-product-gallery .iu-woocommerce-badges {
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: 5;
+	display: flex;
+	gap: .3rem;
+}
+.vk-product-summary > * + * {
+	margin-top: 1.2rem;
+}
+.vk-product-summary .iu-woocommerce-product-brand {
+	display: inline-block;
+	font-size: .8rem;
+	letter-spacing: .1em;
+	text-transform: uppercase;
+}
+.vk-product-summary .iu-title {
+	margin-top: .6rem;
+	font-size: 2.4rem;
+	line-height: 1.05;
+}
+.vk-product-summary .iu-woocommerce-short-description p {
+	margin: 0;
+	color: var(--vk-muted);
+}
+.vk-product-summary .iu-woocommerce-product-attributes {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+	gap: .6rem;
+	padding: 0;
+}
+.vk-product-summary .iu-woocommerce-product-attribute {
+	display: flex;
+	flex-direction: column;
+	gap: .15rem;
+	padding: .6rem .8rem;
+	border: 1px solid var(--vk-border);
+	border-radius: var(--vk-radius);
+	font-size: .8rem;
+}
+.vk-product-summary .iu-woocommerce-product-attribute-name {
+	color: var(--vk-muted);
+}
+.vk-product-summary .iu-woocommerce-product-attribute-value {
+	font-size: 1rem;
+	font-weight: 600;
+	text-align: left;
+}
+.vk-product-summary .vk-specs-link {
+	margin-top: .6rem;
+}
+.vk-product-summary .vk-specs-link a {
+	color: var(--wp--preset--color--primary);
+	text-decoration: underline;
+}
+.vk-buy-box {
+	padding-top: 1.2rem;
+	border-top: 1px solid var(--vk-border);
+}
+.vk-buy-box .iu-woocommerce-price .price {
+	margin: 0;
+	font-family: var(--iu-heading-font-family);
+	font-size: 2.4rem;
+	font-weight: 600;
+	line-height: 1;
+}
+.vk-buy-box .iu-woocommerce-price .price del {
+	display: block;
+	font-size: 1.1rem;
+	font-weight: 400;
+}
+.vk-buy-box .iu-woocommerce-price .price ins {
+	text-decoration: none;
+}
+.vk-buy-box .stock {
+	margin: 0;
+	padding: .3rem .8rem;
+	border-radius: 2rem;
+	background: #ecf7ef;
+	color: var(--vk-success);
+	font-size: .85rem;
+	font-weight: 500;
+}
+.vk-buy-box .stock.available-on-backorder {
+	background: #fff4e5;
+	color: var(--vk-warning);
+}
+.vk-buy-box .stock.out-of-stock {
+	background: #fdecec;
+	color: #b91c1c;
+}
+.vk-product-summary .iu-woocommerce-add-to-cart.single {
+	display: flex;
+	gap: .9rem;
+	margin-bottom: 0;
+}
+.vk-product-summary .iu-woocommerce-add-to-cart.single .iu-button {
+	min-height: 3.3rem;
+	background: var(--wp--preset--color--primary);
+	border-color: var(--wp--preset--color--primary);
+	font-size: 1rem;
+	font-weight: 600;
+}
+.vk-product-summary .iu-woocommerce-add-to-cart.single .iu-button:hover {
+	background: var(--wp--preset--color--dark);
+	border-color: var(--wp--preset--color--dark);
+}
+
+.vk-product-info {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 1rem 1.5rem;
+	margin: 1.8rem 0 0;
+	padding: 1.2rem;
+	border-radius: var(--vk-radius);
+	background: var(--wp--preset--color--light);
+	list-style: none;
+}
+.vk-product-info li {
+	display: flex;
+	gap: .75rem;
+	font-size: .85rem;
+	line-height: 1.35;
+}
+.vk-product-info li > span:last-child {
+	display: flex;
+	flex-direction: column;
+}
+.vk-product-info strong {
+	font-weight: 600;
+}
+.vk-product-info a {
+	color: inherit;
+}
+.vk-product-info strong a:hover, .vk-product-info span > a {
+	color: var(--wp--preset--color--primary);
+}
+.vk-product-info-icon {
+	flex: 0 0 auto;
+	color: var(--wp--preset--color--primary);
+}
+
+.vk-product-tabs .iu-tabs-contents {
+	padding-top: 2.1rem;
+}
+.vk-product-tabs .iu-tab {
+	max-width: 56rem;
+}
+.vk-question-form {
+	max-width: 42rem;
+	margin-top: 1.5rem;
+}
+
+.vk-specs {
+	width: 100%;
+	max-width: 48rem;
+	border-collapse: collapse;
+	font-size: .95rem;
+}
+.vk-specs th, .vk-specs td {
+	padding: .7rem 1rem;
+	border-bottom: 1px solid var(--vk-border);
+	text-align: left;
+	vertical-align: top;
+}
+.vk-specs th {
+	width: 40%;
+	color: var(--vk-muted);
+	font-weight: 400;
+}
+.vk-specs tr:nth-child(odd) {
+	background: var(--wp--preset--color--light);
+}
+
+.vk-related-section h2 {
+	margin-bottom: 2.1rem;
+}
+
+@media (max-width: 991.8px) {
+	.vk-product-summary .iu-title {
+		font-size: 1.8rem;
+	}
+	.vk-product-info {
+		grid-template-columns: 1fr;
+	}
+	.woocommerce-product-gallery {
+		position: relative;
+		top: 0;
+	}
+}
+
+/* ---------- Archív fejléckép ---------- */
+
+.vk-hero-image {
+	position: relative;
+	height: var(--vk-hero-height, 15rem);
+	overflow: hidden;
+	background: var(--wp--preset--color--dark);
+}
+.vk-hero-image img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+.vk-hero-image.clip-down:after {
+	content: '';
+	position: absolute;
+	bottom: -1px;
+	left: 0;
+	width: 100%;
+	height: 4.5rem;
+	background: var(--wp--preset--color--white);
+	clip-path: polygon(0% 100%, 33.333% 0%, 100% 100%);
+	pointer-events: none;
+}
+
+/* ---------- Kategória / márka fejléc ---------- */
+
+.vk-term-header {
+	display: flex;
+	flex-direction: column;
+	gap: 1.2rem;
+	margin-top: 1.5rem;
+}
+.vk-term-logo img {
+	max-height: 3.6rem;
+	width: auto;
+}
+.vk-term-description {
+	max-width: 56rem;
+	color: var(--vk-muted);
+}
+.vk-term-description p {
+	margin: 0;
+}
+.vk-subcategories {
+	display: flex;
+	flex-wrap: wrap;
+	gap: .5rem;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.vk-subcategories a {
+	display: inline-block;
+	padding: .45rem .95rem;
+	border: 1px solid var(--vk-border);
+	border-radius: 2rem;
+	color: var(--iu-text-color);
+	font-size: .9rem;
+	transition: border-color .2s, color .2s;
+}
+.vk-subcategories a:hover {
+	border-color: var(--wp--preset--color--primary);
+	color: var(--wp--preset--color--primary);
+}
+
+/* ---------- Kedvencek, összehasonlítás ---------- */
+
+.vk-empty-list {
+	max-width: 42rem;
+	padding: 2.4rem;
+	border: 1px dashed var(--vk-border);
+	border-radius: var(--vk-radius);
+}
+.vk-empty-list .iu-button-group {
+	margin-top: 1.2rem;
+}
+
+.vk-compare-scroll {
+	overflow-x: auto;
+	-webkit-overflow-scrolling: touch;
+}
+.vk-compare-table {
+	width: 100%;
+	min-width: 42rem;
+	border-collapse: collapse;
+	table-layout: fixed;
+	font-size: .95rem;
+}
+.vk-compare-table th, .vk-compare-table td {
+	padding: .8rem 1rem;
+	border-bottom: 1px solid var(--vk-border);
+	text-align: left;
+	vertical-align: top;
+}
+.vk-compare-table tbody th {
+	width: 11rem;
+	color: var(--vk-muted);
+	font-weight: 400;
+}
+.vk-compare-table thead th:first-child {
+	width: 11rem;
+}
+.vk-compare-table tbody tr:nth-child(odd) {
+	background: var(--wp--preset--color--light);
+}
+.vk-compare-product {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	gap: .6rem;
+}
+.vk-compare-product img {
+	width: 100%;
+	max-width: 12rem;
+	height: auto;
+}
+.vk-compare-title {
+	color: var(--iu-text-color);
+	font-family: var(--iu-heading-font-family);
+	font-size: 1.1rem;
+	font-weight: 600;
+	line-height: 1.2;
+}
+.vk-compare-remove {
+	position: absolute;
+	top: 0;
+	right: 0;
+	justify-content: center;
+	width: 1.8rem;
+	height: 1.8rem;
+	border-radius: 50%;
+	background: var(--wp--preset--color--light);
+	font-size: 1.2rem;
+	line-height: 1;
+}
+.vk-compare-table .price {
+	font-weight: 600;
+}
+.vk-compare-actions td .iu-woocommerce-add-to-cart {
+	display: flex;
+}
+
+/* ---------- Keresés ---------- */
+
+.vk-result-count {
+	color: var(--vk-muted);
+}
+
+/* ---------- Kezdőlap: szezonális fülek ---------- */
+
+.vk-season-tabs {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: flex-end;
+	gap: .6rem;
+	margin-bottom: 1.5rem;
+}
+.vk-season-tabs button {
+	padding: .55rem 1.3rem;
+	border: 1px solid currentColor;
+	border-radius: 2rem;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	font-size: .9rem;
+	font-weight: 500;
+	text-transform: uppercase;
+	cursor: pointer;
+	transition: background .2s, color .2s;
+}
+.vk-season-tabs button.vk-active, .vk-season-tabs button:hover {
+	background: var(--wp--preset--color--white);
+	border-color: var(--wp--preset--color--white);
+	color: var(--wp--preset--color--dark);
+}
+.vk-season-pane:not(.vk-active) {
+	height: 0;
+	overflow: hidden;
+	visibility: hidden;
+}
+@media (max-width: 991.8px) {
+	.vk-season-tabs {
+		justify-content: flex-start;
+	}
+}
+
+/* ---------- Űrlapok, CTA ---------- */
+
+.iu-form-select .iu-form-select-wrap select {
+	width: 100%;
+	min-height: 2.7rem;
+	padding: .7rem 2.4rem .7rem 1.5rem;
+	border: 1px solid color-mix(in srgb, var(--wp--preset--color--light), black 6%);
+	border-radius: .21rem;
+	background: var(--wp--preset--color--light);
+	color: var(--iu-text-color);
+	font: inherit;
+	appearance: none;
+}
+.iu-form .iu-group-equal > .iu-form-field {
+	min-width: 0;
+}
+.vk-cta .iu-button.iu-button-outline {
+	border: 1px solid var(--wp--preset--color--white);
+	background: transparent;
+	color: var(--wp--preset--color--white);
+}
+.vk-cta .iu-button.iu-button-outline:hover {
+	background: var(--wp--preset--color--white);
+	color: var(--wp--preset--color--dark) !important;
+}
+.vk-contact-aside p {
+	margin: 0;
+}
+.vk-contact-aside a, .vk-legal a {
+	color: var(--wp--preset--color--primary);
+}
+.vk-map iframe {
+	display: block;
+	width: 100%;
+	height: 100%;
+	min-height: 26rem;
+	border: 0;
+	border-radius: var(--vk-radius);
+}
+.vk-brand-logos img {
+	max-height: 2.4rem;
+	width: auto;
+	filter: grayscale(0);
+}
+.vk-legal {
+	max-width: 56rem;
+}
+.vk-legal h3 {
+	margin-top: 2.1rem;
+}
+.vk-legal mark {
+	background: #fff4e5;
+	color: var(--vk-warning);
+}
+.vk-compare-table .stock, .vk-specs .stock {
+	margin: 0;
+	text-align: left;
+}
+
+/* ---------- Google értékelések ---------- */
+
+.vk-reviews-head {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	align-items: flex-end;
+	gap: 1.5rem;
+}
+.vk-reviews-summary {
+	text-align: right;
+}
+.vk-reviews-rating {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: .5rem;
+	font-family: var(--iu-heading-font-family);
+	font-size: 1.5rem;
+}
+.vk-reviews-rating strong {
+	font-size: 2.1rem;
+}
+.vk-reviews-list {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 1.5rem;
+	margin-top: 3rem;
+}
+.vk-review {
+	margin: 0;
+	padding: 1.5rem;
+	border-radius: var(--vk-radius);
+	background: var(--wp--preset--color--white);
+	box-shadow: 0 4px 20px rgba(0, 0, 0, .06);
+}
+.vk-review blockquote {
+	margin: .9rem 0;
+}
+.vk-review figcaption span {
+	color: var(--vk-muted);
+	font-size: .85rem;
+}
+.vk-reviews-actions {
+	margin-top: 2.1rem;
+}
+.vk-stars {
+	display: inline-flex;
+	gap: .15rem;
+}
+.vk-star {
+	width: 1rem;
+	height: 1rem;
+	background: linear-gradient(90deg, var(--wp--preset--color--primary) var(--vk-star-fill), #d9dbe0 var(--vk-star-fill));
+	clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+}
+@media (max-width: 991.8px) {
+	.vk-reviews-list {
+		grid-template-columns: 1fr;
+	}
+	.vk-reviews-summary, .vk-reviews-rating {
+		text-align: left;
+		justify-content: flex-start;
+	}
+}
+.iu-woocommerce-checkout .iu-form-select select, .iu-woocommerce-account .iu-form-select select {
+	width: 100%;
+	min-height: 2.7rem;
+	padding: .7rem 1.5rem;
+	border: 1px solid color-mix(in srgb, var(--wp--preset--color--light), black 6%);
+	border-radius: .21rem;
+	background: var(--wp--preset--color--light);
+	font: inherit;
+}
+
+/* ---------- Mobil fejléc ---------- */
+
+@media (max-width: 991.8px) {
+	.header-top .iu-icon-text-text {
+		display: none;
+	}
+	.header-top .iu-column > .iu-group > .iu-group {
+		flex: 0 0 auto;
+		width: auto;
+		flex-wrap: nowrap;
+		gap: 1.2rem;
+	}
+	.header-top .iu-icon-text .iu-icon {
+		width: 1.1rem;
+		height: 1.1rem;
+	}
+	.header-menu .iu-column > .iu-group {
+		flex-wrap: wrap;
+		row-gap: .75rem;
+		padding: .6rem 0;
+	}
+	.header-menu .iu-group-horizontal-flex-end {
+		display: contents;
+	}
+	.header-menu .iu-group:has(> .iu-menu-block-wrapper):before {
+		display: none;
+	}
+	.header-menu .iu-image, .header-menu .iu-image .iu-image-wrap {
+		flex: 0 0 auto;
+		width: auto !important;
+		overflow: visible;
+	}
+	.header-menu .iu-image img {
+		width: auto !important;
+		height: 2.1rem !important;
+		max-width: none;
+	}
+	.header-menu .iu-menu-block-wrapper {
+		flex: 0 0 auto;
+		order: 1;
+		margin-left: auto;
+	}
+	.header-menu .iu-woocommerce-search {
+		order: 2;
+		flex: 1 0 100%;
+	}
+	.vk-product-summary .iu-woocommerce-product-attributes {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+	.vk-product-tabs .iu-tabs-tabs {
+		overflow-x: auto;
+		flex-wrap: nowrap;
+		white-space: nowrap;
+	}
+}
+
+/* ---------- Mobil: kezdőlapi márka-hero és lábléc ---------- */
+
+@media (max-width: 991.8px) {
+	.vasskisgep-pager-hero {
+		flex-wrap: wrap;
+	}
+	.vasskisgep-pager-hero .vasskisgep-pager-hero-slide {
+		order: 2;
+		flex: 0 0 20% !important;
+		width: 20% !important;
+		min-width: 0;
+		height: 4.2rem;
+		border-left: 1px solid var(--vk-border);
+		border-top: 1px solid var(--vk-border);
+		cursor: pointer;
+		transition: none;
+	}
+	.vasskisgep-pager-hero .vasskisgep-pager-hero-slide.open {
+		order: 1;
+		flex: 0 0 100% !important;
+		width: 100% !important;
+		height: auto;
+		border: 0;
+		cursor: default;
+	}
+	.vasskisgep-pager-hero-slide-inner {
+		position: relative;
+		left: 0;
+		width: 100%;
+		transform: none;
+	}
+	.vasskisgep-pager-hero-slide:not(.open) .vasskisgep-pager-hero-slide-bg,
+	.vasskisgep-pager-hero-slide:not(.open) .vasskisgep-pager-hero-slide-open,
+	.vasskisgep-pager-hero-slide.open .vasskisgep-pager-hero-slide-closed {
+		display: none;
+	}
+	.vasskisgep-pager-hero-slide.open .vasskisgep-pager-hero-slide-bg {
+		height: 42vh;
+	}
+	.vasskisgep-pager-hero-slide-content {
+		position: relative;
+	}
+	.vasskisgep-pager-hero-slide-closed {
+		position: relative;
+		height: 4.2rem;
+		padding: .6rem;
+		clip-path: none;
+	}
+	.vasskisgep-pager-hero-slide-closed img {
+		max-width: 100%;
+		max-height: 1.5rem;
+		width: auto;
+		transform: none;
+	}
+	.vasskisgep-pager-hero-slide-open {
+		position: relative;
+		margin-top: -2.4rem;
+		padding: 2.4rem 5vw 1.5rem;
+	}
+
+	.footer .iu-column, .footer .iu-column:nth-child(2), .footer .iu-column:nth-child(3), .footer .iu-column:nth-child(4),
+	.footer .iu-form, .footer .iu-form .iu-form-field, .footer .iu-form .iu-button-group, .footer .iu-form .iu-button {
+		width: 100%;
+	}
+	.copyright .iu-column > .iu-group {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 1.2rem;
+	}
+}

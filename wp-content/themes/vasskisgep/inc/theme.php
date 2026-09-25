@@ -2,7 +2,12 @@
 
 namespace VasskisgepTheme;
 
-require_once('blocks.php');
+require_once(__DIR__.'/blocks.php');
+require_once(__DIR__.'/setup.php');
+require_once(__DIR__.'/shop.php');
+require_once(__DIR__.'/lists.php');
+require_once(__DIR__.'/forms.php');
+require_once(__DIR__.'/reviews.php');
 
 class Theme {
     private static $instance;
@@ -15,6 +20,11 @@ class Theme {
 
     function __construct(){
         Blocks::get_instance();
+        Setup::get_instance();
+        Shop::get_instance();
+        Lists::get_instance();
+        Forms::get_instance();
+        Reviews::get_instance();
 
         add_action('after_setup_theme', [$this, 'editor_styles'], 999);
         add_action('wp_enqueue_scripts', [$this, 'enqueue'], 99);

@@ -1,0 +1,32 @@
+[
+    {
+        "id": 21,
+        "post_type": "iu_template",
+        "file": "header.html",
+        "original_md5": "8deaa7602f724557355654bfa10376b3"
+    },
+    {
+        "id": 30,
+        "post_type": "iu_template",
+        "file": "footer.html",
+        "original_md5": "70e3d9415290791a68f4d11e133703f0"
+    },
+    {
+        "id": 2,
+        "post_type": "page",
+        "file": "front-page.html",
+        "original_md5": "afc91459926f732870552dde690c115a"
+    },
+    {
+        "id": 6,
+        "post_type": "page",
+        "file": "termekek.html",
+        "original_md5": "d3a543aa6bfa9e1997eaff8b795caa41"
+    },
+    {
+        "id": 121,
+        "post_type": "iu_pattern",
+        "file": "loop-product.html",
+        "original_md5": "47ae6dccf790a0b2f3fe1cf62c639230"
+    }
+]

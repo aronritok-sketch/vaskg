@@ -1,0 +1,64 @@
+<!-- wp:iu/section -->
+<section class="iu-section"><!-- wp:iu/row {"columns":"2-3|1-3"} -->
+<div class="iu-row"><!-- wp:iu/column {"width":"2-3"} -->
+<div class="iu-column iu-column-2-3"><!-- wp:paragraph {"className":""} -->
+<p class="iu-text">Írja meg, milyen munkához keres gépet, és munkatársunk egy munkanapon belül személyre szabott ajánlattal jelentkezik. Céges és nagyobb tételű megrendeléseknél egyedi árajánlatot adunk.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:iu/form {"formId":"ajanlatkeres","buttonLabel":"Ajánlatot kérek","success":"Köszönjük! Ajánlatunkkal hamarosan jelentkezünk.","iu_style":"margin-top:2.1rem","marginTop":"2.1rem"} -->
+<form class="iu-form"><input type="hidden" name="iu_form_id" value="ajanlatkeres"/><!-- wp:iu/group {"equal":true} -->
+<div class="iu-group iu-group-equal"><!-- wp:iu/form-text {"name":"fullname","label":"Név","placeholder":"Teljes név","validate":"required|Adja meg a nevét"} -->
+<div class="iu-form-field iu-form-text iu-form-field-required" data-validate="required|Adja meg a nevét"><label>Név</label><input type="text" name="fullname" placeholder="Teljes név"/><span class="iu-form-field-error-message"></span></div>
+<!-- /wp:iu/form-text -->
+
+<!-- wp:iu/form-text {"name":"company","label":"Cégnév","placeholder":"Nem kötelező"} -->
+<div class="iu-form-field iu-form-text"><label>Cégnév</label><input type="text" name="company" placeholder="Nem kötelező"/></div>
+<!-- /wp:iu/form-text --></div>
+<!-- /wp:iu/group -->
+
+<!-- wp:iu/group {"equal":true} -->
+<div class="iu-group iu-group-equal"><!-- wp:iu/form-text {"name":"email","label":"E-mail cím","placeholder":"pelda@email.hu","validate":"required|Adja meg az e-mail címét\nemail|Érvénytelen e-mail cím"} -->
+<div class="iu-form-field iu-form-text iu-form-field-required" data-validate="required|Adja meg az e-mail címét
+email|Érvénytelen e-mail cím"><label>E-mail cím</label><input type="text" name="email" placeholder="pelda@email.hu"/><span class="iu-form-field-error-message"></span></div>
+<!-- /wp:iu/form-text -->
+
+<!-- wp:iu/form-text {"name":"phone","label":"Telefonszám","placeholder":"+36 30 123 4567","validate":"required|Adja meg a telefonszámát"} -->
+<div class="iu-form-field iu-form-text iu-form-field-required" data-validate="required|Adja meg a telefonszámát"><label>Telefonszám</label><input type="text" name="phone" placeholder="+36 30 123 4567"/><span class="iu-form-field-error-message"></span></div>
+<!-- /wp:iu/form-text --></div>
+<!-- /wp:iu/group -->
+
+<!-- wp:iu/form-select {"name":"category","label":"Milyen gép érdekli?","options":"Kertészeti gép\nErdészeti gép\nÉpítőipari gép\nAlkatrész, tartozék\nEgyéb"} -->
+<div class="iu-form-field iu-form-select"><label>Milyen gép érdekli?</label><div class="iu-form-select-wrap"><select name="category"><option value="Kertészeti gép">Kertészeti gép</option><option value="Erdészeti gép">Erdészeti gép</option><option value="Építőipari gép">Építőipari gép</option><option value="Alkatrész, tartozék">Alkatrész, tartozék</option><option value="Egyéb">Egyéb</option></select></div></div>
+<!-- /wp:iu/form-select -->
+
+<!-- wp:iu/form-textarea {"name":"message","label":"Részletek","placeholder":"Milyen munkára, mekkora területre keres gépet? Van márka- vagy típuselképzelése?","validate":"required|Írja le, milyen gépet keres"} -->
+<div class="iu-form-field iu-form-textarea iu-form-field-required" data-validate="required|Írja le, milyen gépet keres"><label>Részletek</label><textarea name="message" placeholder="Milyen munkára, mekkora területre keres gépet? Van márka- vagy típuselképzelése?" rows="5"></textarea><span class="iu-form-error-message"></span></div>
+<!-- /wp:iu/form-textarea -->
+
+<!-- wp:iu/form-accept {"name":"accept","label":"Elfogadom az \u003ca href=\u0022{{home}}/adatkezelesi-tajekoztato/\u0022 target=\u0022_blank\u0022\u003eadatkezelési tájékoztató\u003c/a\u003et.","error":"Fogadja el az adatkezelési tájékoztatót"} -->
+<div class="iu-form-field iu-form-accept iu-form-field-required" data-validate="required|Fogadja el az adatkezelési tájékoztatót"><div class="iu-form-checkbox-wrap"><span class="iu-form-checkbox-input"><input name="accept" type="checkbox"/></span><span class="iu-form-checkbox-label">Elfogadom az <a href="{{home}}/adatkezelesi-tajekoztato/" target="_blank">adatkezelési tájékoztató</a>t.</span></div><span class="iu-form-field-error-message"></span></div>
+<!-- /wp:iu/form-accept --><div class="iu-form-foot iu-button-group"><a class="iu-form-submit iu-button iu-button-highlight"><span class="iu-button-text"><span>Ajánlatot kérek</span></span></a></div><span class="iu-form-error-message"></span><span class="iu-form-success-message">Köszönjük! Ajánlatunkkal hamarosan jelentkezünk.</span></form>
+<!-- /wp:iu/form --></div>
+<!-- /wp:iu/column -->
+
+<!-- wp:iu/column {"width":"1-3"} -->
+<div class="iu-column iu-column-1-3"><!-- wp:iu/group {"direction":"column","bgColor":"light","iu_style":"background-color:var(\u002d\u002dwp\u002d\u002dpreset\u002d\u002dcolor\u002d\u002dlight);padding-top:2.1rem;padding-bottom:2.1rem;padding-left:2.1rem;padding-right:2.1rem","paddingTop":"2.1rem","paddingBottom":"2.1rem","paddingLeft":"2.1rem","paddingRight":"2.1rem"} -->
+<div class="iu-group iu-group-direction-column"><!-- wp:heading {"level":4} -->
+<h4 class="wp-block-heading iu-heading">Közvetlen elérhetőségek</h4>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph {"className":""} -->
+<p class="iu-text"><strong>Központi ügyfélszolgálat</strong><br><a href="tel:+36302895977">+36 30 289 5977</a><br><a href="mailto:info@vasskisgep.hu">info@vasskisgep.hu</a></p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph {"className":""} -->
+<p class="iu-text"><strong>Kisvárdai üzlet</strong><br>4600 Kisvárda, Városmajor út 20.<br><a href="tel:+3645404379">+36 45 404 379</a></p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph {"className":""} -->
+<p class="iu-text"><strong>Vásárosnaményi üzlet</strong><br>4800 Vásárosnamény, Jókai M. út 51.<br><a href="tel:+3645472379">+36 45 472 379</a></p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:iu/group --></div>
+<!-- /wp:iu/column --></div>
+<!-- /wp:iu/row --></section>
+<!-- /wp:iu/section -->
