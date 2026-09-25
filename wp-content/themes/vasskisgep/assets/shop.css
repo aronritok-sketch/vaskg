@@ -2991,3 +2991,25 @@ header .iu-woocommerce-search-results {
 .vk-search-card-price del * {
 	font-size: .8rem !important;
 }
+
+/* ---------- Lábléc a design szerint (footer.png: tartalom 1640 px, x=140-től) ---------- */
+@media (min-width: 992px) {
+	footer .footer > .iu-row,
+	footer .copyright > .iu-row {
+		width: 85.42%;
+	}
+	footer .footer > .iu-row { gap: 0; }
+	footer .footer .iu-column:nth-child(1) { width: 25.3%; }
+	footer .footer .iu-column:nth-child(2) { width: 16.8%; }
+	footer .footer .iu-column:nth-child(3) { width: 25.2%; }
+	footer .footer .iu-column:nth-child(4) { width: 32.7%; }
+}
+footer .iu-form-field-required label:after {
+	content: none;
+}
+footer .iu-form-submit .iu-button-text:after {
+	content: '\f345';
+	font-family: Dashicons;
+	margin-left: .45rem;
+	vertical-align: middle;
+}

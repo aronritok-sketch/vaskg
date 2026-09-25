@@ -53,7 +53,12 @@ def header(s):
 
 def footer(s):
     s = s.replace('https://dev.otletoldal.hu/adatkezelesi-tajekoztato', HOME + '/adatkezelesi-tajekoztato/')
-    return s.replace('>Szervíz</a>', '>Szerviz</a>')
+    s = s.replace('>Szervíz</a>', '>Szerviz</a>')
+    # A design (footer.png) szövegei.
+    s = s.replace('Készítette: <a href="https://ideastyle.hu" target="_blank" rel="noreferrer noopener">Provision</a> © 2026 Vass Kisgép - Minden jog fenntartva',
+                  '© 2026 <a href="https://ideastyle.hu" target="_blank" rel="noreferrer noopener">Provision</a> - Minden jog fenntartva')
+    s = s.replace('>Adatkezelési tájékoztató</a>', '>Adatvédelmi tájékoztató</a>')
+    return s
 
 
 def front_page(s):

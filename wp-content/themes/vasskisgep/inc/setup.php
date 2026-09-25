@@ -33,6 +33,7 @@ class Setup {
         14 => 'about_page',
         15 => 'about_design',
         16 => 'wc_pages_layout',
+        17 => 'footer_design',
     ];
 
     private $log = [];
@@ -982,5 +983,22 @@ class Setup {
                 $this->log[] = 'Termékek oldal: a régi szűrő helyett az új szűrős terméklista';
             }
         }
+    }
+
+    /** Lábléc szövegei a design szerint („© 2026 Provision…”, „Adatvédelmi tájékoztató”), ha nem szerkesztették. */
+    function footer_design(){
+        $known = [ '73e37ba18a47b2f1b950cd84a228fbf3', '70e3d9415290791a68f4d11e133703f0' ];
+        $footer = get_post(30);
+        if (!$footer || $footer->post_type !== 'iu_template'){
+            $found = get_posts([ 'post_type' => 'iu_template', 'title' => 'Footer', 'post_status' => 'any', 'numberposts' => 1 ]);
+            $footer = $found ? $found[0] : null;
+        }
+        if (!$footer) return;
+        if (!in_array(md5(self::collapse($footer->post_content)), $known, true)){
+            $this->log[] = 'FIGYELEM: a láblécet szerkesztették, nem íródik felül – az új változat: setup/managed/footer.html';
+            return;
+        }
+        wp_update_post([ 'ID' => $footer->ID, 'post_content' => wp_slash(self::content_file('managed/footer.html')) ]);
+        $this->log[] = 'Lábléc frissítve a design szerint';
     }
 }
