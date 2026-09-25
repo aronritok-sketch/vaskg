@@ -150,7 +150,7 @@ li.product {
 .vk-cofidis-badge {
 	position: absolute;
 	right: -1.5rem;
-	bottom: 1.2rem;
+	bottom: .6rem;
 	z-index: 2;
 	display: inline-flex;
 	align-items: center;
@@ -163,6 +163,10 @@ li.product {
 	letter-spacing: .02em;
 	border-radius: .3rem 0 0 .3rem;
 	pointer-events: none;
+}
+/* A márkajelölés a Cofidis jelvény fölé kerül (a design szerint). */
+li.product .iu-woocommerce-loop-product:has(.vk-cofidis-badge) .iu-group.brand {
+	transform: translateY(-2.2rem);
 }
 .vk-product-gallery .vk-cofidis-badge,
 .vk-summary .vk-cofidis-badge {
@@ -1204,4 +1208,192 @@ li.product {
 .vk-filter-side .vk-dd-label {
 	overflow: hidden;
 	text-overflow: ellipsis;
+}
+
+/* ---------- Termékek megamenü (inc/megamenu.php) ---------- */
+
+.vk-mega {
+	display: none;
+}
+@media screen and (min-width: 992px) {
+	.iu-menu-block li.vk-has-mega > .sub-menu {
+		display: none;
+	}
+	.iu-menu-block li.vk-has-mega:not(.menu-item-has-children) > a:after {
+		content: "\f347";
+		font-family: Dashicons;
+		margin-left: .45rem;
+		vertical-align: bottom;
+	}
+	.vk-mega {
+		position: fixed;
+		z-index: 9999;
+		max-height: calc(100vh - 8rem);
+		overflow-y: auto;
+		padding: 1.2rem 2.4rem 2.4rem;
+		background: var(--wp--preset--color--white);
+		border-radius: 0 0 .45rem .45rem;
+		box-shadow: 0 .6rem 1.8rem rgba(0, 0, 0, .14);
+		text-align: left;
+		cursor: auto;
+	}
+	.vk-has-mega.vk-mega-open > .vk-mega {
+		display: block;
+	}
+	.vk-has-mega.vk-mega-open > a {
+		color: var(--wp--preset--color--primary);
+	}
+}
+.vk-mega-head {
+	position: relative;
+	display: flex;
+	justify-content: center;
+	margin-bottom: 1.8rem;
+}
+.vk-mega-tabs {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 1.5rem;
+	border-bottom: 1px solid var(--wp--preset--color--light);
+}
+.iu-menu-block .vk-mega-tab,
+.vk-mega-tab {
+	padding: .3rem 0 .45rem;
+	margin-bottom: -1px;
+	border: 0;
+	border-bottom: 2px solid transparent;
+	background: none;
+	color: #6b7280;
+	font: inherit;
+	font-size: 1.05rem;
+	font-weight: 500;
+	cursor: pointer;
+	transition: color .2s, border-color .2s;
+}
+.vk-mega-tab:hover,
+.vk-mega-tab.vk-active {
+	color: var(--iu-text-color);
+	border-bottom-color: var(--iu-text-color);
+}
+.vk-mega-close {
+	position: absolute;
+	top: 0;
+	right: -1.2rem;
+	display: flex;
+	padding: .3rem;
+	border: 0;
+	background: none;
+	color: var(--iu-text-color);
+	cursor: pointer;
+}
+.vk-mega-close:hover {
+	color: var(--wp--preset--color--primary);
+}
+.vk-mega-pane {
+	display: none;
+}
+.vk-mega-pane.vk-active {
+	display: block;
+}
+.vk-mega-cols {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	max-width: 62rem;
+	margin: 0 auto;
+}
+.vk-mega-col {
+	padding: 0 1.2rem;
+	border-left: 1px solid var(--wp--preset--color--light);
+}
+.vk-mega-col:first-child {
+	border-left: 0;
+	padding-left: 0;
+}
+.iu-menu-block .vk-mega a {
+	display: block;
+	padding: 0;
+	font-family: inherit;
+	color: inherit;
+}
+.iu-menu-block .vk-mega a:after {
+	content: none;
+}
+.vk-mega .vk-mega-col-title {
+	margin-bottom: .9rem;
+	font-size: 1.05rem;
+	font-weight: 600;
+	color: var(--iu-text-color);
+	line-height: 1.3;
+}
+.vk-mega-group {
+	margin-bottom: 1.1rem;
+}
+.vk-mega .vk-mega-group-title {
+	margin-bottom: .3rem;
+	font-size: .92rem;
+	font-weight: 500;
+	color: var(--iu-text-color);
+}
+.vk-mega-group ul {
+	margin: 0;
+	padding: 0 0 0 .3rem;
+	list-style: none;
+}
+.iu-menu-block .vk-mega-group li {
+	display: block;
+}
+.vk-mega .vk-mega-link {
+	padding: .2rem 0;
+	font-size: .88rem;
+	color: #6b7280;
+	line-height: 1.4;
+}
+.vk-mega a:hover,
+.vk-mega .vk-mega-col-title:hover,
+.vk-mega .vk-mega-group-title:hover {
+	color: var(--wp--preset--color--primary);
+}
+.vk-mega-foot {
+	max-width: 62rem;
+	margin: 1rem auto 0;
+	padding-top: 1rem;
+	border-top: 1px solid var(--wp--preset--color--light);
+}
+.vk-mega .vk-mega-all {
+	display: inline-block;
+	font-size: .88rem;
+	font-weight: 600;
+	color: var(--iu-text-color);
+}
+.vk-mega-brands {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+	gap: .9rem;
+	max-width: 62rem;
+	margin: 0 auto;
+}
+.iu-menu-block .vk-mega .vk-mega-brand,
+.vk-mega .vk-mega-brand {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 5.4rem;
+	padding: .9rem;
+	border: 1px solid var(--wp--preset--color--light);
+	border-radius: .45rem;
+	font-weight: 700;
+	letter-spacing: .06em;
+	transition: border-color .2s, box-shadow .2s;
+}
+.vk-mega .vk-mega-brand:hover {
+	border-color: var(--wp--preset--color--primary);
+	box-shadow: 0 .15rem .6rem rgba(0, 0, 0, .08);
+}
+.vk-mega-brand img {
+	max-width: 100%;
+	max-height: 2.4rem;
+	width: auto;
+	height: auto;
+	object-fit: contain;
 }
