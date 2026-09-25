@@ -30,6 +30,7 @@ class Setup {
         11 => 'email_branding',
         12 => 'demo_products',
         13 => 'product_page',
+        14 => 'about_page',
     ];
 
     private $log = [];
@@ -837,6 +838,31 @@ class Setup {
             }
             \WC_Comments::clear_transients($post->ID);
             $this->log[] = 'Minta értékelések: '.$product->get_name();
+        }
+    }
+
+    /**
+     * Rólunk oldal a design szerint. Csak akkor íródik felül, ha a tartalom még a
+     * korábbi telepítői változat (szerkesztés után nem nyúlunk hozzá).
+     */
+    function about_page(){
+        $previous = [ '00fa5715e0cfd908e77557d47087b1a3' ];
+        $page = get_page_by_path('rolunk');
+        if (!$page){
+            $this->upsert_page('rolunk', 'Rólunk', 'pages/rolunk.html');
+            $page = get_page_by_path('rolunk');
+        } else {
+            $current = md5(str_replace(untrailingslashit(home_url()), '{{home}}', $page->post_content));
+            if (trim($page->post_content) === '' || in_array($current, $previous, true)){
+                wp_update_post([ 'ID' => $page->ID, 'post_content' => wp_slash(self::content_file('pages/rolunk.html')) ]);
+                $this->log[] = 'Oldal frissítve: Rólunk (design szerint)';
+            } else {
+                $this->log[] = 'Rólunk: a tartalom szerkesztve lett, nem íródik felül (setup/pages/rolunk.html)';
+            }
+        }
+        if ($page && !get_post_thumbnail_id($page->ID)){
+            $image = $this->attachment_by_name('stihl-termekek');
+            if ($image) set_post_thumbnail($page->ID, $image);
         }
     }
 }

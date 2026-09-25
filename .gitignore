@@ -11,3 +11,4 @@ wp-content/mail.log
 .DS_Store
 node_modules/
 dev/.env
+__pycache__/

@@ -22,6 +22,12 @@ def attrs(a):
 
 
 def block(name, a=None, inner=None, html_open='', html_close=''):
+    # A blokkszerkesztő az egyedi osztályt a mentett HTML-ből olvassa vissza, ezért oda is kell.
+    if a and a.get('className') and html_open and 'class="' in html_open:
+        head, tail = html_open.split('class="', 1)
+        head += 'class="'
+        end = tail.index('"')
+        html_open = head + tail[:end] + ' ' + a['className'] + tail[end:]
     if inner is None:
         return '<!-- wp:%s%s /-->' % (name, attrs(a))
     return '<!-- wp:%s%s -->\n%s%s%s\n<!-- /wp:%s -->' % (name, attrs(a), html_open, '\n\n'.join(inner), html_close, name)

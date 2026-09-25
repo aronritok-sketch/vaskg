@@ -37,7 +37,7 @@ A `wp-content/plugins`, `uploads` és `languages` mappák nincsenek verzióköve
 3. Lépj be adminisztrátorként. Az első admin oldalbetöltéskor lefutnak a telepítő lépések, és egy zöld értesítés felsorolja, mi történt.
    - WP-CLI-vel is futtatható: `wp vasskisgep setup --user=<admin>`.
    - Minden lépés csak egyszer fut (`vasskisgep_setup_version` opció).
-4. A meglévő fejlécet, láblécet, kezdőlapot, Termékek oldalt és a terméklista kártyát a telepítő **csak akkor írja felül, ha 2026-09-25 óta nem szerkesztették**. Ha közben módosultak, az értesítésben „FIGYELEM” sor jelenik meg, és az új változat a `setup/managed/` mappában található; ezt kézzel kell átvezetni.
+4. A meglévő fejlécet, láblécet, kezdőlapot és Termékek oldalt a telepítő **csak akkor írja felül, ha 2026-09-25 óta nem szerkesztették**. Ha közben módosultak, az értesítésben „FIGYELEM” sor jelenik meg, és az új változat a `setup/managed/` mappában található; ezt kézzel kell átvezetni.
 5. Beállítások → Közvetlen linkek: egy mentés nem árt (a telepítő a Tudástár URL-jeit `/tudastar/cikk/`-re állítja).
 
 ### Mit állít be a telepítő
@@ -48,10 +48,14 @@ A `wp-content/plugins`, `uploads` és `languages` mappák nincsenek verzióköve
 | ÁFA | 27%, bruttó árak megadása és megjelenítése |
 | Szállítás | Házhozszállítás futárszolgálattal; Személyes átvétel Kisvárdán és Vásárosnaményban (ingyenes) |
 | Fizetés | Fizetés átvételkor; Előre utalás (csak ha van bankszámlaszám); Barion (ha telepítve és beállítva) |
-| Katalógus | Kategóriafa (Kertészeti / Erdészeti / Építőipari gépek, Alkatrészek, Munkaruházat), márkák logóval (Stihl, Stiga, Cedrus, Bluebird, Rato, Kasei), évszak címkék (Tavasz, Nyár, Ősz, Tél) |
-| Oldalak | Rólunk, Szolgáltatások, Ajánlatkérés, Szerviz, Kapcsolat, Kedvencek, Összehasonlítás, Szállítás és fizetés, ÁSZF, Adatkezelési tájékoztató, Elállás és visszaküldés |
+| Katalógus | 4 szintű kategóriafa (`setup/catalog/categories.json`: Kerti és erdészeti gépek a Figma megamenüje szerint; Építőipari gépek és Alkatrészek és karbantartás **javaslat, egyeztetendő**), szűrhető tulajdonságok (Lökettérfogat cm³, Teljesítmény LE, Tömeg kg, Vágásszélesség cm, Garancia hó), márkák logóval, évszak címkék |
+| Bemutató termékek | 23 db `DEMO-001…023` cikkszámú termék képpel, tulajdonságokkal, akcióval, készletállapotokkal, kapcsolódó termékekkel, néhány minta értékeléssel (a TESZT001 termékek piszkozatba kerülnek) |
+| Tudástár | 3 cikk a lorem ipsum bejegyzések helyett, témák: Gépválasztás, Karbantartás, Szezonális teendők |
+| E-mailek | WooCommerce levelek színei az arculat szerint |
+| Termékoldal | értékelések bekapcsolva, tájékoztató doboz a bemutató gépeknél |
+| Oldalak | Rólunk (Figma szerint), Szolgáltatások, Ajánlatkérés, Szerviz, Kapcsolat, Kedvencek, Összehasonlítás, Szállítás és fizetés, ÁSZF, Adatkezelési tájékoztató, Elállás és visszaküldés |
 | Menü | Főmenü linkjei, a Termékek alatt a főkategóriák |
-| Tartalom | fejléc: Kedvencek/Összehasonlítás link; lábléc: hibás adatkezelési link javítva; kezdőlap: gomb-linkek, válogatott karusszelek (kiemelt, szezonális, népszerű), valódi Google értékelések a lorem ipsum helyett; terméklista kártya: kedvenc/összehasonlítás ikonok |
+| Tartalom | fejléc: Kedvencek/Összehasonlítás link; lábléc: hibás adatkezelési link javítva; kezdőlap: gomb-linkek, válogatott karusszelek (kiemelt, szezonális, népszerű), valódi Google értékelések a lorem ipsum helyett; Termékek oldal: szűrős terméklista |
 
 ## Teendők élesítés előtt
 
@@ -63,14 +67,20 @@ A `wp-content/plugins`, `uploads` és `languages` mappák nincsenek verzióköve
 - [ ] **E-mail kézbesítés**: SMTP (pl. WP Mail SMTP) a `vasskisgep.hu` domainről, SPF/DKIM beállítással.
 - [ ] **Google értékelések**: Megjelenés → Beállítások → Google értékelések: Places API kulcs és Place ID. Addig a kezdőlapon csak a „Véleményeink a Google-on” gomb látszik.
 - [ ] **Közösségi linkek**: a láblécben az Instagram és a YouTube ikon még `#`-re mutat.
-- [ ] **Termékek**: valódi termékek felvitele vagy importja (kategória, márka, tulajdonságok, képek, súly). Az 5 „TESZT001” termék törölhető. Szezonális termékeknél az évszak címkét kell megadni.
+- [ ] **Bemutató termékek törlése**: Termékek → keresés „DEMO-” → mind törlése (a minta értékelések velük törlődnek). Az 5 „TESZT001” piszkozat is törölhető.
+- [ ] **Termékek**: valódi termékek felvitele vagy importja (minta és leírás: `dev/import/`) (kategória, márka, a szűrhető tulajdonságok globális attribútumként, képek, súly). Termékenként: promóciós szöveg, Cofidis jelölés, dokumentumok (PDF), tájékoztató doboz, keresztértékesítés (= „Kapcsolódó termékek” oldalsáv). Szezonális termékeknél az évszak címke.
+- [ ] **Kategóriafa**: az Építőipari gépek és az Alkatrészek és karbantartás ágat a Figma nem tartalmazza (a „Mega dropdown szöveges tartalma” dokumentum hiányzott) – egyeztetni, és a `setup/catalog/categories.json` alapján vagy az adminban javítani.
+- [ ] **Nyitvatartás**: a Rólunk oldalon a Figma szerinti „H–P: 7:30–16:30, Szo: 7:30–12:00” szerepel – ellenőrizni.
 - [ ] **Keresőmotorok**: élesítéskor Beállítások → Olvasás → „Keresőmotorok…” jelölés kivétele.
-- [ ] **Cofidis** (áruhitel): a láblécben szerepel a logó, de integráció nincs; a Cofidis saját bővítményét kell kérni.
+- [ ] **Cofidis** (áruhitel): a kalkulátor kész, de csak akkor jelenik meg, ha a Megjelenés → Beállítások → Cofidis áruhitel fülön meg van adva a **THM** (és igény szerint ügyleti kamat, futamidők, min./max. hitelösszeg, reprezentatív példa szövege) – ezeket a Cofidis adja a kereskedői szerződéssel. A hitelkérelem indítása (fizetési mód a pénztárban) a Cofidis bővítményével / API-jával oldható meg, ehhez partnerazonosító és teszt környezet kell.
 
 ## Funkciók
 
-- **Termékoldal** (`templates/single_product_content.html`): galéria, márka, kulcsadatok, ár, készlet, kosárba, kedvencek/összehasonlítás, vásárlási információk, fülek (Leírás, Műszaki adatok, Szállítás és fizetés, Kérdése van? űrlap), hasonló termékek.
-- **Kategória, márka, címke archívum**: fejléckép, leírás, alkategóriák, szűrő, terméklista.
+- **Termékoldal** (`templates/single_product_content.html`, Figma szerint): galéria kedvezmény-jelvénnyel, promó szöveggel és márkával; cikkszám, készlet + csillagos értékelés, ár doboz (régi/akciós ár, áfa megjegyzés, Cofidis jelvény), tulajdonság-csempék, mennyiség + Kosárba (AJAX), kedvencek/összehasonlítás; „Kapcsolódó termékek” oldalsáv (keresztértékesítés); fülek: Részletek (tájékoztató doboz, leírás, műszaki adatok), Dokumentumok, Vélemények (WooCommerce értékelések, moderálás a Termékek → Értékelések alatt), Kérdése van?; szállítási és fizetési módok a WooCommerce beállításaiból; Cofidis kalkulátor; hasonló és legutóbb megtekintett termékek.
+- **Terméklista** (`vasskisgep/product-listing` blokk; Termékek oldal, kategória, márka, címke): felső szűrősáv (Kategória, Gyártó, Ár, Készlet/Akciós) legördülőkkel és „(N) termék megtekintése” előnézettel, rács/lista nézet, rendezés, „Részletes szűrés” tulajdonságok szerint, „Továbbiak mutatása”. A szűrés URL-paraméterekben van (megosztható link).
+- **Termékkártya**: kedvezmény, promó szöveg, Cofidis jelvény, márka, 3 fő tulajdonság, kedvencek/összehasonlítás ikonok a képen.
+- **Megamenü** (`inc/megamenu.php`): a főmenü Termékek pontja alatt fülek (főkategóriák + Gyártók), 4 szintű kategóriafa; mobilon a menü saját almenüje.
+- **Rólunk** oldal a Figma szerint.
 - **Keresés**: termékek (név, leírás, cikkszám) és Tudástár cikkek.
 - **Kedvencek és összehasonlítás**: sütiben tárolva, bejelentkezett vásárlónál a fiókba is mentve; számláló a fejlécben; legfeljebb 4 termék hasonlítható össze.
 - **Űrlapok**: visszahívás (lábléc), ajánlatkérés, szervizbejelentés, kapcsolat, termékkérdés. Az e-mail minden kitöltött mezőt tartalmaz, a válaszcím a kitöltő e-mail címe. Címzett: `Forms::RECIPIENT` (`inc/forms.php`).

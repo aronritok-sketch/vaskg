@@ -5,11 +5,11 @@
 <h2 class="wp-block-heading iu-heading">Furcsa hang, nehéz indítás, gyengébb teljesítmény?</h2>
 <!-- /wp:heading -->
 
-<!-- wp:paragraph -->
+<!-- wp:paragraph {"className":""} -->
 <p class="iu-text">Kérjen tanácsot, mielőtt a kisebb hiba komolyabb javítást igényel. Szakszervizünk a forgalmazott márkák kertészeti, erdészeti és építőipari gépeit javítja, eredeti alkatrészekkel.</p>
 <!-- /wp:paragraph -->
 
-<!-- wp:heading {"marginTop":"2.1rem","level":4} -->
+<!-- wp:heading {"level":4,"marginTop":"2.1rem","iu_style":"margin-top:2.1rem"} -->
 <h4 class="wp-block-heading iu-heading">Így működik</h4>
 <!-- /wp:heading -->
 
@@ -43,59 +43,59 @@
 
 <!-- wp:iu/form {"formId":"szerviz","buttonLabel":"Bejelentés elküldése","success":"Köszönjük a bejelentést! Munkatársunk hamarosan visszahívja."} -->
 <form class="iu-form"><input type="hidden" name="iu_form_id" value="szerviz"/><!-- wp:iu/group {"equal":true} -->
-<div class="iu-group"><!-- wp:iu/form-text {"name":"fullname","label":"Név","placeholder":"Teljes név","validate":"required|Adja meg a nevét"} -->
-<div class="iu-form-field iu-form-text"></div>
+<div class="iu-group iu-group-equal"><!-- wp:iu/form-text {"name":"fullname","label":"Név","placeholder":"Teljes név","validate":"required|Adja meg a nevét"} -->
+<div class="iu-form-field iu-form-text iu-form-field-required" data-validate="required|Adja meg a nevét"><label>Név</label><input type="text" name="fullname" placeholder="Teljes név"/><span class="iu-form-field-error-message"></span></div>
 <!-- /wp:iu/form-text -->
 
 <!-- wp:iu/form-text {"name":"phone","label":"Telefonszám","placeholder":"+36 30 123 4567","validate":"required|Adja meg a telefonszámát"} -->
-<div class="iu-form-field iu-form-text"></div>
+<div class="iu-form-field iu-form-text iu-form-field-required" data-validate="required|Adja meg a telefonszámát"><label>Telefonszám</label><input type="text" name="phone" placeholder="+36 30 123 4567"/><span class="iu-form-field-error-message"></span></div>
 <!-- /wp:iu/form-text --></div>
 <!-- /wp:iu/group -->
 
 <!-- wp:iu/form-text {"name":"email","label":"E-mail cím","placeholder":"pelda@email.hu","validate":"email|Érvénytelen e-mail cím"} -->
-<div class="iu-form-field iu-form-text"></div>
+<div class="iu-form-field iu-form-text" data-validate="email|Érvénytelen e-mail cím"><label>E-mail cím</label><input type="text" name="email" placeholder="pelda@email.hu"/><span class="iu-form-field-error-message"></span></div>
 <!-- /wp:iu/form-text -->
 
 <!-- wp:iu/group {"equal":true} -->
-<div class="iu-group"><!-- wp:iu/form-text {"name":"machine","label":"Gép márkája és típusa","placeholder":"pl. STIHL MS 250","validate":"required|Adja meg a gép típusát"} -->
-<div class="iu-form-field iu-form-text"></div>
+<div class="iu-group iu-group-equal"><!-- wp:iu/form-text {"name":"machine","label":"Gép márkája és típusa","placeholder":"pl. STIHL MS 250","validate":"required|Adja meg a gép típusát"} -->
+<div class="iu-form-field iu-form-text iu-form-field-required" data-validate="required|Adja meg a gép típusát"><label>Gép márkája és típusa</label><input type="text" name="machine" placeholder="pl. STIHL MS 250"/><span class="iu-form-field-error-message"></span></div>
 <!-- /wp:iu/form-text -->
 
 <!-- wp:iu/form-select {"name":"store","label":"Melyik üzletbe hozná?","options":"Kisvárda\nVásárosnamény"} -->
-<div class="iu-form-field iu-form-select"></div>
+<div class="iu-form-field iu-form-select"><label>Melyik üzletbe hozná?</label><div class="iu-form-select-wrap"><select name="store"><option value="Kisvárda">Kisvárda</option><option value="Vásárosnamény">Vásárosnamény</option></select></div></div>
 <!-- /wp:iu/form-select --></div>
 <!-- /wp:iu/group -->
 
 <!-- wp:iu/form-textarea {"name":"message","label":"A hiba leírása","placeholder":"Mikor jelentkezik a hiba, mit tapasztal?","validate":"required|Írja le a hibát"} -->
-<div class="iu-form-field iu-form-textarea"></div>
+<div class="iu-form-field iu-form-textarea iu-form-field-required" data-validate="required|Írja le a hibát"><label>A hiba leírása</label><textarea name="message" placeholder="Mikor jelentkezik a hiba, mit tapasztal?" rows="5"></textarea><span class="iu-form-error-message"></span></div>
 <!-- /wp:iu/form-textarea -->
 
 <!-- wp:iu/form-accept {"name":"accept","label":"Elfogadom az \u003ca href=\u0022{{home}}/adatkezelesi-tajekoztato/\u0022 target=\u0022_blank\u0022\u003eadatkezelési tájékoztató\u003c/a\u003et.","error":"Fogadja el az adatkezelési tájékoztatót"} -->
-<div class="iu-form-field iu-form-accept"></div>
-<!-- /wp:iu/form-accept --></form>
+<div class="iu-form-field iu-form-accept iu-form-field-required" data-validate="required|Fogadja el az adatkezelési tájékoztatót"><div class="iu-form-checkbox-wrap"><span class="iu-form-checkbox-input"><input name="accept" type="checkbox"/></span><span class="iu-form-checkbox-label">Elfogadom az <a href="{{home}}/adatkezelesi-tajekoztato/" target="_blank">adatkezelési tájékoztató</a>t.</span></div><span class="iu-form-field-error-message"></span></div>
+<!-- /wp:iu/form-accept --><div class="iu-form-foot iu-button-group"><a class="iu-form-submit iu-button iu-button-highlight"><span class="iu-button-text"><span>Bejelentés elküldése</span></span></a></div><span class="iu-form-error-message"></span><span class="iu-form-success-message">Köszönjük a bejelentést! Munkatársunk hamarosan visszahívja.</span></form>
 <!-- /wp:iu/form --></div>
 <!-- /wp:iu/column --></div>
 <!-- /wp:iu/row --></section>
 <!-- /wp:iu/section -->
 
-<!-- wp:iu/section {"bgColor":"dark","lightText":true,"paddingTop":"4.5rem","paddingBottom":"4.5rem","className":"vk-cta"} -->
-<section class="iu-section"><!-- wp:iu/row -->
+<!-- wp:iu/section {"lightText":true,"bgColor":"dark","iu_style":"background-color:var(\u002d\u002dwp\u002d\u002dpreset\u002d\u002dcolor\u002d\u002ddark);padding-top:4.5rem;padding-bottom:4.5rem","paddingTop":"4.5rem","paddingBottom":"4.5rem","className":"vk-cta"} -->
+<section class="iu-section iu-section-light vk-cta"><!-- wp:iu/row -->
 <div class="iu-row"><!-- wp:iu/column -->
 <div class="iu-column iu-column-1-1"><!-- wp:heading -->
 <h2 class="wp-block-heading iu-heading">Alkatrészre van szüksége?</h2>
 <!-- /wp:heading -->
 
-<!-- wp:paragraph -->
+<!-- wp:paragraph {"className":""} -->
 <p class="iu-text">Eredeti alkatrészeket és tartozékokat raktárról vagy rövid határidővel beszerzünk. Kérdezzen minket a gép típusának megadásával.</p>
 <!-- /wp:paragraph -->
 
-<!-- wp:iu/button-group {"marginTop":"1.5rem"} -->
+<!-- wp:iu/button-group {"marginTop":"1.5rem","iu_style":"margin-top:1.5rem"} -->
 <div class="iu-button-group"><!-- wp:iu/button {"text":"Alkatrészek, tartozékok","type":"highlight","linkUrl":"{{home}}/termekkategoria/alkatreszek-tartozekok/"} -->
-<a class="iu-button iu-button-highlight"><span class="iu-button-text"><span>Alkatrészek, tartozékok</span></span></a>
+<a class="iu-button iu-button-highlight" href="{{home}}/termekkategoria/alkatreszek-tartozekok/"><span class="iu-button-text"><span>Alkatrészek, tartozékok</span></span></a>
 <!-- /wp:iu/button -->
 
 <!-- wp:iu/button {"text":"Kapcsolat","type":"outline","linkUrl":"{{home}}/kapcsolat/"} -->
-<a class="iu-button iu-button-outline"><span class="iu-button-text"><span>Kapcsolat</span></span></a>
+<a class="iu-button iu-button-outline" href="{{home}}/kapcsolat/"><span class="iu-button-text"><span>Kapcsolat</span></span></a>
 <!-- /wp:iu/button --></div>
 <!-- /wp:iu/button-group --></div>
 <!-- /wp:iu/column --></div>
