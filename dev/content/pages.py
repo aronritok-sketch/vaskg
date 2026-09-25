@@ -5,6 +5,7 @@ Futtatás: python3 dev/content/pages.py  → vázlatok a setup/pages/ mappába,
 utána dev/canon.sh minden fájlra (kanonikus markup a blokkszerkesztőből).
 """
 import os
+import re
 import sys
 
 sys.path.insert(0, os.path.dirname(__file__))
@@ -53,30 +54,54 @@ def contact_aside():
 
 pages = {}
 
-# ---------------------------------------------------------------- Rólunk (design: Rólunk)
-OPENING_HOURS = 'H–P: 7:30–16:30, Szo: 7:30–12:00'
+# ---------------------------------------------------------------- Rólunk (design: Rólunk, pontos szövegekkel)
+# A képek a téma setup/media/ mappájából kerülnek a médiatárba ({{media:…}} helyőrzők, Setup::expand()).
+OPENING_HOURS = 'H-P: 7:30-16:30, Szo: 7:30-12:00'
+
+
+def media_attrs(name):
+    return {'imageID': '__MID__' + name, 'imageURL': '{{media:%s}}' % name, 'imageThumbURL': '{{media-thumb:%s}}' % name}
+
+
+def media_image(name, **a):
+    a2 = media_attrs(name)
+    a2.update(a)
+    return block('iu/image', clean(a2), [], '<div class="iu-image"><div class="iu-image-wrap"><img src="{{media:%s}}"/></div>' % name, '</div>')
+
+
+def media_card(name, heading, text):
+    a = media_attrs(name)
+    a.update({'heading': heading, 'text': text})
+    return block('iu/card', a, [], '<div class="iu-card">', '</div>')
 
 
 def timeline_item(year, title, text):
     return group(p(year, className='vk-year'), h(title, 4), p(text), direction='column', className='vk-timeline-item')
 
 
-def store_info(title, rows):
-    return group(h(title, 4), *[p('<strong>%s</strong><br>%s' % r) for r in rows], direction='column', className='vk-store-info')
+def reach_item(icon, label, value):
+    return p('<strong>%s</strong><br>%s' % (label, value), className='vk-reach-item vk-ico-' + icon)
 
+
+def reach_col(title, *items):
+    return group(h(title, 4), *items, direction='column', className='vk-reach-col')
+
+
+ABOUT_BRANDS = [('marka-stiga.png', 'stiga'), ('marka-stihl.png', 'stihl'), ('marka-rato.png', 'rato'),
+                ('marka-berrin.png', ''), ('marka-cedrus.png', 'cedrus'), ('marka-cedrus-construction.png', ''),
+                ('marka-alpina.png', ''), ('marka-eurosystems.png', ''), ('marka-bluebird.png', 'bluebird')]
 
 pages['rolunk'] = '\n\n'.join([
+    custom('iu/featured-image', crop=True, width='100%', height='30.6rem', className='clip-down vk-about-hero', **media_attrs('rolunk-hero.jpg')),
+    section(row(col(
+        h('Kisgép szaküzlet és szerviz, felkészült szakemberekkel', 1),
+        p('A Vass Kisgépnél kertészeti, erdészeti és mezőgazdasági kisgépeket, kiegészítőket, valamint alkatrészeket forgalmazunk. Kisvárdai és vásárosnaményi üzleteinkben személyesen is megtekinthetők a gépek, webshopunkban pedig országosan elérhető a kínálat.', className='vk-lead'),
+    )), paddingTop='3.8rem', paddingBottom='0', className='vk-about vk-about-intro'),
     section(row(
         col(
-            h('Kisgép szaküzlet és szerviz, felkészült szakemberekkel'),
-            p('A Vass Kisgépnél kertészeti, erdészeti és mezőgazdasági kisgépeket, kiegészítőket, valamint alkatrészeket forgalmazunk. Kisvárdai és vásárosnaményi üzleteinkben személyesen is megtekinthetők a gépek, webshopunkban pedig országosan elérhető a kínálat.'),
-            width='2-3'),
-        columns='2-3|1-3'), className='vk-about-intro'),
-    section(row(
-        col(
-            h('Számunkra a szakkereskedés…'),
+            h('Számunkra a szakkereskedés...'),
             p('A műszaki adatlap fontos, de önmagában ritkán válaszolja meg, hogy egy gép megfelelő lesz-e az adott mindennapi munkához. A teljesítmény mellett számít a munkaszélesség, a gép tömege, a kezelhetőség, az üzemidő, a tartozékok elérhetősége és a későbbi alkatrészellátás is.'),
-            p('Hogy segíteni tudjuk vevőinket, a választás során többek között ezeket vizsgáljuk:'),
+            p('Hogy segíteni tudjuk vevőinket, a választás során többek között ezeket vizsgáljuk:', className='vk-list-intro'),
             ul('A megmunkálandó terület mérete és adottságai',
                'Az alkalmi, rendszeres vagy intenzív használat',
                'A szükséges teljesítmény és munkakapacitás',
@@ -85,71 +110,73 @@ pages['rolunk'] = '\n\n'.join([
                'Az alkatrészek, kopóelemek és tartozékok hozzáférhetősége',
                'A várható karbantartási és szervizigény', className='vk-checklist'),
             width='1-2'),
-        col(image(156, '2026/09/kerti-kisgep-szakkereskedes.jpg', crop=True, width='100%', height='110%', className='vk-about-photo'), width='1-2'),
-        columns='1-2|1-2', vertical='center')),
+        col(media_image('rolunk-szakkereskedes.jpg', crop=True, width='100%', height='100%', className='vk-about-photo'), width='1-2'),
+        columns='1-2|1-2', vertical='center'), paddingTop='9.5rem', paddingBottom='0', className='vk-about vk-w-1364'),
     section(row(
         col(
             h('Márkák, amelyekhez műszaki háttér is tartozik'),
             p('A márkajelzés önmagában kevés. Egy gépnél ugyanilyen lényeges a konstrukció, a javíthatóság, az alkatrészellátás és az, hogy a gyártó termékei között található-e megfelelő modell az adott felhasználási területre.'),
-            p('Kínálatunkban többek között STIHL, STIGA, Cedrus, Bluebird, Rato és Kasei gépek szerepelnek. A választék a kisebb ház körüli feladatoktól a rendszeres kertészeti, erdészeti és mezőgazdasági munkákig több felhasználási szintet lefed.'),
+            p('Kínálatunkban többek között Makita, STIGA, Kasei, Grillo, Rato, Berrin, Cedrus és STIHL gépek szerepelnek. A választék a kisebb ház körüli feladatoktól a rendszeres kertészeti, erdészeti és mezőgazdasági munkákig több felhasználási szintet lefed.'),
             width='1-2'),
-        col(group(*[image(i, f, linkUrl=HOME + '/gyarto/' + slug + '/', width='8.4rem', align='center') for i, f, slug in BRANDS],
+        col(group(*[media_image(f, **({'linkUrl': HOME + '/gyarto/' + slug + '/'} if slug else {})) for f, slug in ABOUT_BRANDS],
+                  media_image('marka-kasei.png', linkUrl=HOME + '/gyarto/kasei/'),
                   className='vk-brand-grid'), width='1-2'),
-        columns='1-2|1-2', vertical='center')),
+        columns='1-2|1-2', vertical='center'), paddingTop='13.6rem', paddingBottom='6.7rem', className='vk-about vk-w-1640'),
     section(
         row(col(h('Összeszerelve és beüzemelve vehető át'))),
         row(
-            col(card(155, '2026/09/kerti-gep-szereles.jpg', 'Összeszerelés', 'A személyesen átvett gépeket díjmentesen összeszereljük és beüzemeljük. Így az átvételkor nem dobozban lévő alkatrészeket kell hazavinni, és az első indítás sem otthoni próbálkozással kezdődik.'), width='1-3'),
-            col(card(132, '2026/09/funyirotraktorok-kulonbozo-szinben.jpg', 'Beüzemelés', 'A beüzemelés során a gép használatra kész állapotba kerül. Ez csökkenti a hibás összeszerelésből, helytelen beállításból vagy bizonytalan első indításból eredő problémák esélyét. Az átvételkor a kezeléshez kapcsolódó lényeges tudnivalók is tisztázhatók.'), width='1-3'),
-            columns='1-3|1-3', marginTop='2.1rem', className='vk-about-cards'),
-        bgColor='light', className='vk-about-assembly'),
+            col(media_card('rolunk-osszeszereles.jpg', 'Összeszerelés', 'A személyesen átvett gépeket díjmentesen összeszereljük és beüzemeljük. Így az átvételkor nem dobozban lévő alkatrészeket kell hazavinni, és az első indítás sem otthoni próbálkozással kezdődik.'), width='1-2'),
+            col(media_card('rolunk-beuzemeles.jpg', 'Beüzemelés', 'A beüzemelés során a gép használatra kész állapotba kerül. Ez csökkenti a hibás összeszerelésből, helytelen beállításból vagy bizonytalan első indításból eredő problémák esélyét. Az átvételkor a kezeléshez kapcsolódó lényeges tudnivalók is tisztázhatók.'), width='1-2'),
+            columns='1-2|1-2', className='vk-about-cards vk-about-cards-2'),
+        paddingTop='13rem', paddingBottom='6.7rem', className='vk-about vk-about-assembly vk-wedge-top vk-w-1510'),
     section(row(
-        col(image(169, '2026/09/kerti-kisgep-szerviz.jpg', crop=True, width='100%', height='100%', className='vk-about-photo'), width='1-2'),
+        col(media_image('rolunk-szerviz.jpg', crop=True, width='100%', height='100%', className='vk-about-photo'), width='1-2'),
         col(
             h('Kisgép szerviz a garancia lejárta után is'),
             p('Egy meghibásodott gép sokszor akkor áll le, amikor a legnagyobb szükség lenne rá. Tavasszal gyorsan nő a fű, az erdészeti munkát nem lehet korlátlan ideig halasztani, egy vállalkozásnál pedig minden kieső munkanap költséget jelent.'),
             group(p('30+', className='vk-stat-number'),
                   group(h('év tapasztalat', 4), p('A hibák feltárásában és a precíz szerelésben.'), direction='column'),
                   vertical='center', className='vk-stat'),
-            buttons(button('Szervizbejelentés', HOME + '/szerviz/', 'highlight'), marginTop='1.5rem'),
             width='1-2'),
-        columns='1-2|1-2', vertical='center')),
-    section(
-        row(col(h('A műhely tapasztalata a gépválasztásnál is hasznos'))),
-        row(
-            col(card(154, '2026/09/kerti-kisgepek-karbantartasa.jpg', 'Karbantartási tapasztalatok', 'A szervizben pontosan látható, mely alkatrészek kopnak intenzív használat mellett, milyen hibákat okozhat a nem megfelelő üzemeltetés, és mely konstrukciók javíthatók gazdaságosan.'), width='1-3'),
-            col(card(210, '2026/08/stihl-termekek.jpg', 'Alkatrész hozzáférhetőség', 'Tudjuk, hogy a kopóelemek és tartozékok elérhetősége hosszú távon meghatározó a gép életciklusában.'), width='1-3'),
-            col(card(76, '2026/09/stihl-tools-in-forest.jpg', 'Modell ajánlások', 'Ennek köszönhetően a gépválasztásnál előkerülhetnek olyan gyakorlati szempontok is, amelyek a termékoldalakon ritkán kapnak hangsúlyt.'), width='1-3'),
-            columns='1-3|1-3|1-3', marginTop='2.1rem', className='vk-about-cards'),
-        className='vk-about-workshop'),
+        columns='1-2|1-2', vertical='center'), paddingTop='9.4rem', paddingBottom='0', className='vk-about vk-w-1364'),
+    section(row(col(group(
+        h('A műhely tapasztalata a gépválasztásnál is hasznos'),
+        group(
+            media_card('rolunk-karbantartas.jpg', 'Karbantartási tapasztalatok', 'A szervizben pontosan látható, mely alkatrészek kopnak intenzív használat mellett, milyen hibákat okozhat a nem megfelelő üzemeltetés, és mely konstrukciók javíthatók gazdaságosan.'),
+            media_card('rolunk-alkatresz.jpg', 'Alkatrész hozzáférhetőség', 'Tudjuk, hogy a kopóelemek és tartozékok elérhetősége hosszú távon meghatározó a gép életciklusában.'),
+            media_card('rolunk-modell.jpg', 'Modell ajánlások', 'Ennek köszönhetően a gépválasztásnál előkerülhetnek olyan gyakorlati szempontok is, amelyek a termékoldalakon ritkán kapnak hangsúlyt.'),
+            className='vk-about-cards vk-about-cards-3'),
+        direction='column', className='vk-about-box'))), paddingTop='9.4rem', paddingBottom='0', className='vk-about'),
     section(
         row(col(h('Több mint harminc év szakmai tapasztalat'))),
         row(col(group(
             timeline_item('2011', 'Első üzlet megnyitása', 'A Vass Kisgép első üzlete 2011-ben nyílt meg Kisvárdán, majd Vásárosnaményben is elérhetővé vált kínálatunk és szolgáltatásunk.'),
             timeline_item('2015', 'Szerviz bővítés', 'A csapat szakmai tapasztalata ennél jóval korábbra nyúlik vissza: munkatársaink több mint három évtizede foglalkoznak kisgépekkel, műszaki tanácsadással és javítással.'),
             timeline_item('2020', 'Webshop indítás', 'Az eltelt évek alatt sokat változtak a gépek. A hagyományos benzines modellek mellett megjelentek a nagy teljesítményű akkumulátoros rendszerek, fejlődött a motorvezérlés, bővült a tartozékkínálat.'),
-            className='vk-timeline')), marginTop='2.1rem')),
-    section(
-        row(col(h('Személyesen és online is elérhetőek vagyunk'))),
-        row(col(group(
+            className='vk-timeline'))),
+        paddingTop='9.9rem', paddingBottom='0', className='vk-about vk-w-1640'),
+    section(row(col(group(
+        h('Személyesen és online is elérhetőek vagyunk'),
+        group(
             h('Üzleteink', 3),
             group(
-                store_info(STORE_KV[0], [('Telefon', '<a href="%s">%s</a>' % (STORE_KV[3], STORE_KV[2])), ('Cím', '<a href="%s" target="_blank" rel="noopener">%s</a>' % (STORE_KV[4], STORE_KV[1]))]),
-                store_info(STORE_VN[0], [('Telefon', '<a href="%s">%s</a>' % (STORE_VN[3], STORE_VN[2])), ('Cím', '<a href="%s" target="_blank" rel="noopener">%s</a>' % (STORE_VN[4], STORE_VN[1]))]),
-                store_info('Nyitvatartás', [('Mindkét üzlet', OPENING_HOURS)]),
-                className='vk-store-grid'),
-            direction='column', className='vk-reach-card vk-reach-personal')), marginTop='2.1rem'),
-        row(col(group(
+                reach_col(STORE_KV[0], reach_item('phone', 'Telefon', '<a href="%s">%s</a>' % (STORE_KV[3], STORE_KV[2])), reach_item('pin', 'Cím', '<a href="%s" target="_blank" rel="noopener">%s</a>' % (STORE_KV[4], STORE_KV[1]))),
+                reach_col(STORE_VN[0], reach_item('phone', 'Telefon', '<a href="%s">%s</a>' % (STORE_VN[3], STORE_VN[2])), reach_item('pin', 'Cím', '<a href="%s" target="_blank" rel="noopener">%s</a>' % (STORE_VN[4], STORE_VN[1]))),
+                reach_col('Nyitvatartás', reach_item('clock', 'Mindkét üzlet', OPENING_HOURS)),
+                className='vk-reach-grid'),
+            direction='column', className='vk-reach-card vk-reach-personal'),
+        group(
             h('Webshop', 3),
-            group(store_info('Web', [('Online rendelés', 'A webshop azok számára jelent kényelmes megoldást, akik már ismerik a keresett típust, vagy távolabbról rendelnének. <a href="' + HOME + '/termekek/">Termékek megtekintése ›</a>')]), className='vk-store-grid'),
-            direction='column', className='vk-reach-card vk-reach-online')), marginTop='1.2rem'),
-        bgColor='light', className='vk-about-reach'),
+            group(reach_item('web', 'Web', 'A webshop azok számára jelent kényelmes megoldást, akik már ismerik a keresett típust, vagy távolabbról rendelnének.'), className='vk-reach-grid vk-reach-grid-1'),
+            direction='column', className='vk-reach-card vk-reach-online'),
+        direction='column', className='vk-about-box vk-about-reach'))), paddingTop='9.7rem', paddingBottom='13.4rem', className='vk-about'),
     section(row(col(
         h('Kérdése van egy géppel kapcsolatban?'),
         p('Keresse munkatársainkat telefonon vagy személyesen üzleteinkben. Mondja el, milyen munkához keres gépet, mekkora területen használná, és milyen gyakran lenne rá szükség. Ezekből az adatokból már pontos, szakmailag indokolható ajánlás készíthető.'),
-        buttons(button('Kapcsolatfelvétel', HOME + '/kapcsolat/'), marginTop='1.5rem', align='center'),
-    )), bgColor='primary', paddingTop='4.5rem', paddingBottom='4.5rem', className='vk-cta vk-cta-primary'),
+        buttons(button('Kapcsolatfelvétel', HOME + '/kapcsolat/'), align='center'),
+    )), bgColor='primary', paddingTop='6.7rem', paddingBottom='13rem', className='vk-cta-primary vk-wedge-bottom'),
 ])
+pages['rolunk'] = re.sub(r'"__MID__([a-z0-9._-]+)"', r'{{media-id:\1}}', pages['rolunk'])
 
 # ---------------------------------------------------------------- Szolgáltatások
 pages['szolgaltatasok'] = '\n\n'.join([

@@ -31,6 +31,7 @@ class Setup {
         12 => 'demo_products',
         13 => 'product_page',
         14 => 'about_page',
+        15 => 'about_design',
     ];
 
     private $log = [];
@@ -117,7 +118,69 @@ class Setup {
     static function content_file($name){
         $file = get_stylesheet_directory().'/setup/'.$name;
         if (!file_exists($file)) return '';
-        return str_replace('{{home}}', untrailingslashit(home_url()), file_get_contents($file));
+        return self::expand(file_get_contents($file));
+    }
+
+    /**
+     * Helyőrzők a setup/ tartalmakban:
+     *   {{home}}                  – a webhely címe
+     *   {{media:fajl.jpg}}        – a setup/media/fajl.jpg médiatárba töltött példányának URL-je
+     *   {{media-thumb:fajl.jpg}}  – ugyanennek 150×150-es mérete
+     *   {{media-id:fajl.jpg}}     – a csatolmány azonosítója
+     * A képek az első hivatkozáskor kerülnek a médiatárba (egyszer).
+     */
+    static function expand($content){
+        $content = str_replace('{{home}}', untrailingslashit(home_url()), $content);
+        return preg_replace_callback('/\{\{media(-thumb|-id)?:([a-z0-9._-]+)\}\}/', function($m){
+            $id = self::media($m[2]);
+            if (!$id) return $m[1] === '-id' ? '0' : '';
+            if ($m[1] === '-id') return (string)$id;
+            if ($m[1] === '-thumb'){
+                $thumb = wp_get_attachment_image_src($id, 'thumbnail');
+                return $thumb ? $thumb[0] : wp_get_attachment_url($id);
+            }
+            return wp_get_attachment_url($id);
+        }, $content);
+    }
+
+    /** A expand() fordítottja (a dev/canon.php használja a fájlba visszaíráskor). */
+    static function collapse($content){
+        foreach(get_posts([ 'post_type' => 'attachment', 'post_status' => 'inherit', 'numberposts' => -1, 'meta_key' => '_vk_media_source' ]) as $post){
+            $name = get_post_meta($post->ID, '_vk_media_source', true);
+            $thumb = wp_get_attachment_image_src($post->ID, 'thumbnail');
+            if ($thumb && $thumb[0] !== wp_get_attachment_url($post->ID)) $content = str_replace($thumb[0], '{{media-thumb:'.$name.'}}', $content);
+            $content = str_replace(wp_get_attachment_url($post->ID), '{{media:'.$name.'}}', $content);
+            $content = preg_replace('/("imageID":)'.$post->ID.'([,}])/', '$1{{media-id:'.$name.'}}$2', $content);
+        }
+        return str_replace(untrailingslashit(home_url()), '{{home}}', $content);
+    }
+
+    /** A setup/media/<fájl> médiatárbeli azonosítója; ha még nincs feltöltve, feltölti. */
+    static function media($name){
+        static $cache = [];
+        if (isset($cache[$name])) return $cache[$name];
+
+        $existing = get_posts([ 'post_type' => 'attachment', 'post_status' => 'inherit', 'numberposts' => 1, 'fields' => 'ids', 'meta_key' => '_vk_media_source', 'meta_value' => $name ]);
+        if (!empty($existing)) return $cache[$name] = (int)$existing[0];
+
+        $source = get_stylesheet_directory().'/setup/media/'.$name;
+        if (!file_exists($source)) return $cache[$name] = 0;
+
+        require_once(ABSPATH.'wp-admin/includes/image.php');
+        $upload = wp_upload_bits($name, null, file_get_contents($source));
+        if (!empty($upload['error'])) return $cache[$name] = 0;
+
+        $type = wp_check_filetype($upload['file']);
+        $id = wp_insert_attachment([
+            'post_mime_type' => $type['type'],
+            'post_title' => preg_replace('/\.[^.]+$/', '', $name),
+            'post_status' => 'inherit'
+        ], $upload['file']);
+        if (is_wp_error($id) || !$id) return $cache[$name] = 0;
+
+        wp_update_attachment_metadata($id, wp_generate_attachment_metadata($id, $upload['file']));
+        update_post_meta($id, '_vk_media_source', $name);
+        return $cache[$name] = (int)$id;
     }
 
     private function set_option($name, $value){
@@ -864,5 +927,31 @@ class Setup {
             $image = $this->attachment_by_name('stihl-termekek');
             if ($image) set_post_thumbnail($page->ID, $image);
         }
+    }
+
+    /**
+     * Rólunk oldal pontosan a Figma szerint: saját fejléc (hero fotó + nagy cím), a terv
+     * fotói és márkalogói (setup/media → médiatár). Csak a korábbi telepítői változatot írja felül.
+     */
+    function about_design(){
+        $previous = [ '00fa5715e0cfd908e77557d47087b1a3', 'f575d706e38ace6d064bea78dfeaa308' ];
+        $page = get_page_by_path('rolunk');
+        if (!$page){
+            $this->upsert_page('rolunk', 'Rólunk', 'pages/rolunk.html');
+            $page = get_page_by_path('rolunk');
+        } else {
+            $current = md5(self::collapse($page->post_content));
+            if (trim($page->post_content) === '' || in_array($current, $previous, true)){
+                wp_update_post([ 'ID' => $page->ID, 'post_content' => wp_slash(self::content_file('pages/rolunk.html')) ]);
+                $this->log[] = 'Oldal frissítve: Rólunk (Figma szerinti fotókkal, logókkal)';
+            } else {
+                $this->log[] = 'FIGYELEM: a Rólunk oldalt szerkesztették, nem íródik felül – az új változat: setup/pages/rolunk.html';
+                return;
+            }
+        }
+        if (!$page) return;
+        update_post_meta($page->ID, Pages::CUSTOM_HEADER, '1');
+        $hero = self::media('rolunk-hero.jpg');
+        if ($hero) set_post_thumbnail($page->ID, $hero);
     }
 }

@@ -8,7 +8,7 @@ kses_remove_filters();
 remove_filter('content_save_pre', 'wp_strip_custom_css_from_blocks', 8);
 if ($mode === 'push') {
     $content = file_get_contents($file);
-    $content = str_replace('{{home}}', untrailingslashit(home_url()), $content);
+    $content = \VasskisgepTheme\Setup::expand($content);
     $title = 'CANON '.basename(dirname($file)).'/'.basename($file);
     $existing = get_posts(['post_type' => 'iu_template', 'title' => $title, 'post_status' => 'any', 'numberposts' => 1]);
     $data = ['post_type' => 'iu_template', 'post_status' => 'draft', 'post_title' => $title, 'post_content' => wp_slash($content)];
@@ -17,7 +17,7 @@ if ($mode === 'push') {
 } else {
     $id = (int)$args[2];
     $content = get_post_field('post_content', $id);
-    if (!empty($args[3])) $content = str_replace(untrailingslashit(home_url()), '{{home}}', $content);
+    if (!empty($args[3])) $content = \VasskisgepTheme\Setup::collapse($content);
     file_put_contents($file, $content);
     echo "pulled $id -> $file\n";
 }

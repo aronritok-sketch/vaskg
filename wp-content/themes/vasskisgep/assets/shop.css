@@ -2240,194 +2240,413 @@ li.product .iu-woocommerce-loop-product:has(.vk-cofidis-badge) .iu-group.brand {
 	object-fit: contain;
 }
 
-/* ---------- Rólunk (design: Rólunk) ---------- */
+/* ---------- Rólunk (design: Rólunk; méretek az 1920 px-es tervből, 1rem ≈ 18px) ---------- */
 
-.vk-about-intro h2 {
-	font-size: clamp(2rem, 4vw, 3.3rem);
-	line-height: 1.05;
+.vk-about p,
+.vk-about li {
+	color: #4b5563;
+	font-size: 1rem;
+	line-height: 1.5;
+}
+.vk-about h2 {
+	margin: 0 0 1.25rem;
+	font-size: 2.65rem;
+	line-height: 1.12;
 	text-transform: uppercase;
 }
-.vk-about-photo img {
+.vk-about h4 {
+	margin: 0;
+	font-size: 1.12rem;
+	font-weight: 600;
+	color: var(--iu-text-color);
+}
+.vk-w-1364 > .iu-row { width: 71.04%; }
+.vk-w-1510 > .iu-row { width: 78.65%; }
+.vk-w-1640 > .iu-row { width: 85.42%; }
+.vk-about .iu-row.iu-row-vertical-center > .iu-column-1-2 {
+	width: calc(50% - .55rem);
+}
+.vk-about .iu-row { gap: 1.1rem; }
+.vk-about-photo img,
+.vk-about-photo .iu-image-wrap {
 	border-radius: .45rem;
+	overflow: hidden;
+}
+
+/* Hero: üzletfelirat fotó ferde aljjal (V a 70,8%-nál), alatta nagy cím, jobbra narancs négyzet */
+.vk-about-hero.iu-featured-image {
+	margin: 0;
+}
+.vk-about-hero.clip-down:after {
+	height: 5.4rem;
+	clip-path: polygon(0 0, 70.8% 100%, 100% 0, 100% 100%, 0 100%);
+}
+.vk-about-intro {
+	position: relative;
+}
+.vk-about-intro:after {
+	content: '';
+	position: absolute;
+	top: 4.45rem;
+	right: 0;
+	width: 4.45rem;
+	height: 4.45rem;
+	background: var(--wp--preset--color--primary);
+}
+.vk-about-intro > .iu-row {
+	width: 92.71%;
+}
+.vk-about-intro h1 {
+	max-width: 44rem;
+	margin: 0 0 1.15rem;
+	font-size: 4.78rem;
+	line-height: 1;
+	text-transform: uppercase;
+}
+.vk-about-intro .vk-lead {
+	max-width: 44.6rem;
+	margin: 0;
+}
+
+/* Számunkra a szakkereskedés: pipás lista narancs sarokjelekkel */
+.vk-about .vk-list-intro {
+	margin: 2.2rem 0 .3rem;
+	color: var(--iu-text-color);
 }
 .vk-checklist {
-	margin: 1rem 0 0;
+	margin: 0;
 	padding: 0;
 	list-style: none;
 }
-.vk-checklist li {
+.vk-about .vk-checklist li {
 	position: relative;
-	padding: .3rem 0 .3rem 2rem;
-	color: #4b5563;
+	margin: 0;
+	padding: .4rem 0 .4rem 2.2rem;
 }
 .vk-checklist li:before {
 	content: '';
 	position: absolute;
 	left: 0;
 	top: .45rem;
-	width: 1.1rem;
-	height: 1.1rem;
-	border-left: 2px solid var(--wp--preset--color--primary);
-	border-bottom: 2px solid var(--wp--preset--color--primary);
-	background: radial-gradient(circle at 55% 45%, #4b5563 0 .2rem, transparent .22rem);
+	width: 1.7rem;
+	height: 1.7rem;
+	background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3E%3Cpath d='M2 17v11h11M17 2h11v11' fill='none' stroke='%23F36517' stroke-width='1.5'/%3E%3Ccircle cx='15' cy='15' r='6' fill='%23fff' stroke='%23d1d5db'/%3E%3Ccircle cx='15' cy='15' r='3.6' fill='%234b5563'/%3E%3C/svg%3E") no-repeat center / contain;
 }
+
+/* Márkák: 3×3 logórács, lapozó pöttyökkel (shop.js) */
 .vk-brand-grid {
 	display: grid;
 	grid-template-columns: repeat(3, minmax(0, 1fr));
+	grid-auto-rows: 5.9rem;
 	align-items: center;
 	justify-items: center;
-	gap: 2.1rem 1.5rem;
+	width: 52.5rem;
+	margin-left: -3.7rem;
+}
+.vk-about .iu-row:has(.vk-brand-grid) > .iu-column-1-2:first-child {
+	width: 38.4rem;
+	flex: 0 0 38.4rem;
+}
+.vk-brand-grid > .iu-image {
+	margin: 0;
 }
 .vk-brand-grid .iu-image img {
-	max-height: 3rem;
 	width: auto;
+	max-width: 9.8rem;
+	max-height: 4.4rem;
 	object-fit: contain;
 }
-.vk-about-cards {
+.vk-brand-grid > .vk-page-hidden {
+	display: none;
+}
+.vk-brand-dots {
+	grid-column: 1 / -1;
+	display: flex;
+	gap: .45rem;
 	justify-content: center;
+	align-self: start;
+	margin-top: .6rem;
 }
-.vk-about-cards .iu-card {
+.vk-brand-dots button {
+	width: .7rem;
+	height: .7rem;
+	padding: 0;
+	border: 0;
+	border-radius: 50%;
+	background: #d1d5db;
+	cursor: pointer;
+}
+.vk-brand-dots button.vk-active {
+	background: var(--iu-text-color);
+}
+
+/* Szürke szakasz ferde fehér „V” felső éllel (V a 27,3%-nál) */
+.vk-about-assembly {
+	position: relative;
+	background: #f9fafb;
+}
+.vk-wedge-top:before {
+	content: '';
+	position: absolute;
+	top: -1px;
+	left: 0;
+	width: 100%;
+	height: 5.85rem;
+	background: var(--wp--preset--color--white);
+	clip-path: polygon(0 0, 100% 0, 100% 0, 27.3% 100%, 0 0);
+}
+.vk-about-assembly h2 {
+	margin-bottom: 3.6rem;
+}
+
+/* Kártyák */
+.vk-about-cards {
+	display: flex;
+	justify-content: center;
+	gap: 1.05rem;
+}
+.vk-about-cards > .iu-column {
+	flex: 0 0 21.95rem;
+	width: 21.95rem;
+}
+.vk-about-cards .iu-card,
+.vk-about-cards > .iu-card {
 	height: 100%;
-	text-align: center;
+	margin: 0;
+	border: 1px solid #e5e7eb;
+	border-radius: .35rem;
+	background: var(--wp--preset--color--white);
 }
+.vk-about-cards-2 .iu-card {
+	min-height: 31.6rem;
+}
+.vk-about-cards-3 > .iu-card {
+	flex: 0 0 22rem;
+	width: 22rem;
+	min-height: 28.7rem;
+}
+.vk-about-cards .iu-card-image {
+	padding-top: 75.2%;
+}
+.vk-about-cards .iu-card .iu-card-image:after {
+	height: 1.2rem;
+}
+.vk-about-cards .iu-card-content {
+	padding: 0 1.5rem 1.6rem;
+}
+.vk-about-cards .iu-card-heading {
+	margin-top: 1.1rem;
+	font-size: 1.12rem;
+	font-weight: 600;
+}
+.vk-about-cards .iu-card-text {
+	margin-top: 1.2rem;
+	opacity: 1;
+	color: #4b5563;
+	font-size: 1rem;
+	line-height: 1.5;
+}
+
+/* Szerviz: stat doboz */
 .vk-stat {
 	display: flex;
-	gap: 1.2rem;
-	max-width: 22rem;
-	margin-top: 1.5rem;
-	padding: 1.2rem 1.5rem;
+	align-items: center;
+	gap: 1.4rem;
+	width: 26.7rem;
+	min-height: 6.7rem;
+	margin-top: 2.9rem;
+	padding: 1rem 1.75rem;
 	border-radius: .45rem;
-	background: linear-gradient(120deg, var(--wp--preset--color--primary) 55%, #b4470f);
-	color: var(--iu-text-color);
+	background: linear-gradient(118deg, #f36517 0%, #f36517 58%, #b04a15 100%);
 }
-.vk-stat .vk-stat-number {
+.vk-about .vk-stat .vk-stat-number {
 	margin: 0;
 	font-family: var(--iu-heading-font-family);
-	font-size: 1.8rem;
-	font-weight: 700;
+	font-size: 1.75rem;
+	font-weight: 600;
 	color: var(--iu-text-color);
 }
-.vk-stat h4 {
+.vk-about .vk-stat h4 {
+	margin-bottom: .2rem;
+	font-size: 1.12rem;
+}
+.vk-about .vk-stat p:not(.vk-stat-number) {
 	margin: 0;
-	font-size: 1.05rem;
+	color: rgba(26, 26, 26, .72);
+	font-size: .95rem;
 }
-.vk-stat p {
-	margin: 0;
-	color: rgba(0, 0, 0, .65);
-	font-size: .88rem;
+
+/* Lekerekített szürke doboz (Műhely, Elérhetőség) */
+.vk-about-box {
+	padding: 3.6rem 3.95rem 4.3rem;
+	border-radius: .9rem;
+	background: #f9fafb;
 }
-.vk-about-workshop > .iu-row:last-child {
-	padding: 0;
+.vk-about-box > h2 {
+	max-width: 36rem;
+	margin-bottom: 3rem;
 }
+.vk-about-reach.vk-about-box > h2 {
+	max-width: 45rem;
+}
+.vk-about .iu-row:has(> .iu-column > .vk-timeline) {
+	margin-top: 0;
+}
+.vk-about .iu-row:has(+ .iu-row .vk-timeline) h2 {
+	max-width: 36rem;
+}
+.vk-about-cards-3 {
+	flex-wrap: nowrap;
+}
+
+/* Idővonal */
 .vk-timeline {
+	position: relative;
 	display: grid;
 	grid-template-columns: repeat(3, minmax(0, 1fr));
-	gap: 2.1rem;
-	position: relative;
+	max-width: 87.2rem;
+	margin: 3.6rem auto 0;
 	text-align: center;
 }
 .vk-timeline:before {
 	content: '';
 	position: absolute;
-	top: 2.1rem;
-	left: 16%;
-	right: 16%;
+	top: 2.5rem;
+	left: 16.67%;
+	right: 16.67%;
 	height: 1px;
-	background: var(--vk-border);
+	background: #e5e7eb;
 }
 .vk-timeline-item {
 	position: relative;
 	align-items: center;
 }
-.vk-timeline-item .vk-year {
+.vk-about .vk-timeline-item .vk-year {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	width: 4.2rem;
-	height: 4.2rem;
-	margin: 0 auto .6rem;
+	width: 5rem;
+	height: 5rem;
+	margin: 0 auto 1.6rem;
 	border-radius: 50%;
-	background: radial-gradient(circle at 35% 30%, #ff8a3d, var(--wp--preset--color--primary) 60%, #c2500f);
-	box-shadow: 0 0 0 .35rem var(--wp--preset--color--white), 0 .3rem .9rem rgba(0, 0, 0, .15);
+	background: linear-gradient(135deg, #f36517 45%, #b8531a 100%);
+	box-shadow: 0 0 0 .28rem var(--wp--preset--color--white), 0 .2rem .8rem rgba(0, 0, 0, .18);
 	color: var(--iu-text-color);
 	font-family: var(--iu-heading-font-family);
-	font-size: 1.3rem;
-	font-weight: 700;
+	font-size: 1.75rem;
+	font-weight: 600;
+	line-height: 1;
 }
 .vk-timeline-item h4 {
-	margin: 0 0 .4rem;
-	font-size: 1.05rem;
+	margin-bottom: .8rem;
 }
-.vk-timeline-item p:not(.vk-year) {
-	max-width: 17rem;
+.vk-about .vk-timeline-item p:not(.vk-year) {
+	max-width: 17.9rem;
 	margin: 0 auto;
-	color: #4b5563;
-	font-size: .9rem;
+}
+
+/* Elérhetőség kártyák */
+.vk-about-reach > h2 {
+	margin-bottom: 2.9rem;
 }
 .vk-reach-card {
 	position: relative;
-	padding: 1.2rem 1.5rem 1.5rem;
-	border: 1px solid var(--vk-border);
-	border-radius: .45rem;
+	padding: 1.6rem 1.7rem 1.65rem;
+	border: 1px solid #e5e7eb;
+	border-radius: .6rem;
 	background: var(--wp--preset--color--white);
+	box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
+}
+.vk-reach-card + .vk-reach-card {
+	margin-top: 1.9rem;
+}
+.vk-reach-card > h3 {
+	margin: .55rem 0 1rem;
+	padding-bottom: .95rem;
+	border-bottom: 1px solid #e5e7eb;
+	font-size: 1.65rem;
+	font-weight: 600;
+	text-transform: none;
 }
 .vk-reach-card:after {
 	position: absolute;
 	top: .9rem;
-	right: 1rem;
-	padding: .15rem .45rem;
-	border-top: 1px solid var(--wp--preset--color--primary);
-	border-right: 1px solid var(--wp--preset--color--primary);
-	font-size: .68rem;
-	letter-spacing: .12em;
+	right: .8rem;
+	padding: .2rem .35rem;
+	font-size: .72rem;
+	letter-spacing: .14em;
 	text-transform: uppercase;
+	color: var(--iu-text-color);
+	background:
+		linear-gradient(var(--wp--preset--color--primary), var(--wp--preset--color--primary)) top right / .6rem 1px no-repeat,
+		linear-gradient(var(--wp--preset--color--primary), var(--wp--preset--color--primary)) top right / 1px .6rem no-repeat,
+		linear-gradient(var(--wp--preset--color--primary), var(--wp--preset--color--primary)) bottom left / .6rem 1px no-repeat,
+		linear-gradient(var(--wp--preset--color--primary), var(--wp--preset--color--primary)) bottom left / 1px .6rem no-repeat;
 }
-.vk-reach-personal:after {
-	content: 'Személyesen';
-}
-.vk-reach-online:after {
-	content: 'Online';
-}
-.vk-reach-card > h3 {
-	margin: 0 0 1rem;
-	padding-bottom: .9rem;
-	border-bottom: 1px solid var(--vk-border);
-	font-size: 1.3rem;
-}
-.vk-store-grid {
+.vk-reach-personal:after { content: 'Személyesen'; }
+.vk-reach-online:after { content: 'Online'; }
+.vk-reach-grid {
 	display: grid;
-	grid-template-columns: repeat(3, minmax(0, 1fr));
-	gap: 1.2rem 2.1rem;
-	padding-left: 6.6rem;
+	grid-template-columns: repeat(3, 23rem);
+	margin-left: 9.65rem;
 }
-.vk-store-info h4 {
-	margin: 0 0 .5rem;
-	font-size: 1rem;
+.vk-reach-grid-1 {
+	grid-template-columns: minmax(0, 42rem);
 }
-.vk-store-info p {
-	margin: 0 0 .6rem;
-	font-size: .9rem;
+.vk-reach-col h4 {
+	margin-bottom: .9rem;
+}
+.vk-about .vk-reach-item {
+	position: relative;
+	margin: 0 0 .8rem;
+	padding-left: 1.4rem;
+	color: var(--iu-text-color);
+}
+.vk-about .vk-reach-item strong {
+	font-family: var(--iu-heading-font-family);
+	font-size: 1.05rem;
+	font-weight: 500;
+}
+.vk-about .vk-reach-item a {
+	color: inherit;
+}
+.vk-about .vk-reach-grid-1 .vk-reach-item {
 	color: #4b5563;
 }
-.vk-store-info p strong {
+.vk-reach-item:before {
+	content: '';
+	position: absolute;
+	left: 0;
+	top: .2rem;
+	width: 1.05rem;
+	height: 1.05rem;
+	background: currentColor;
 	color: var(--iu-text-color);
-	font-weight: 600;
+	-webkit-mask: var(--vk-ico) no-repeat center / contain;
+	mask: var(--vk-ico) no-repeat center / contain;
 }
-.vk-reach-online .vk-store-grid {
-	grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-}
+.vk-ico-phone { --vk-ico: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.6'%3E%3Crect x='6' y='2.5' width='12' height='19' rx='2'/%3E%3Cpath d='M10.5 5.5h3'/%3E%3C/svg%3E"); }
+.vk-ico-pin { --vk-ico: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.6'%3E%3Cpath d='M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z'/%3E%3Ccircle cx='12' cy='9.5' r='2.5'/%3E%3C/svg%3E"); }
+.vk-ico-clock { --vk-ico: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.6'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7v5l3 2'/%3E%3C/svg%3E"); }
+.vk-ico-web { --vk-ico: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.6'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M3 12h18M12 3c2.5 2.7 3.8 5.7 3.8 9S14.5 18.3 12 21c-2.5-2.7-3.8-5.7-3.8-9S9.5 5.7 12 3z'/%3E%3C/svg%3E"); }
+
+/* Narancs CTA ferde (Λ) aljjal a lábléc színére */
 .vk-cta-primary {
+	position: relative;
 	text-align: center;
-	background: linear-gradient(120deg, var(--wp--preset--color--primary) 60%, #a4420e) !important;
+	background: linear-gradient(160deg, #f36517 0%, #f36517 62%, #a4420e 100%) !important;
 }
 .vk-cta-primary h2 {
+	margin: 0 0 1rem;
+	font-size: 2.4rem;
 	text-transform: uppercase;
 }
 .vk-cta-primary p {
-	max-width: 36rem;
-	margin-left: auto;
-	margin-right: auto;
-	color: rgba(0, 0, 0, .75);
+	max-width: 36.5rem;
+	margin: 0 auto 1.2rem;
+	color: rgba(26, 26, 26, .85);
+	font-size: .9rem;
+	line-height: 1.55;
 }
 .vk-cta-primary .iu-button-group {
 	justify-content: center;
@@ -2436,36 +2655,52 @@ li.product .iu-woocommerce-loop-product:has(.vk-cofidis-badge) .iu-group.brand {
 	background: var(--iu-text-color);
 	border-color: var(--iu-text-color);
 	color: var(--wp--preset--color--white);
+	font-size: .8rem;
+}
+.vk-cta-primary .iu-button .iu-button-text:after {
+	content: '\f345';
+	font-family: Dashicons;
+	margin-left: .5rem;
+	vertical-align: middle;
+}
+.vk-wedge-bottom:after {
+	content: '';
+	position: absolute;
+	bottom: -1px;
+	left: 0;
+	width: 100%;
+	height: 5.85rem;
+	background: var(--wp--preset--color--light);
+	clip-path: polygon(0 100%, 72.8% 0, 100% 100%);
 }
 
 @media (max-width: 991.8px) {
-	.vk-brand-grid {
-		margin-top: 1.5rem;
+	.vk-w-1364 > .iu-row,
+	.vk-w-1510 > .iu-row,
+	.vk-w-1640 > .iu-row {
+		width: var(--iu-row-width);
 	}
-	.vk-timeline {
-		grid-template-columns: minmax(0, 1fr);
-	}
-	.vk-timeline:before {
-		top: 0;
-		bottom: 0;
-		left: 50%;
-		right: auto;
-		width: 1px;
-		height: auto;
-	}
-	.vk-timeline-item {
-		background: var(--wp--preset--color--white);
-		padding: .6rem 0;
-	}
-	.vk-store-grid,
-	.vk-reach-online .vk-store-grid {
-		grid-template-columns: minmax(0, 1fr);
-		padding-left: 0;
-	}
-	.vk-reach-card:after {
-		position: static;
-		align-self: flex-start;
-		order: -1;
-		margin-bottom: .6rem;
-	}
+	.vk-about h2 { font-size: 1.9rem; }
+	.vk-about-intro h1 { font-size: 2.6rem; }
+	.vk-about-intro:after { width: 2rem; height: 2rem; top: 1.5rem; }
+	.vk-about .iu-row.iu-row-vertical-center > .iu-column-1-2 { width: 100%; }
+	.vk-brand-grid { width: 100%; margin: 1.5rem 0 0; grid-auto-rows: 4.2rem; }
+	.vk-about .iu-row:has(.vk-brand-grid) > .iu-column-1-2:first-child { width: 100%; flex: 1 1 auto; }
+	.vk-about .iu-row { gap: 0; }
+	.vk-brand-grid .iu-image img { max-width: 100%; max-height: 3rem; }
+	.vk-about-cards,
+	.vk-about-cards-3 { flex-direction: column; align-items: center; }
+	.vk-about-cards > .iu-column,
+	.vk-about-cards-3 > .iu-card { flex: 1 1 auto; width: 100%; max-width: 24rem; }
+	.vk-about-cards-2 .iu-card,
+	.vk-about-cards-3 > .iu-card { min-height: 0; }
+	.vk-stat { width: 100%; }
+	.vk-about-box { padding: 2rem 1.2rem; }
+	.vk-timeline { grid-template-columns: minmax(0, 1fr); gap: 2rem; }
+	.vk-timeline:before { top: 0; bottom: 0; left: 50%; right: auto; width: 1px; height: auto; }
+	.vk-timeline-item { background: var(--wp--preset--color--white); }
+	.vk-reach-grid { grid-template-columns: minmax(0, 1fr); margin-left: 0; gap: .6rem; }
+	.vk-reach-card > h3 { padding-right: 7rem; }
+	.vk-cta-primary h2 { font-size: 1.8rem; }
+	.vk-cta-primary p { font-size: 1rem; }
 }

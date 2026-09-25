@@ -221,3 +221,24 @@
 	});
 
 })(jQuery);
+
+/* ---------- Márkarács lapozása (Rólunk): 9 logó oldalanként, pöttyökkel ---------- */
+(function($){
+	const PER_PAGE = 9;
+	$('.vk-brand-grid').each(function(){
+		const $grid = $(this);
+		const $items = $grid.children('.iu-image');
+		const pages = Math.ceil($items.length / PER_PAGE);
+		if (pages < 2) return;
+		const $dots = $('<div class="vk-brand-dots" role="tablist"></div>');
+		const show = function(page){
+			$items.each(function(i){ $(this).toggleClass('vk-page-hidden', Math.floor(i / PER_PAGE) !== page); });
+			$dots.children().removeClass('vk-active').attr('aria-selected', 'false').eq(page).addClass('vk-active').attr('aria-selected', 'true');
+		};
+		for (let i = 0; i < pages; i++){
+			$('<button type="button" role="tab"></button>').attr('aria-label', (i + 1) + '. oldal').on('click', function(){ show(i); }).appendTo($dots);
+		}
+		$grid.append($dots);
+		show(0);
+	});
+})(jQuery);
