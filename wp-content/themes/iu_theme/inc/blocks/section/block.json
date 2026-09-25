@@ -1,0 +1,31 @@
+{
+	"$schema": "https://json.schemastore.org/block.json",
+	"apiVersion": 3,
+	"title": "Section",
+	"name": "iu/section",
+	"description": "Display a section element.",
+	"category": "design",
+	"attributes": {
+		"lightText": {
+			"type": "boolean",
+			"default": false
+		},
+		"fullWidth": {
+			"type": "boolean",
+			"default": false
+		},
+		"templateLock": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"supports": {
+		"iu": {
+			"background": true,
+			"spacing": true
+		}
+	},
+	"editorScript": "file:./block.js",
+	"editorStyle": "file:./editor.css",
+	"style": "file:./style.css"
+}

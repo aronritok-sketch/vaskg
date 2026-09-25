@@ -1,0 +1,55 @@
+body:not(.wp-admin) .iu-modal {
+	position: fixed;
+	top: 0;
+	left: -200vw;
+	width: 100%;
+	height: 100%;
+	background-color: transparent;
+	transition: background-color .3s;
+	padding: 12rem 0;
+	overflow: auto;
+}
+.iu-modal-dialog {
+	position: relative;
+	width: 50%;
+	background: white;
+	padding: 3rem;
+	margin: auto;
+	transform: translateY(3rem);
+	opacity: 0;
+	transition: opacity .3s, transform .3s;
+}
+.iu-modal-close {
+	position: absolute;
+	top: 1.5rem;
+	right: 1.5rem;
+	cursor: pointer;
+}
+
+body:not(.wp-admin) .iu-modal.open {
+	background-color: rgba(0,0,0,.9);
+	z-index: 9999999;
+	left: 0;
+}
+.iu-modal.open .iu-modal-dialog {
+	opacity: 1;
+	transform: none;
+}
+
+.iu-modal.closing {
+	background-color: transparent;
+}
+.iu-modal.closing .iu-modal-dialog {
+	opacity: 0;
+	transform: translateY(3rem);
+}
+
+@media (max-width: 991.8px) {
+	body:not(.wp-admin) .iu-modal {
+		padding: 0;
+	}
+	.iu-modal-dialog {
+		width: 100%;
+		min-height: 100vh;
+	}
+}

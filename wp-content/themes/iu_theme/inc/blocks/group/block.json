@@ -1,0 +1,36 @@
+{
+	"$schema": "https://json.schemastore.org/block.json",
+	"apiVersion": 3,
+	"title": "Group",
+	"name": "iu/group",
+	"description": "Display a group element.",
+	"category": "design",
+	"attributes": {
+		"direction": {
+			"type": "string",
+			"default": ""
+		},
+		"equal": {
+			"type": "boolean",
+			"default": false
+		},
+		"horizontal": {
+			"type": "string",
+			"default": ""
+		},
+		"vertical": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"supports": {
+		"iu": {
+			"background": true,
+			"spacing": true,
+			"gap": true
+		}
+	},
+	"editorScript": "file:./block.js",
+	"editorStyle": "file:./editor.css",
+	"style": "file:./style.css"
+}

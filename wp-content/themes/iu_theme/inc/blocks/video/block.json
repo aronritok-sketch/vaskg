@@ -1,0 +1,22 @@
+{
+	"$schema": "https://json.schemastore.org/block.json",
+	"apiVersion": 3,
+	"title": "Video",
+	"name": "iu/video",
+	"description": "Display an embedded video element.",
+	"category": "media",
+	"attributes": {
+		"url": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"supports": {
+		"iu": {
+			"spacing": true
+		}
+	},
+	"editorScript": "file:./block.js",
+	"style": "file:./style.css",
+	"render": "file:./render.php"
+}

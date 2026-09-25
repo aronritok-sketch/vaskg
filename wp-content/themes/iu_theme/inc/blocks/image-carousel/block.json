@@ -1,0 +1,22 @@
+{
+	"$schema": "https://json.schemastore.org/block.json",
+	"apiVersion": 3,
+	"title": "Image carousel",
+	"name": "iu/image-carousel",
+	"description": "Display an image carousel element.",
+	"category": "media",
+	"attributes": {
+		"images": {
+			"type": "array",
+			"default": []
+		},
+		"params": {
+			"type": "string",
+			"default": "\"slidesToShow\": 3,\n\"slidesToScroll\": 3,\n\"infinite\": false"
+		}
+	},
+	"editorScript": "file:./block.js",
+	"editorStyle": "file:./editor.css",
+	"style": "file:./style.css",
+	"viewScript": [ "iu-slick", "file:./script.js", "jquery" ]
+}

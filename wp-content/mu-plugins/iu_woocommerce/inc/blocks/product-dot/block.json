@@ -1,0 +1,33 @@
+{
+	"$schema": "https://json.schemastore.org/block.json",
+	"apiVersion": 3,
+	"title": "Product Dot",
+	"name": "iu-woocommerce/product-dot",
+	"description": "Product Dot",
+	"category": "iu-woocommerce",
+	"attributes": {
+		"x": {
+			"type": "string",
+			"default": ""
+		},
+		"y": {
+			"type": "string",
+			"default": ""
+		},
+		"placement": {
+			"type": "string",
+			"default": ""
+		},
+		"content": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"supports": {
+		"iu": {
+			"link": true
+		}
+	},
+	"editorScript": "file:./block.js",
+	"style": "file:./style.css"
+}

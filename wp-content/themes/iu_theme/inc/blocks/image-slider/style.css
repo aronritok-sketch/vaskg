@@ -1,0 +1,91 @@
+.iu-image-slider-slider {
+	position: relative;
+	opacity: 0;
+	transition: opacity .15s;
+}
+.iu-image-slider-slider.slick-initialized {
+	opacity: 1;
+}
+.iu-image-slider .slick-list {
+	overflow: hidden;
+}
+.iu-image-slider .slick-track {
+	display: flex;
+}
+.iu-image-slider .iu-image-slider-wrap {
+	position: relative;
+	padding: 4.5rem 0;
+}
+.iu-image-slider .iu-image-slider-wrap:after {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 0;
+	display: block;
+	width: 100%;
+	height: 100%;
+	background: linear-gradient(120deg, rgba(0,0,0,.45), transparent);
+}
+.iu-image-slider .iu-image-slider-wrap img {
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	object-position: center;
+}
+.iu-image-slider .iu-image-slider-content {
+	position: relative;
+	z-index: 1;
+}
+.iu-image-slider .iu-image-slider-content > * {
+	color: white;
+}
+.iu-image-slider a.slick-arrow {
+	position: absolute;
+	top: 50%;
+	left: 1rem;
+	color: white;
+	transform: translateY(-50%);
+	z-index: 1001;
+	cursor: pointer;
+}
+.iu-image-slider a.slick-next {
+	left: unset;
+	right: 1rem;
+}
+.iu-image-slider .slick-dots {
+	padding: 0;
+	margin: 0;
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	position: absolute;
+	bottom: 2.1rem;
+	left: 50%;
+	transform: translateX(-50%);
+	z-index: 1001;
+}
+.iu-image-slider .slick-dots li {
+	display: block;
+}
+.iu-image-slider .slick-dots li button {
+	font-size: 0;
+	width: .6rem;
+	height: .6rem;
+	background: white;
+	border-radius: 50%;
+	border: none;
+	display: block;
+	padding: 0;
+	cursor: pointer;
+}
+.iu-image-slider .slick-dots li:not(.slick-active) button:hover {
+	background: var(--wp--preset--color--green);
+}
+.iu-image-slider .slick-dots li.slick-active button {
+	outline: 1px solid white;
+	outline-offset: 2px;
+}

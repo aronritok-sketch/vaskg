@@ -1,0 +1,27 @@
+.iu-logo-slider {
+	opacity: 1 !important;
+}
+.iu-logo-slider-images {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+}
+.iu-logo-slider-images > div {
+	width: 75px;
+	position: relative;
+	cursor: move;
+}
+.iu-logo-slider-images > div.ui-sortable-helper {
+	cursor: grabbing;
+}
+.iu-logo-slider-images > div > img {
+	display: block;
+	width: 100%;
+}
+.iu-logo-slider-images > div > span {
+	color: #cc1818;
+	position: absolute;
+	top: 3px;
+	right: 2px;
+	cursor: pointer;
+}

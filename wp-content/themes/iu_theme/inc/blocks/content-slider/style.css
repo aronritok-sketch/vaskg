@@ -1,0 +1,35 @@
+.iu-content-slider {
+	position: relative;
+}
+.iu-content-slider-slider {
+	position: relative;
+	opacity: 0;
+	transition: opacity .15s;
+}
+.iu-content-slider-slider.slick-initialized {
+	opacity: 1;
+}
+.iu-content-slider .slick-list {
+	overflow: hidden;
+}
+.iu-content-slider .slick-track {
+	display: flex;
+}
+.iu-content-slider .iu-slide-inner {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+}
+.iu-content-slider-arrows a {
+	position: absolute;
+	z-index: 1000;
+	top: 50%;
+	left: -3rem;
+	transform: translateY(-50%);
+	cursor: pointer;
+}
+.iu-content-slider-arrows a.slick-next {
+	left: unset;
+	right: -3rem;
+}

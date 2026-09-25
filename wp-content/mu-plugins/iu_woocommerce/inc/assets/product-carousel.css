@@ -1,0 +1,68 @@
+.iu-woocommerce-product-carousel {
+	position: relative;
+}
+.iu-woocommerce-product-carousel-slider {
+	display: flex;
+	opacity: 0;
+	transition: opacity .3s;
+}
+.iu-woocommerce-product-carousel-slider.slick-initialized {
+	opacity: 1;
+	display: block;
+}
+.iu-woocommerce-product-carousel .slick-list {
+	overflow: hidden;
+}
+.iu-woocommerce-product-carousel .slick-track {
+	display: flex;
+	gap: .9rem;
+}
+.iu-woocommerce-product-carousel .slick-track * {
+	user-select: none;
+}
+.iu-woocommerce-product-carousel-arrows a {
+	position: absolute;
+	top: 50%;
+	left: -3rem;
+	cursor: pointer;
+}
+.iu-woocommerce-product-carousel-arrows .slick-next {
+	left: unset;
+	right: -3rem;
+}
+.iu-woocommerce-product-carousel .slick-dots {
+	display: flex;
+	gap: .45rem;
+	justify-content: center;
+	padding: 0;
+	margin: 1.5rem 0 0;
+}
+.iu-woocommerce-product-carousel .slick-dots li {
+	display: block;
+}
+.iu-woocommerce-product-carousel .slick-dots button {
+	border: 0;
+	display: block;
+	width: .9rem;
+	height: .9rem;
+	border-radius: 50%;
+	font-size: 0;
+	padding: 0;
+	background: var(--iu-text-color);
+	opacity: .15;
+	transition: all .3s;
+	outline: none;
+}
+.iu-woocommerce-product-carousel .slick-dots li.slick-active button {
+	opacity: 1;
+	transform: scale(1.2);
+}
+.iu-woocommerce-product-carousel .slick-dots li:not(.slick-active) button {
+	cursor: pointer;
+}
+
+@media (max-width: 991.8px) {
+	.iu-woocommerce-product-carousel .slick-track {
+		gap: 0;
+	}
+}

@@ -1,0 +1,25 @@
+{
+	"$schema": "https://json.schemastore.org/block.json",
+	"apiVersion": 3,
+	"title": "Title",
+	"name": "iu/title",
+	"description": "Display a title element.",
+	"category": "theme",
+	"attributes": {
+		"heading": {
+			"type": "string",
+			"default": "h2"
+		},
+		"align": {
+			"type": "string",
+			"default": "left"
+		}
+	},
+	"supports": {
+		"iu": {
+			"spacing": true
+		}
+	},
+	"editorScript": "file:./block.js",
+	"render": "file:./render.php"
+}

@@ -1,0 +1,31 @@
+{
+	"$schema": "https://json.schemastore.org/block.json",
+	"apiVersion": 3,
+	"title": "Column",
+	"name": "iu/column",
+	"description": "Display a column element.",
+	"category": "design",
+	"parent": [ "iu/row" ],
+	"attributes": {
+		"width": {
+			"type": "string",
+			"default": "1-1"
+		},
+		"templateLock": {
+			"type": "string",
+			"default": ""
+		},
+		"align": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"supports": {
+		"iu": {
+			"background": true,
+			"spacing": true
+		}
+	},
+	"editorScript": "file:./block.js",
+	"style": "file:./style.css"
+}

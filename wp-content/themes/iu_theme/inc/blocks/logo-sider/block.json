@@ -1,0 +1,18 @@
+{
+	"$schema": "https://json.schemastore.org/block.json",
+	"apiVersion": 3,
+	"title": "Logo slider",
+	"name": "iu/logo-slider",
+	"description": "Display a logo slider element.",
+	"category": "media",
+	"attributes": {
+		"images": {
+			"type": "array",
+			"default": []
+		}
+	},
+	"editorScript": "file:./block.js",
+	"editorStyle": "file:./editor.css",
+	"style": "file:./style.css",
+	"viewScript": [ "file:./script.js", "jquery" ]
+}

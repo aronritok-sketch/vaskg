@@ -1,0 +1,22 @@
+{
+	"$schema": "https://json.schemastore.org/block.json",
+	"apiVersion": 3,
+	"title": "Search",
+	"name": "iu/search",
+	"description": "Display a search element.",
+	"category": "theme",
+	"attributes": {
+		"placeholder": {
+			"type": "string",
+			"default": "Keresés..."
+		}
+	},
+	"supports": {
+		"iu": {
+			"spacing": true
+		}
+	},
+	"editorScript": "file:./block.js",
+	"style": "file:./style.css",
+	"render": "file:./render.php"
+}

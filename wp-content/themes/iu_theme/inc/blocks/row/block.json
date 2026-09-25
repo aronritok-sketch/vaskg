@@ -1,0 +1,29 @@
+{
+	"$schema": "https://json.schemastore.org/block.json",
+	"apiVersion": 3,
+	"title": "Row",
+	"name": "iu/row",
+	"description": "Display a row element.",
+	"category": "design",
+	"parent": [ "iu/section" ],
+	"attributes": {
+		"columns": {
+			"type": "string",
+			"default": "1-1"
+		},
+		"vertical": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"supports": {
+		"iu": {
+			"background": true,
+			"spacing": true,
+			"gap": true
+		}
+	},
+	"editorScript": "file:./block.js",
+	"editorStyle": "file:./editor.css",
+	"style": "file:./style.css"
+}

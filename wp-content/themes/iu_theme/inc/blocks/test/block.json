@@ -1,0 +1,19 @@
+{
+	"$schema": "https://json.schemastore.org/block.json",
+	"apiVersion": 3,
+	"title": "Test",
+	"name": "iu/test",
+	"description": "Display a test element.",
+	"category": "theme",
+	"attributes": {
+		"slides": {
+			"type": "array",
+			"default": []
+		},
+		"params": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"editorScript": "file:./block.js"
+}

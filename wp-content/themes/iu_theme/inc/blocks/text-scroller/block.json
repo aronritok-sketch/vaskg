@@ -1,0 +1,16 @@
+{
+	"$schema": "https://json.schemastore.org/block.json",
+	"apiVersion": 3,
+	"title": "Text Scroller",
+	"name": "iu/text-scroller",
+	"description": "Display a text scroller element.",
+	"category": "theme",
+	"attributes": {
+		"texts": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"editorScript": "file:./block.js",
+	"style": "file:./style.css"
+}

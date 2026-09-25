@@ -1,0 +1,26 @@
+.iu-form-select {
+	width: 100%;
+}
+.iu-form-select-wrap {
+	width: 100%;
+	position: relative;
+}
+.iu-form-select .iu-form-select-wrap select {
+	width: 100%;
+	display: block;
+	padding-right: 2.4rem;
+	cursor: pointer;
+}
+.iu-form-select-wrap:after {
+	content: '\f347';
+	font-family: Dashicons;
+	position: absolute;
+	top: 50%;
+	right: .75rem;
+	transform: translateY(-50%);
+	pointer-events: none;
+}
+.iu-form .iu-form-select.iu-form-error input {
+	background: #ffe6e6;
+	border-color: #fe6060;
+}

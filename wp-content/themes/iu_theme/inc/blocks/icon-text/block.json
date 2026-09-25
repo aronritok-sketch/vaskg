@@ -1,0 +1,37 @@
+{
+	"$schema": "https://json.schemastore.org/block.json",
+	"apiVersion": 3,
+	"title": "Icon Text",
+	"name": "iu/icon-text",
+	"description": "Display a icon text element.",
+	"category": "widgets",
+	"attributes": {
+		"icon": {
+			"type": "string",
+			"defaul": "email"
+		},
+		"svg": {
+			"type": "string",
+			"defaut": ""
+		},
+		"height": {
+			"type": "string",
+			"default": ""
+		},
+		"type": {
+			"type": "string",
+			"default": "default"
+		},
+		"text": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"supports": {
+		"iu": {
+			"link": true
+		}
+	},
+	"editorScript": "file:./block.js",
+	"style": [ "file:./style.css", "dashicons", "file:../icon/style.css" ]
+}

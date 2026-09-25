@@ -1,0 +1,16 @@
+.iu-form-textarea {
+	width: 100%;
+}
+.iu-form-textarea textarea {
+	width: 100%;
+	display: block;
+	font-family: var(--iu-text-font-family);
+	font-size: var(--iu-text-font-size);
+	border: none;
+	background: var(--wp--preset--color--light);
+	padding: .9rem 1.5rem;
+}
+.iu-form .iu-form-textarea.iu-form-error textarea {
+	background: #ffe6e6;
+	border-color: #fe6060;
+}

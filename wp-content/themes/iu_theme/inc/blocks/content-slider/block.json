@@ -1,0 +1,22 @@
+{
+	"$schema": "https://json.schemastore.org/block.json",
+	"apiVersion": 3,
+	"title": "Content Slider",
+	"name": "iu/content-slider",
+	"description": "Display a content slider element.",
+	"category": "theme",
+	"attributes": {
+		"params": {
+			"type": "string",
+			"default": "\"slidesToShow\": 3,\n\"slidesToScroll\": 1,\n\"infinite\": false,\n\"autoplay\": true,\n\"autoplaySpeed\": 3000,\n\"fade\": false,\n\"arrows\": true,\n\"dots\": false"
+		}
+	},
+	"supports": {
+		"iu": {
+			"spacing": true
+		}
+	},
+	"editorScript": "file:./block.js",
+	"viewScript": [ "iu-slick", "file:./script.js", "jquery" ],
+	"style": "file:./style.css"
+}

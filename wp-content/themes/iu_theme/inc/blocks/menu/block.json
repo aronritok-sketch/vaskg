@@ -1,0 +1,26 @@
+{
+	"$schema": "https://json.schemastore.org/block.json",
+	"apiVersion": 3,
+	"title": "Menu",
+	"name": "iu/menu",
+	"description": "Display the selected navigation menu.",
+	"category": "design",
+	"attributes": {
+		"menu": {
+			"type": "number",
+			"default": 0
+		},
+		"vertical": {
+			"type": "boolean",
+			"default": false
+		},
+		"collapse": {
+			"type": "boolean",
+			"default": true
+		}
+	},
+	"editorScript": "file:./block.js",
+	"viewScript": "file:./script.js",
+	"style": "file:./style.css",
+	"render": "file:./render.php"
+}

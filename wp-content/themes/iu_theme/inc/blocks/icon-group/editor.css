@@ -1,0 +1,7 @@
+.wp-block-iu-icon-group > .block-editor-inner-blocks > .block-editor-block-list__layout {
+	display: flex;
+	gap: var(--iu-group-gap);
+}
+.iu-icon-group-justify-flex-start > .block-editor-inner-blocks > .block-editor-block-list__layout { justify-content: flex-start; }
+.iu-icon-group-justify-center > .block-editor-inner-blocks > .block-editor-block-list__layout { justify-content: center; }
+.iu-icon-group-justify-flex-end > .block-editor-inner-blocks > .block-editor-block-list__layout { justify-content: flex-end; }

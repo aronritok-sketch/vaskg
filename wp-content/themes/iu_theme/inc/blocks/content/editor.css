@@ -1,0 +1,10 @@
+.iu-content {
+	padding-top: var(--iu-section-default-padding);
+	padding-bottom: var(--iu-section-default-padding);
+}
+.iu-content > * {
+	width: var(--iu-row-width);
+	max-width: var(--iu-row-max-width);
+	margin-left: auto;
+	margin-right: auto;
+}

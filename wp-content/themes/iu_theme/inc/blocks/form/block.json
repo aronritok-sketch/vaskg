@@ -1,0 +1,60 @@
+{
+	"$schema": "https://json.schemastore.org/block.json",
+	"apiVersion": 3,
+	"title": "Form",
+	"name": "iu/form",
+	"description": "Display a form element.",
+	"category": "theme",
+	"attributes": {
+		"formId": {
+			"type": "string",
+			"default": ""
+		},
+		"buttonLabel": {
+			"type": "string",
+			"default": "Submit"
+		},
+		"email": {
+			"type": "string",
+			"default": ""
+		},
+		"subject": {
+			"type": "string",
+			"default": ""
+		},
+		"message": {
+			"type": "string",
+			"default": ""
+		},
+		"from": {
+			"type": "string",
+			"default": ""
+		},
+		"success": {
+			"type": "string",
+			"default": ""
+		},
+		"ac_url": {
+			"type": "string",
+			"default": ""
+		},
+		"ac_key": {
+			"type": "string",
+			"default": ""
+		},
+		"ac_listid": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"supports": {
+		"iu": {
+			"background": true,
+			"spacing": true
+		}
+	},
+	"editorScript": "file:./block.js",
+	"style": "file:./style.css",
+	"viewScript": [ "file:./script.js", "jquery" ],
+	"viewStyle": "file:../button/style.css"
+}

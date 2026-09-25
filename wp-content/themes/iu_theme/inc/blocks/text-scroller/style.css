@@ -1,0 +1,33 @@
+.iu-text-scroller {
+	overflow: hidden;
+}
+.iu-text-scroller-items-wrap {
+	display: flex;
+	flex-wrap: nowrap;
+	min-width: max-content;
+	overflow: auto;
+}
+.iu-text-scroller-items {
+	display: flex;
+	flex-wrap: nowrap;
+	min-width: max-content;
+	gap: 2.1rem;
+	animation: iu-text-scroller-scroll 18s infinite;
+	animation-timing-function: linear;
+	padding-right: 2.1rem;
+}
+.iu-text-scroller-item {
+	white-space: nowrap;
+	font-family: var(--iu-text-font-family);
+	font-size: var(--iu-text-font-size);
+	color: var(--iu-text-color);
+}
+
+@keyframes iu-text-scroller-scroll {
+	from {
+		transform: translateX(0);
+	}
+	to {
+		transform: translateX(-100%);
+	}
+}

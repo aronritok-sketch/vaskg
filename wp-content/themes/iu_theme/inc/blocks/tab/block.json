@@ -1,0 +1,28 @@
+{
+	"$schema": "https://json.schemastore.org/block.json",
+	"apiVersion": 3,
+	"title": "Tab",
+	"name": "iu/tab",
+	"description": "Display a tab element.",
+	"parent": [ "iu/tabs" ],
+	"category": "theme",
+	"attributes": {
+		"title": {
+			"type": "string",
+			"default": ""
+		},
+		"imageID": {
+			"type": "number",
+			"default": null
+		},
+		"imageURL": {
+			"type": "string",
+			"default": ""
+		},
+		"imageThumbURL": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"editorScript": "file:./block.js"
+}

@@ -1,0 +1,30 @@
+{
+	"$schema": "https://json.schemastore.org/block.json",
+	"apiVersion": 3,
+	"title": "Textarea input",
+	"name": "iu/form-textarea",
+	"description": "Display a textarea element.",
+	"category": "theme",
+	"parent": [ "iu/form", "iu/group" ],
+	"attributes": {
+		"name": {
+			"type": "text",
+			"default": ""
+		},
+		"label": {
+			"type": "text",
+			"default": ""
+		},
+		"placeholder": {
+			"type": "text",
+			"default": ""
+		},
+		"validate": {
+			"type": "text",
+			"default": ""
+		}
+	},
+	"editorScript": "file:./block.js",
+	"viewScript": [ "file:./script.js", "jquery" ],
+	"style": "file:./style.css"
+}

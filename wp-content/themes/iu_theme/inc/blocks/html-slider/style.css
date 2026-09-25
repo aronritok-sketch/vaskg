@@ -1,0 +1,30 @@
+.iu-html-slider-slider {
+	opacity: 0;
+	transition: opacity .3s;
+}
+.iu-html-slider-slider.slick-initialized {
+	opacity: 1;
+}
+.iu-html-slider .slick-list {
+	overflow: hidden;
+}
+.iu-html-slider-slider .slick-track {
+	display: flex;
+	gap: .6rem;
+}
+.iu-html-slider-arrows {
+	margin-top: 1.2rem;
+	display: flex;
+	justify-content: flex-start;
+	align-items: center;
+	gap: 1rem;
+	cursor: pointer;
+}
+.iu-html-slider-arrows a.iu-button {
+	padding: 0;
+	width: 3rem;
+	height: 3rem;
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+}

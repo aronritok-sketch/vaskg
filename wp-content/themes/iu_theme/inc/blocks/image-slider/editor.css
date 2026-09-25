@@ -1,0 +1,54 @@
+.iu-image-slider-slides {
+	margin-bottom: 12px;
+}
+.iu-image-slider-slides > div {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px;
+	padding: 9px 0;
+	border-top: 1px solid #dddddd;
+	background: white;
+}
+.iu-image-slider-slides > div:last-child {
+	border-bottom: 1px solid #dddddd;
+}
+.iu-image-slider-slides > div.ui-sortable-helper {
+	border-bottom: 1px solid #dddddd;
+}
+.iu-image-slider-slides > div > span.dashicons-menu-alt2 {
+	cursor: move;
+}
+.iu-image-slider-slides > div img {
+	width: 48px;
+	height: 48px;
+}
+.iu-image-slider-slides > div textarea {
+	width: 100%;
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+    line-height: 20px;
+    background: var(--wp-components-color-background, #fff);
+    color: var(--wp-components-color-foreground, #1e1e1e);
+    resize: vertical;
+    padding: 9px 11px;
+    box-shadow: transparent 0px 0px 0px;
+    border-radius: 2px;
+    border: 1px solid var(--wp-components-color-gray-600, #949494);
+    font-size: 13px;
+    display: none;
+}
+.iu-image-slider-slides > div.open textarea {
+	display: block;
+}
+.iu-image-slider-slides > div > span.dashicons-trash {
+	color: #cc1818;
+	cursor: pointer;
+	display: block;
+    margin-left: auto;
+}
+.iu-image-slider-slides > div > span.dashicons-arrow-down {
+	cursor: pointer;
+}
+.iu-image-slider-slides > div.open > span.dashicons-arrow-down {
+	transform: rotate(180deg);
+}

@@ -1,0 +1,16 @@
+{
+	"$schema": "https://json.schemastore.org/block.json",
+	"apiVersion": 3,
+	"title": "Back to Top",
+	"name": "iu/backtotop",
+	"description": "Display a back to top button element.",
+	"category": "theme",
+	"attributes": {
+		"text": {
+			"type": "string",
+			"default": "Back to Top"
+		}
+	},
+	"editorScript": "file:./block.js",
+	"style": "file:./style.css"
+}

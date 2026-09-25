@@ -1,0 +1,42 @@
+{
+	"$schema": "https://json.schemastore.org/block.json",
+	"apiVersion": 3,
+	"title": "Card",
+	"name": "iu/card",
+	"description": "Display a card element.",
+	"category": "widgets",
+	"attributes": {
+		"imageID": {
+			"type": "number",
+			"default": null
+		},
+		"imageURL": {
+			"type": "string",
+			"default": ""
+		},
+		"imageThumbURL": {
+			"type": "string",
+			"default": ""
+		},
+		"heading": {
+			"type": "string",
+			"default": "Enter a title..."
+		},
+		"text": {
+			"type": "string",
+			"default": "Enter the content of the card element..."
+		},
+		"button": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"supports": {
+		"iu": {
+			"link": true,
+			"background": true
+		}
+	},
+	"editorScript": "file:./block.js",
+	"style": "file:./style.css"
+}

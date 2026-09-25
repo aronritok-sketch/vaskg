@@ -1,0 +1,30 @@
+{
+	"$schema": "https://json.schemastore.org/block.json",
+	"apiVersion": 3,
+	"title": "Radios",
+	"name": "iu/form-radios",
+	"description": "Display a radios element.",
+	"category": "theme",
+	"parent": [ "iu/form", "iu/group", "iu/form-step" ],
+	"attributes": {
+		"name": {
+			"type": "string",
+			"default": ""
+		},
+		"label": {
+			"type": "string",
+			"default": ""
+		},
+		"options": {
+			"type": "string",
+			"default": ""
+		},
+		"validate": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"editorScript": "file:./block.js",
+	"viewScript": [ "file:./script.js", "jquery" ],
+	"style": "file:./style.css"
+}

@@ -1,0 +1,17 @@
+{
+	"$schema": "https://json.schemastore.org/block.json",
+	"apiVersion": 3,
+	"title": "Modal",
+	"name": "iu/modal",
+	"description": "Display a modal window element.",
+	"category": "theme",
+	"attributes": {
+		"id": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"editorScript": "file:./block.js",
+	"viewScript": "file:./script.js",
+	"style": "file:./style.css"
+}

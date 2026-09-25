@@ -1,0 +1,17 @@
+{
+	"$schema": "https://json.schemastore.org/block.json",
+	"apiVersion": 3,
+	"title": "Term cloud",
+	"name": "iu/term-cloud",
+	"description": "Display taxonomy terms as a tag cloud.",
+	"category": "widget",
+	"attributes": {
+		"taxonomy": {
+			"type": "string",
+			"default": "post_tag"
+		}
+	},
+	"editorScript": "file:./block.js",
+	"style": "file:./style.css",
+	"render": "file:./render.php"
+}

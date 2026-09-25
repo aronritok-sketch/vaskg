@@ -1,0 +1,46 @@
+{
+	"$schema": "https://json.schemastore.org/block.json",
+	"apiVersion": 3,
+	"title": "Image",
+	"name": "iu/image",
+	"description": "Display an image element.",
+	"category": "media",
+	"attributes": {
+		"imageID": {
+			"type": "number",
+			"default": null
+		},
+		"imageURL": {
+			"type": "string",
+			"default": ""
+		},
+		"imageThumbURL": {
+			"type": "string",
+			"default": ""
+		},
+		"crop": {
+			"type": "boolean",
+			"default": false
+		},
+		"width": {
+			"type": "string",
+			"default": ""
+		},
+		"height": {
+			"type": "string",
+			"default": ""
+		},
+		"align": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"supports": {
+		"iu": {
+			"link": true,
+			"spacing": true
+		}
+	},
+	"editorScript": "file:./block.js",
+	"style": "file:./style.css"
+}

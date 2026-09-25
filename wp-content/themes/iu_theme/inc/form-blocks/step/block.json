@@ -1,0 +1,27 @@
+{
+	"$schema": "https://json.schemastore.org/block.json",
+	"apiVersion": 3,
+	"title": "Step",
+	"name": "iu/form-step",
+	"description": "Display a step element.",
+	"category": "theme",
+	"parent": [ "iu/form" ],
+	"attributes": {
+		"label": {
+			"type": "string",
+			"default": ""
+		},
+		"prev": {
+			"type": "string",
+			"default": "Előző"
+		},
+		"next": {
+			"type": "string",
+			"default": "Következő"
+		}
+	},
+	"editorScript": "file:./block.js",
+	"editorStyle": "file:./editor.css",
+	"style": "file:./style.css",
+	"viewScript": [ "file:./script.js", "jquery" ]
+}

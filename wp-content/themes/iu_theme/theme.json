@@ -1,0 +1,103 @@
+{
+    "version": 2,
+    "settings": {
+        "appearanceTools": false,
+        "background": {
+            "backgroundImage": false,
+            "backgroundSize": false
+        },
+        "border": {
+            "color": false,
+            "radius": false,
+            "style": false,
+            "width": false
+        },
+        "color": {
+            "button": false,
+            "caption": false,
+            "custom": false,
+            "customDuotone": false,
+            "customGradient": false,
+            "duotone": [],
+            "gradients": [],
+            "link": false,
+            "palette": [
+                {
+                    "name": "White",
+                    "slug": "white",
+                    "color": "#ffffff"
+                },
+                {
+                    "name": "Primary",
+                    "slug": "primary",
+                    "color": "black"
+                },
+                {
+                    "name": "Dark gray",
+                    "slug": "dark-gray",
+                    "color": "#373737"
+                },
+                {
+                    "name": "Light gray",
+                    "slug": "light-gray",
+                    "color": "#939393"
+                }
+            ],
+            "text": false,
+            "background": false,
+            "defaultGradients": false,
+            "defaultPalette": false,
+            "defaultDuotone": false,
+            "heading": false
+        },
+        "dimensions": {
+            "defaultAspectRatios": false,
+            "aspectRatios": {
+                "default": []
+            },
+            "minHeight": false
+        },
+        "layout": {
+            "contentSize": null,
+            "wideSize": null,
+            "allowEditing": false,
+            "allowCustomContentAndWideSize":false
+        },
+        "position": {
+            "sticky": false
+        },
+        "spacing": {
+            "blockGap": null,
+            "margin": false,
+            "padding": false,
+            "units": [],
+            "customSpacingSize": false,
+            "spacingScale": [],
+            "defaultSpacingSizes": false,
+            "spacingSizes": {
+                "default": []
+            }
+        },
+        "shadow": {
+            "defaultPresets": false
+        },
+        "typography": {
+            "customFontSize": false,
+            "dropCap": false,
+            "fluid": false,
+            "fontFamilies": [],
+            "fontSizes": [],
+            "fontStyle": false,
+            "fontWeight": false,
+            "letterSpacing": false,
+            "lineHeight": false,
+            "textColumns": false,
+            "textDecoration": false,
+            "textTransform": false
+        },
+        "useRootPaddingAwareAlignments": false
+    },
+    "styles": null,
+    "customTemplates": {},
+    "templateParts": {}
+}

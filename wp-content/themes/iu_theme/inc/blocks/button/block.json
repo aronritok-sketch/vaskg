@@ -1,0 +1,26 @@
+{
+	"$schema": "https://json.schemastore.org/block.json",
+	"apiVersion": 3,
+	"title": "Button",
+	"name": "iu/button",
+	"parent": [ "iu/button-group" ],
+	"description": "Display a button element.",
+	"category": "text",
+	"attributes": {
+		"text": {
+			"type": "string",
+			"default": "Click me!"
+		},
+		"type": {
+			"type": "string",
+			"default": "default"
+		}
+	},
+	"supports": {
+		"iu": {
+			"link": true
+		}
+	},
+	"editorScript": "file:./block.js",
+	"style": "file:./style.css"
+}

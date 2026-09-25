@@ -1,0 +1,29 @@
+{
+	"$schema": "https://json.schemastore.org/block.json",
+	"apiVersion": 3,
+	"title": "Terms",
+	"name": "iu/terms",
+	"description": "Display selected taxonomy terms.",
+	"category": "widget",
+	"attributes": {
+		"taxonomy": {
+			"type": "string",
+			"default": "category"
+		},
+		"all_text": {
+			"type": "string",
+			"default": "Összes"
+		},
+		"post_counts": {
+			"type": "boolean",
+			"default": false
+		},
+		"buttons": {
+			"type": "boolean",
+			"default": false
+		}
+	},
+	"editorScript": "file:./block.js",
+	"style": [ "file:../button-group/style.css", "file:./style.css" ],
+	"render": "file:./render.php"
+}

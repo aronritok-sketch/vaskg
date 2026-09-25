@@ -1,0 +1,22 @@
+{
+	"$schema": "https://json.schemastore.org/block.json",
+	"apiVersion": 3,
+	"title": "Image slider",
+	"name": "iu/image-slider",
+	"description": "Display an image slider element.",
+	"category": "media",
+	"attributes": {
+		"slides": {
+			"type": "array",
+			"default": []
+		},
+		"params": {
+			"type": "string",
+			"default": "\"arrows\": true,\n\"dots\": true,\n\"fade\": true"
+		}
+	},
+	"editorScript": "file:./block.js",
+	"editorStyle": "file:./editor.css",
+	"style": "file:./style.css",
+	"viewScript": [ "iu-slick", "file:./script.js", "jquery" ]
+}

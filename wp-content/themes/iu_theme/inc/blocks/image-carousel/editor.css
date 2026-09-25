@@ -1,0 +1,24 @@
+.iu-image-carousel-images {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+}
+.iu-image-carousel-images > div {
+	width: 75px;
+	position: relative;
+	cursor: move;
+}
+.iu-image-carousel-images > div.ui-sortable-helper {
+	cursor: grabbing;
+}
+.iu-image-carousel-images > div > img {
+	display: block;
+	width: 100%;
+}
+.iu-image-carousel-images > div > span {
+	color: #cc1818;
+	position: absolute;
+	top: 3px;
+	right: 2px;
+	cursor: pointer;
+}

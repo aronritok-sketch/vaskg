@@ -1,0 +1,85 @@
+.vasskisgep-pager-hero {
+	display: flex;
+}
+.vasskisgep-pager-hero-slide {
+	transition: flex .6s;
+	height: 87vh;
+	min-width: 9.6rem;
+	width: 9.6rem;
+	border-left: .03rem solid white;
+	position: relative;
+	overflow: hidden;
+}
+.vasskisgep-pager-hero-slide:first-child {
+	border: none;
+}
+.vasskisgep-pager-hero-slide.open {
+	flex: 1;
+}
+.vasskisgep-pager-hero:has(.open) .vasskisgep-pager-hero-slide:not(.open) {
+	flex: unset;
+	width: 9.6rem;
+}
+
+.vasskisgep-pager-hero-slide-inner {
+	width: 57vw;
+	height: 100%;
+	position: absolute;
+	top: 0;
+	left: 50%;
+	transform: translateX(-50%);
+}
+.vasskisgep-pager-hero-slide-bg {
+	height: 81%;
+	overflow: hidden;
+	background-size: cover;
+	background-position: center;
+	background-repeat: no-repeat;
+}
+.vasskisgep-pager-hero-slide-content {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	width: 100%;
+}
+.vasskisgep-pager-hero-slide-open {
+	clip-path: shape(from 0% 0%, line to 66.666% 15%, line to 100% 0%, line to 100% 100%, line to 0% 100%, close);
+	background: var(--wp--preset--color--white);
+	padding: 1.5rem 9rem 1.5rem 4.5rem;
+}
+.vasskisgep-pager-hero-slide-open img {
+	display: block;
+}
+.vasskisgep-pager-hero-slide-open p {
+	margin-top: 0;
+}
+.vasskisgep-pager-hero-slide-open > * {
+	opacity: 0;
+	transition: opacity .15s;
+}
+.vasskisgep-pager-hero-slide.open .vasskisgep-pager-hero-slide-open > * {
+	opacity: 1;
+}
+.vasskisgep-pager-hero-slide-closed {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	width: 100%;
+	height: 21rem;
+	opacity: 1;
+	transition: opacity .3s;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	background: var(--wp--preset--color--white);
+	clip-path: shape(from 0% 0%, line to 100% 30%, line to 100% 100%, line to 0% 100%, close);
+	z-index: 1;
+	pointer-events: none;
+	padding-top: 4.5rem;
+}
+.vasskisgep-pager-hero-slide.open .vasskisgep-pager-hero-slide-closed {
+	opacity: 0;
+}
+.vasskisgep-pager-hero-slide-closed img {
+	transform: rotate(-90deg);
+}

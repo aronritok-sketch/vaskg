@@ -1,0 +1,10 @@
+.iu-icon-text {
+	display: flex;
+	align-items: center;
+	gap: var(--iu-icon-text-gap, .6rem);
+	font-family: var(--iu-text-font-family);
+	transition: color .15s;
+}
+.iu-icon-text .iu-icon {
+	transition: color .15s;
+}

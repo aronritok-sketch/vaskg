@@ -1,0 +1,22 @@
+{
+	"$schema": "https://json.schemastore.org/block.json",
+	"apiVersion": 3,
+	"title": "Tabs",
+	"name": "iu/tabs",
+	"description": "Display a tabs element.",
+	"category": "theme",
+	"attributes": {
+		"tabs": {
+			"type": "array",
+			"default": []
+		}
+	},
+	"supports":{
+		"iu": {
+			"spacing": true
+		}
+	},
+	"editorScript": "file:./block.js",
+	"style": "file:./style.css",
+	"viewScript": [ "jquery", "file:./script.js" ]
+}

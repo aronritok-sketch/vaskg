@@ -1,0 +1,20 @@
+{
+	"$schema": "https://json.schemastore.org/block.json",
+	"apiVersion": 3,
+	"title": "Pattern",
+	"name": "iu/pattern",
+	"description": "Display a synced pattern.",
+	"category": "text",
+	"attributes": {
+		"ref": {
+			"type": "number",
+			"default": null
+		}
+	},
+	"supports": {
+		"renaming": false,
+		"html": false
+	},
+	"editorScript": "file:./block.js",
+	"render": "file:./render.php"
+}

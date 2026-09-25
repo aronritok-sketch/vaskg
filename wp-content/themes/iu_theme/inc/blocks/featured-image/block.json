@@ -1,0 +1,46 @@
+{
+	"$schema": "https://json.schemastore.org/block.json",
+	"apiVersion": 3,
+	"title": "Featured image",
+	"name": "iu/featured-image",
+	"description": "Displays a featured image element.",
+	"category": "theme",
+	"attributes": {
+		"imageID": {
+			"type": "number",
+			"default": null
+		},
+		"imageURL": {
+			"type": "string",
+			"default": ""
+		},
+		"imageThumbURL": {
+			"type": "string",
+			"default": ""
+		},
+		"crop": {
+			"type": "boolean",
+			"default": false
+		},
+		"width": {
+			"type": "string",
+			"default": ""
+		},
+		"height": {
+			"type": "string",
+			"default": ""
+		},
+		"align": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"supports": {
+		"iu": {
+			"link": true,
+			"spacing": true
+		}
+	},
+	"editorScript": "file:./block.js",
+	"render": "file:./render.php"
+}

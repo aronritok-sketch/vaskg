@@ -1,0 +1,13 @@
+{
+	"$schema": "https://json.schemastore.org/block.json",
+	"apiVersion": 3,
+	"title": "Template",
+	"name": "iu/template",
+	"description": "Display a template element.",
+	"category": "text",
+	"supports": {
+		"renaming": false,
+		"html": false
+	},
+	"editorScript": "file:./block.js"
+}

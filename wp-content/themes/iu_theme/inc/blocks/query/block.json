@@ -1,0 +1,38 @@
+{
+	"$schema": "https://json.schemastore.org/block.json",
+	"apiVersion": 3,
+	"title": "Query",
+	"name": "iu/query",
+	"description": "Display a query element.",
+	"category": "widgets",
+	"attributes": {
+		"main_query": {
+			"type": "boolean",
+			"default": true
+		},
+		"params": {
+			"type": "string",
+			"default": "\"post_type\": \"page\",\n\"posts_per_page\": -1,\n\"orderby\": \"post_title\""
+		},
+		"template": {
+			"type": "string",
+			"default": "<div class=\"iu-query-item\">\n\t<h3 class=\"iu-heading\">[iu_post_title]</h3>\n\t<p class=\"iu-text\">[iu_post_excerpt]</p>\n\t<p class=\"iu-text\">\n\t\t<a href=\"[iu_post_link]\">Megnézem</a>\n\t</p>\n</div>"
+		},
+		"columns": {
+			"type": "string",
+			"default": "3"
+		},
+		"paging": {
+			"type": "boolean",
+			"default": false
+		}
+	},
+	"supports": {
+		"iu": {
+			"spacing": true
+		}
+	},
+	"editorScript": "file:./block.js",
+	"style": "file:./style.css",
+	"render": "file:./render.php"
+}

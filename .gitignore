@@ -1,0 +1,12 @@
+# WordPress runtime / third-party
+wp-content/uploads/
+wp-content/languages/
+wp-content/upgrade/
+wp-content/upgrade-temp-backup/
+wp-content/plugins/*
+!wp-content/plugins/index.php
+wp-content/cache/
+wp-content/debug.log
+.DS_Store
+node_modules/
+dev/.env

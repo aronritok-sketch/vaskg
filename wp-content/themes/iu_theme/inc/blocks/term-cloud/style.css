@@ -1,0 +1,14 @@
+.iu-term-cloud {
+	display: flex;
+	justify-content: center;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	line-height: 1;
+	gap: .45rem;
+
+	a {
+		padding-top: .45rem;
+		display: block;
+		margin-bottom: -.1em;
+	}
+}

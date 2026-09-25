@@ -1,0 +1,30 @@
+{
+	"$schema": "https://json.schemastore.org/block.json",
+	"apiVersion": 3,
+	"title": "Text input",
+	"name": "iu/form-text",
+	"description": "Display a text input element.",
+	"category": "theme",
+	"parent": [ "iu/form", "iu/group", "iu/form-step" ],
+	"attributes": {
+		"name": {
+			"type": "text",
+			"default": ""
+		},
+		"label": {
+			"type": "text",
+			"default": ""
+		},
+		"placeholder": {
+			"type": "text",
+			"default": ""
+		},
+		"validate": {
+			"type": "text",
+			"default": ""
+		}
+	},
+	"editorScript": "file:./block.js",
+	"viewScript": [ "file:./script.js", "jquery" ],
+	"style": "file:./style.css"
+}

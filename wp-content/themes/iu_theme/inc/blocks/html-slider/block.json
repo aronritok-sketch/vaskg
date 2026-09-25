@@ -1,0 +1,22 @@
+{
+	"$schema": "https://json.schemastore.org/block.json",
+	"apiVersion": 3,
+	"title": "HTML slider",
+	"name": "iu/html-slider",
+	"description": "Display an HTML slider element.",
+	"category": "media",
+	"attributes": {
+		"slides": {
+			"type": "array",
+			"default": []
+		},
+		"params": {
+			"type": "string",
+			"default": "\"slidesToShow\": 3,\n\"slidesToScroll\": 1,\n\"infinite\": true,\n\"autoplay\": true"
+		}
+	},
+	"editorScript": "file:./block.js",
+	"editorStyle": "file:./editor.css",
+	"style": "file:./style.css",
+	"viewScript": [ "iu-slick", "file:./script.js", "jquery" ]
+}

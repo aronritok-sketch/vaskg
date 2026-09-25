@@ -1,0 +1,16 @@
+{
+	"$schema": "https://json.schemastore.org/block.json",
+	"apiVersion": 3,
+	"title": "Accordion",
+	"name": "iu/accordion",
+	"description": "Display a accordion element.",
+	"category": "theme",
+	"supports":{
+		"iu": {
+			"spacing": true
+		}
+	},
+	"editorScript": "file:./block.js",
+	"style": "file:./style.css",
+	"viewScript": [ "jquery", "file:./script.js" ]
+}

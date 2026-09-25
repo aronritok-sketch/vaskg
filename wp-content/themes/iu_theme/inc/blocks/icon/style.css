@@ -1,0 +1,55 @@
+.iu-icon {
+	position: relative;
+	background: var(--iu-text-color);
+	border-radius: 50%;
+	transition: transform .3s;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	text-decoration: none;
+	width: 2.7rem;
+	height: 2.7rem;
+	color: var(--wp--preset--color--white);
+}
+.iu-icon:hover {
+	text-decoration: none;
+}
+a.iu-icon[href]:hover {
+	transform: scale(1.2);
+	cursor: pointer;
+}
+.iu-icon.wp-block-iu-icon:hover {
+	transform: none;
+}
+.iu-icon .dashicon {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%,-50%);
+	color: white;
+}
+.iu-icon svg {
+	display: block;
+	height: var(--iu-icon-svg-height, 1.2em);
+	width: auto;
+}
+.iu-icon.iu-icon-highlight {
+	background: var(--wp--preset--color--primary);
+}
+.iu-icon.iu-icon-inverted {
+	background: none;
+	border: 2px solid var(--iu-text-color);
+}
+.iu-icon.iu-icon-inverted .dashicon {
+	color: var(--iu-text-color);
+}
+.iu-icon.iu-icon-icon {
+	background: none;
+	display: block;
+	width: unset;
+	height: unset;
+	color: var(--iu-text-color);
+}
+.iu-icon.iu-icon-icon .dashicon {
+	color: var(--iu-text-color);
+}

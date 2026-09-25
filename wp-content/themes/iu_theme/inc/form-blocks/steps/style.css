@@ -1,0 +1,60 @@
+.iu-form-steps {
+	display: flex;
+	gap: 1.5rem;
+	margin: 1.5rem auto 5.4rem;
+	width: 80%;
+}
+.iu-form-steps-step {
+	display: flex;
+	gap: 1.5rem;
+}
+.iu-form-steps-step-wrap {
+	text-align: center;
+	width: 10.8rem;
+}
+.iu-form-steps-step:not(:first-child) {
+	flex: 1;
+	position: relative;
+}
+.iu-form-steps-step:not(:first-child):before {
+	content: '';
+	flex: 1;
+}
+.iu-form-steps-step:not(:first-child):after {
+	content: '';
+	position: absolute;
+	top: 1.5rem;
+	left: -4.8rem;
+	width: 78%;
+	border-top: 1px solid rgba(0,0,0,.09);
+}
+.iu-form-steps-step-index {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	color: var(--wp--preset--color--primary);
+	border: 1px solid rgba(0,0,0,.09);
+	width: 3rem;
+	height: 3rem;
+	border-radius: 50%;
+	font-size: 1.8rem;
+	font-weight: bold;
+	margin-bottom: .6rem;
+	/*cursor: pointer;*/
+	transition: color .3s;
+	box-shadow: var(--silverfrog-box-shadow);
+}
+/*.iu-form-steps-step-index:hover {
+	color: var(--wp--preset--color--secondary);
+}*/
+.iu-form-steps-step-label {
+	display: block;
+}
+.iu-form-steps-step:has(~ .active) .iu-form-steps-step-index,
+.iu-form-steps-step.active .iu-form-steps-step-index {
+	color: var(--wp--preset--color--secondary);
+}
+.iu-form-steps-step.active:after,
+.iu-form-steps-step:has(~ .active):after {
+	border-color: var(--wp--preset--color--secondary);
+}

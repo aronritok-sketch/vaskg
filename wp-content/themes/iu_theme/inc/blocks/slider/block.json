@@ -1,0 +1,17 @@
+{
+	"$schema": "https://json.schemastore.org/block.json",
+	"apiVersion": 3,
+	"title": "Slider",
+	"name": "iu/slider",
+	"description": "Display a slider element.",
+	"category": "theme",
+	"attributes": {
+		"params": {
+			"type": "string",
+			"default": "\"autoplay\": true,\n\"autoplaySpeed\": 3000"
+		}
+	},
+	"editorScript": "file:./block.js",
+	"viewScript": [ "file:../../js/slick.min.js", "file:./script.js", "jquery" ],
+	"style": "file:./style.css"
+}

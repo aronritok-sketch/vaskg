@@ -1,0 +1,30 @@
+{
+	"$schema": "https://json.schemastore.org/block.json",
+	"apiVersion": 3,
+	"title": "Post navigation",
+	"name": "iu/post-navigation",
+	"description": "Display a post navigation element.",
+	"category": "design",
+	"attributes": {
+		"params": {
+			"type": "string",
+			"default": ""
+		},
+		"previous": {
+			"type": "string",
+			"default": ""
+		},
+		"next": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"supports": {
+		"iu": {
+			"spacing": true
+		}
+	},
+	"editorScript": "file:./block.js",
+	"style": "file:./style.css",
+	"render": "file:./render.php"
+}

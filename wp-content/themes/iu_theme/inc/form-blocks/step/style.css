@@ -1,0 +1,25 @@
+.iu-form-step {
+	position: absolute;
+	top: -200vh;
+	left: -200vw;
+	visibility: hidden;
+	opacity: 0;
+	transition: opacity .6s;
+	z-index: -99;
+}
+.iu-form-step.active {
+	position: static;
+	visibility: visible;
+	opacity: 1;
+}
+.iu-form-step .iu-form-step-nav {
+	cursor: pointer;
+}
+.iu-form-step-foot {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+.iu-form:has(.iu-form-step) .iu-form-foot {
+	display: none;
+}

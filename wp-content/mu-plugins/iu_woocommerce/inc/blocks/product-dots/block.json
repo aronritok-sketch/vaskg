@@ -1,0 +1,24 @@
+{
+	"$schema": "https://json.schemastore.org/block.json",
+	"apiVersion": 3,
+	"title": "Product Dots",
+	"name": "iu-woocommerce/product-dots",
+	"description": "Product Dots",
+	"category": "iu-woocommerce",
+	"attributes": {
+		"imageID": {
+			"type": "number",
+			"default": null
+		},
+		"imageURL": {
+			"type": "string",
+			"default": ""
+		},
+		"imageThumbURL": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"editorScript": "file:./block.js",
+	"style": "file:./style.css"
+}

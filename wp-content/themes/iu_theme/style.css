@@ -1,0 +1,68 @@
+/**
+ * Theme name: Infinite Unity
+ * Description: Base theme created by Infinite Unity.
+ * Author: Felföldi László
+ * Version: 0.1.0
+ * Depends: iu_list_columns, iu_list_views, iu_list_copy, iu_custom_fields, iu_shortcode_js
+ */
+
+@import url(./variables.css);
+@import url(./inc/blocks/block-styles.css);
+
+* {
+	box-sizing: border-box;
+}
+
+html {
+	font-size: var(--iu-text-font-size);
+	scroll-behavior: smooth;
+}
+body {
+	margin: 0;
+	font-family: var(--iu-text-font-family);
+}
+
+#wpadminbar {
+	position: fixed !important;
+}
+
+a {
+	text-decoration: none;
+	color: var(--iu-link-color);
+	transition: color .15s;
+}
+
+img {
+	max-width: 100%;
+}
+
+span.dashicons {
+	font-size: 1.5rem;
+	width: unset;
+	height: unset;
+}
+
+.iu-stars {
+	display: block;
+	color: var(--wp--preset--color--primary);
+}
+
+@media (min-width: 991.8px) {
+	
+	.d-block { display: block !important; }
+	.d-inline-block { display: inline-block !important; }
+	.d-flex { display: flex !important; }
+	.d-inline-flex { display: inline-flex !important;  }
+	.d-none { display: none !important; }
+
+}
+
+@media (max-width: 991.2px){
+
+	.m-block { display: block !important; }
+	.m-inline-block { display: inline-block !important; }
+	.m-flex { display: flex !important; }
+	.m-inline-flex { display: inline-flex !important;  }
+	.m-none { display: none !important;  }
+
+}

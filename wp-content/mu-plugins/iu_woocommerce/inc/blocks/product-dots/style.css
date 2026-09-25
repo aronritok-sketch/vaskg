@@ -1,0 +1,7 @@
+.iu-woocommerce-product-dots {
+	position: relative;
+}
+.iu-woocommerce-product-dots > img {
+	display: block;
+	width: 100%;
+}

@@ -1,0 +1,39 @@
+.iu-logo-slider {
+	opacity: 0;
+	transition: opacity .3s;
+	overflow: hidden;
+	position: relative;
+}
+.iu-logo-slider.initialized {
+	opacity: 1;
+}
+.iu-logo-slider-sliders {
+	display: flex;
+}
+.iu-logo-slider.initialized .iu-logo-slider-slider {
+	display: flex;
+	animation-name: slide;
+	animation-duration: 21s;
+	animation-iteration-count: infinite;
+	animation-timing-function: linear;
+	flex: 1;
+}
+.iu-logo-slider-slide {
+	flex: 1;
+	padding: 0 1rem;
+}
+.iu-logo-slider-wrap {
+	background: var(--wp--preset--color--white);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
+}
+.iu-logo-slider-wrap img {
+	filter: grayscale(.96);
+}
+
+@keyframes slide {
+  from { transform: translate3d(0%,0,0); }
+  to { transform: translate3d(-100%,0,0); }
+}

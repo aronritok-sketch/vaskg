@@ -1,0 +1,5 @@
+.iu-backtotop {
+	cursor: pointer;
+	font-family: var(--iu-text-font-family);
+	font-size: var(--iu-back-to-top-font-size);
+}
