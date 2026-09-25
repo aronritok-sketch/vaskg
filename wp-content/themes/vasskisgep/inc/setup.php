@@ -32,6 +32,7 @@ class Setup {
         13 => 'product_page',
         14 => 'about_page',
         15 => 'about_design',
+        16 => 'wc_pages_layout',
     ];
 
     private $log = [];
@@ -953,5 +954,33 @@ class Setup {
         update_post_meta($page->ID, Pages::CUSTOM_HEADER, '1');
         $hero = self::media('rolunk-hero.jpg');
         if ($hero) set_post_thumbnail($page->ID, $hero);
+    }
+
+    /**
+     * WooCommerce oldalak: a Fiókom oldal (belépés, jelszó-visszaállítás, profil) shortcode-ja
+     * iu/section → iu/row → iu/column keretbe kerül (mint a kosár és a pénztár); a Termékek
+     * oldal régi szűrője (iu-woocommerce/filter + [products]) helyére az új szűrős lista.
+     */
+    function wc_pages_layout(){
+        $wrap = function($shortcode){
+            return "<!-- wp:iu/section -->\n<section class=\"iu-section\"><!-- wp:iu/row -->\n<div class=\"iu-row\"><!-- wp:iu/column -->\n<div class=\"iu-column iu-column-1-1\"><!-- wp:shortcode -->\n".$shortcode."\n<!-- /wp:shortcode --></div>\n<!-- /wp:iu/column --></div>\n<!-- /wp:iu/row --></section>\n<!-- /wp:iu/section -->";
+        };
+        foreach([ 'myaccount' => '[woocommerce_my_account]', 'cart' => '[woocommerce_cart]', 'checkout' => '[woocommerce_checkout]' ] as $key => $shortcode){
+            $id = wc_get_page_id($key);
+            if ($id <= 0) continue;
+            $content = get_post_field('post_content', $id);
+            if (strpos($content, 'wp:iu/section') !== false || strpos($content, $shortcode) === false) continue;
+            wp_update_post([ 'ID' => $id, 'post_content' => wp_slash($wrap($shortcode)) ]);
+            $this->log[] = 'Oldal keretezve (iu/section): '.get_the_title($id);
+        }
+
+        $shop = wc_get_page_id('shop');
+        if ($shop > 0){
+            $content = get_post_field('post_content', $shop);
+            if (strpos($content, 'wp:iu-woocommerce/filter') !== false && strpos($content, 'vasskisgep/product-listing') === false){
+                wp_update_post([ 'ID' => $shop, 'post_content' => wp_slash(self::content_file('managed/termekek.html')) ]);
+                $this->log[] = 'Termékek oldal: a régi szűrő helyett az új szűrős terméklista';
+            }
+        }
     }
 }

@@ -28,6 +28,8 @@ class Listing {
     }
 
     function __construct(){
+        // A Termékek oldal régi (iu-woocommerce/filter + [products]) tartalma helyett az új lista.
+        add_filter('the_content', [$this, 'replace_legacy_shop_content'], 1);
         add_action('template_redirect', [$this, 'endpoint'], 5);
         add_filter('woocommerce_shortcode_products_query', [$this, 'query_args'], 30, 2);
         add_filter('woocommerce_shortcode_products_query_results', [$this, 'capture_total'], 10, 2);
@@ -38,6 +40,31 @@ class Listing {
         $dir = get_stylesheet_directory();
         $uri = get_stylesheet_directory_uri();
         wp_register_script('vasskisgep-listing', $uri.'/assets/listing.js', ['jquery'], filemtime($dir.'/assets/listing.js'), true);
+    }
+
+    /**
+     * Szűrhető tulajdonságok: minden globális WooCommerce attribútum. Elöl a
+     * setup/catalog/categories.json tulajdonságai a megadott sorrendben, mértékegységgel.
+     * @return array [slug => ['label' => …, 'unit' => …]]
+     */
+    static function filter_attributes(){
+        $out = [];
+        foreach(Catalog::attributes() as $slug => $attribute){
+            if (taxonomy_exists(wc_attribute_taxonomy_name($slug))) $out[$slug] = [ 'label' => $attribute['label'], 'unit' => $attribute['unit'] ?? '' ];
+        }
+        foreach(wc_get_attribute_taxonomies() as $tax){
+            if (isset($out[$tax->attribute_name])) continue;
+            $out[$tax->attribute_name] = [ 'label' => $tax->attribute_label, 'unit' => '' ];
+        }
+        return $out;
+    }
+
+    function replace_legacy_shop_content($content){
+        if (strpos($content, 'wp:iu-woocommerce/filter') === false || strpos($content, 'vasskisgep/product-listing') !== false) return $content;
+        $shop = function_exists('wc_get_page_id') ? wc_get_page_id('shop') : 0;
+        if (!$shop || !(is_shop() || is_page($shop))) return $content;
+        $managed = Setup::content_file('managed/termekek.html');
+        return $managed !== '' ? $managed : '<!-- wp:vasskisgep/product-listing /-->';
     }
 
     /* ---------- Szűrési paraméterek ---------- */
@@ -62,7 +89,7 @@ class Listing {
             $query_args['tax_query'][] = [ 'taxonomy' => 'product_brand', 'field' => 'slug', 'terms' => $brands ];
         }
 
-        foreach(array_keys(Catalog::attributes()) as $slug){
+        foreach(array_keys(self::filter_attributes()) as $slug){
             $terms = self::list_param('attr-'.$slug);
             if (empty($terms)) continue;
             $query_args['tax_query'][] = [ 'taxonomy' => wc_attribute_taxonomy_name($slug), 'field' => 'slug', 'terms' => $terms ];

@@ -13,6 +13,7 @@ require_once(__DIR__.'/listing.php');
 require_once(__DIR__.'/megamenu.php');
 require_once(__DIR__.'/product.php');
 require_once(__DIR__.'/pages.php');
+require_once(__DIR__.'/search.php');
 
 class Theme {
     private static $instance;
@@ -35,6 +36,7 @@ class Theme {
         MegaMenu::get_instance();
         ProductPage::get_instance();
         Pages::get_instance();
+        Search::get_instance();
 
         add_action('after_setup_theme', [$this, 'editor_styles'], 999);
         add_action('wp_enqueue_scripts', [$this, 'enqueue'], 99);

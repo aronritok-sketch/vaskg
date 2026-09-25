@@ -54,6 +54,8 @@ class Shop {
         // archívumon (márka, címke) a lekérdezett elem slugját kategóriaként
         // adja át a [products] listának; ez a márka/címke oldalakon üres listát ad.
         add_filter('shortcode_atts_products', [$this, 'fix_archive_category'], 20, 3);
+        // A design szerinti kereső felirat (a keretrendszer blokkjában fix szöveg).
+        add_filter('render_block_iu-woocommerce/search', function($content){ return str_replace('placeholder="Termékek keresése..."', 'placeholder="Keresés..."', $content); });
         add_filter('render_block_iu/breadcrumbs', [$this, 'term_breadcrumbs'], 10, 2);
 
         // Kosár / pénztár apróságok.

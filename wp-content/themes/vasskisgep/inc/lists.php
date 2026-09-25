@@ -31,6 +31,9 @@ class Lists {
     function __construct(){
         add_action('wp_ajax_vasskisgep_list_sync', [$this, 'ajax_sync']);
         add_action('wp_login', [$this, 'merge_on_login'], 10, 2);
+        // Belépett vásárlónál a lista az adatbázisban (user meta) a mérvadó: ha a böngésző
+        // sütije törlődött vagy lejárt, innen áll vissza (különben az első kattintás felülírná).
+        add_action('init', [$this, 'restore_cookies']);
 
         // Terméklista kártya: a gombok a termékkép jobb felső sarkában; ha a Loop Product
         // mintában nincs kép-blokk, a kártya elején (a mintától függetlenül mindig megjelennek).
@@ -102,6 +105,18 @@ class Lists {
             update_user_meta(get_current_user_id(), $cookie, array_values(array_unique($ids)));
         }
         wp_send_json_success();
+    }
+
+    function restore_cookies(){
+        if (!is_user_logged_in() || headers_sent() || wp_doing_ajax()) return;
+        foreach(self::LISTS as $list => $cookie){
+            if (isset($_COOKIE[$cookie]) && $_COOKIE[$cookie] !== '') continue;
+            $saved = array_filter(array_map('absint', (array)get_user_meta(get_current_user_id(), $cookie, true)));
+            if (empty($saved)) continue;
+            $value = implode(',', $saved);
+            setcookie($cookie, $value, [ 'expires' => time() + YEAR_IN_SECONDS, 'path' => COOKIEPATH ?: '/', 'samesite' => 'Lax' ]);
+            $_COOKIE[$cookie] = $value;
+        }
     }
 
     function merge_on_login($user_login, $user){

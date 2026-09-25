@@ -170,8 +170,22 @@ li.product > .star-rating {
 	pointer-events: none;
 }
 /* A márkajelölés a Cofidis jelvény fölé kerül (a design szerint). */
-li.product .iu-woocommerce-loop-product:has(.vk-cofidis-badge) .iu-group.brand {
+ul.products:not(.columns-1) li.product .iu-woocommerce-loop-product:has(.vk-cofidis-badge) .iu-group.brand {
 	transform: translateY(-2.2rem);
+}
+/* Lista nézet: a jelvények a kép sarkaiban (kedvezmény bal alul, Cofidis jobb alul). */
+.woocommerce > .products.columns-1 > .product .iu-woocommerce-loop-gallery {
+	position: relative;
+}
+.woocommerce > .products.columns-1 > .product .vk-cofidis-badge {
+	right: 0;
+	bottom: 1rem;
+	border-radius: .3rem 0 0 .3rem;
+}
+.woocommerce > .products.columns-1 > .product .iu-group.brand .iu-woocommerce-badges {
+	bottom: 2.5rem;
+	left: 1.5rem;
+	z-index: 3;
 }
 .vk-product-gallery .vk-cofidis-badge,
 .vk-summary .vk-cofidis-badge {
@@ -2703,4 +2717,277 @@ li.product .iu-woocommerce-loop-product:has(.vk-cofidis-badge) .iu-group.brand {
 	.vk-reach-card > h3 { padding-right: 7rem; }
 	.vk-cta-primary h2 { font-size: 1.8rem; }
 	.vk-cta-primary p { font-size: 1rem; }
+}
+
+/* ---------- Fejléc a design szerint (Header container: 1920 px-en felső sáv 51 px, menüsáv 84 px) ---------- */
+@media (min-width: 992px) {
+	.header-top.iu-section {
+		padding-top: .55rem !important;
+		padding-bottom: .55rem !important;
+	}
+	.header-top .iu-group > .iu-group {
+		gap: 1.15rem;
+	}
+	.header-top .iu-icon-text {
+		gap: .3rem;
+	}
+	.header-menu .iu-menu-block > li {
+		flex: 0 0 8rem;
+	}
+	.header-menu .iu-menu-block-wrapper {
+		flex: 0 0 auto;
+	}
+	.header-top .iu-icon-text .iu-icon svg {
+		height: .85em;
+		width: auto;
+	}
+	.header-menu .iu-group:has(> .iu-menu-block-wrapper) {
+		margin-left: 6.9rem;
+	}
+	.header-menu .iu-menu-block > li > a {
+		padding-top: .95rem;
+		padding-bottom: .95rem;
+	}
+	.header-menu .iu-menu-block li.current-menu-item > a,
+	.header-menu .iu-menu-block li.current-menu-ancestor > a {
+		color: var(--iu-menu-color, var(--iu-text-color));
+	}
+	.header-menu .iu-menu-block > li > a:hover {
+		color: var(--wp--preset--color--primary);
+	}
+	.header-menu .iu-woocommerce-search {
+		margin-left: auto;
+	}
+	.header-menu .iu-woocommerce-search-form {
+		width: 20.7rem;
+	}
+	.header-menu .iu-woocommerce-search-input input {
+		height: 2.45rem;
+		padding: 0 .9rem;
+		border: 1px solid #d1d5db;
+		border-right: 0;
+		border-radius: .21rem 0 0 .21rem;
+		background: var(--wp--preset--color--light);
+		font-size: .95rem;
+	}
+	.header-menu .iu-woocommerce-search-input .iu-button {
+		width: 2.45rem;
+		height: 2.45rem;
+		padding: 0;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		border-radius: 0 .21rem .21rem 0;
+	}
+}
+
+/* Részletes szűrés: üres tulajdonság */
+.vk-dd-empty {
+	margin: 0;
+	padding: .3rem .2rem;
+	color: var(--vk-muted);
+	font-size: .85rem;
+}
+.vk-dd-side.vk-dd-disabled > .vk-dd-toggle {
+	opacity: .55;
+}
+
+/* ---------- Kereső: teljes szélességű találati panel a fejléc alatt (inc/search.php) ---------- */
+header .iu-woocommerce-search-results {
+	display: none !important;
+}
+.vk-search-panel {
+	position: fixed;
+	z-index: 9999;
+	max-height: calc(100vh - 9rem);
+	overflow-y: auto;
+	padding: 2rem 2.4rem 1.6rem;
+	background: var(--wp--preset--color--white);
+	border-radius: 0 0 .45rem .45rem;
+	box-shadow: 0 .6rem 1.8rem rgba(0, 0, 0, .14);
+}
+.vk-search-panel[hidden] {
+	display: none;
+}
+.vk-search-close {
+	position: absolute;
+	top: 1rem;
+	right: 1rem;
+	display: flex;
+	padding: .3rem;
+	border: 0;
+	background: none;
+	color: var(--iu-text-color);
+	cursor: pointer;
+}
+.vk-search-close:hover {
+	color: var(--wp--preset--color--primary);
+}
+.vk-search-loading .vk-search-body {
+	opacity: .45;
+	transition: opacity .2s;
+}
+.vk-search-loading .vk-search-body:empty {
+	min-height: 6rem;
+	background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%) 0 0 / 200% 100%;
+	border-radius: .45rem;
+	animation: vk-shimmer 1.2s linear infinite;
+}
+@keyframes vk-shimmer { to { background-position: -200% 0; } }
+.vk-search-grid {
+	display: grid;
+	grid-template-columns: 15rem minmax(0, 1fr);
+	gap: 2.4rem;
+}
+.vk-search-grid.vk-search-noside {
+	grid-template-columns: minmax(0, 1fr);
+}
+.vk-search-heading {
+	margin: 0 0 .9rem;
+	font-size: 1.05rem;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: .04em;
+}
+.vk-search-heading small {
+	color: var(--vk-muted);
+	font-weight: 400;
+}
+.vk-search-side .vk-search-heading + .vk-search-links {
+	margin-bottom: 1.6rem;
+}
+.vk-search-links {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.vk-search-links li + li {
+	border-top: 1px solid var(--vk-border);
+}
+.vk-search-links a {
+	display: flex;
+	flex-direction: column;
+	padding: .45rem 0;
+	color: var(--iu-text-color);
+	font-size: .9rem;
+	line-height: 1.35;
+}
+.vk-search-links a small {
+	color: var(--vk-muted);
+	font-size: .75rem;
+}
+.vk-search-links a:hover {
+	color: var(--wp--preset--color--primary);
+}
+.vk-search-cards {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: .9rem;
+}
+.vk-search-card {
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	border: 1px solid #e5e7eb;
+	border-radius: .45rem;
+	color: var(--iu-text-color);
+	transition: box-shadow .2s, border-color .2s;
+}
+.vk-search-card:hover {
+	border-color: var(--wp--preset--color--primary);
+	box-shadow: 0 .2rem .8rem rgba(0, 0, 0, .08);
+}
+.vk-search-card-image {
+	position: relative;
+	display: block;
+	padding-top: 72%;
+	background: #f9fafb;
+}
+.vk-search-card-image img {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+}
+.vk-search-card-body {
+	display: flex;
+	flex-direction: column;
+	gap: .25rem;
+	padding: .7rem .8rem .8rem;
+}
+.vk-search-card-title {
+	font-family: var(--iu-heading-font-family);
+	font-size: .98rem;
+	font-weight: 600;
+	line-height: 1.25;
+}
+.vk-search-card-stock {
+	font-size: .78rem;
+	color: var(--vk-success);
+}
+.vk-search-card-stock.on-backorder { color: var(--vk-warning); }
+.vk-search-card-stock.out-of-stock { color: #b91c1c; }
+.vk-search-card-price {
+	font-size: 1rem;
+	font-weight: 600;
+}
+.vk-search-card-price del {
+	color: var(--wp--preset--color--primary);
+	font-size: .8rem;
+	font-weight: 400;
+}
+.vk-search-card-price ins {
+	text-decoration: none;
+}
+.vk-search-foot {
+	margin-top: 1.3rem;
+	padding-top: 1rem;
+	border-top: 1px solid var(--vk-border);
+	text-align: right;
+}
+.vk-search-all {
+	font-weight: 600;
+	color: var(--iu-text-color);
+}
+.vk-search-all:hover {
+	color: var(--wp--preset--color--primary);
+}
+.vk-search-empty {
+	display: flex;
+	flex-direction: column;
+	gap: .4rem;
+	padding: .6rem 2.4rem .6rem 0;
+}
+.vk-search-empty span {
+	color: var(--vk-muted);
+}
+.vk-search-none {
+	color: var(--vk-muted);
+}
+@media (max-width: 991.8px) {
+	.vk-search-panel {
+		max-height: calc(100vh - 8rem);
+		padding: 1.4rem 4.2% 1.2rem;
+		border-radius: 0;
+	}
+	.vk-search-grid {
+		grid-template-columns: minmax(0, 1fr);
+		gap: 1.2rem;
+	}
+	.vk-search-main { order: -1; }
+	.vk-search-cards {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+	.vk-search-foot { text-align: left; }
+}
+.vk-search-card-price,
+.vk-search-card-price * {
+	font-family: var(--iu-text-font-family);
+	font-size: 1rem !important;
+	line-height: 1.3;
+}
+.vk-search-card-price del,
+.vk-search-card-price del * {
+	font-size: .8rem !important;
 }

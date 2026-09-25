@@ -91,24 +91,27 @@
 			/* ---------- Részletes szűrés ---------- */
 
 			$side = '';
-			foreach(\VasskisgepTheme\Catalog::attributes() as $slug => $attribute){
+			foreach($L::filter_attributes() as $slug => $attribute){
 				$terms = $L::context_terms(wc_attribute_taxonomy_name($slug), $ids);
-				if (empty($terms)) continue;
 				$selected = $L::list_param('attr-'.$slug);
+				$unit = $attribute['unit'] !== '' ? ' '.$attribute['unit'] : '';
 				$html = '';
-				foreach($terms as $t) $html .= $pill('attr-'.$slug, $t['slug'], esc_html($t['name'].' '.$attribute['unit']).' <small>'.$t['count'].'</small>', in_array($t['slug'], $selected, true));
-				$side .= $dropdown('attr-'.$slug, $attribute['label'].' ('.$attribute['unit'].')', $html, count($selected), 'vk-dd-side');
+				foreach($terms as $t) $html .= $pill('attr-'.$slug, $t['slug'], esc_html($t['name'].$unit).' <small>'.$t['count'].'</small>', in_array($t['slug'], $selected, true));
+				if ($html === '') $html = '<p class="vk-dd-empty">Ebben a listában nincs ilyen tulajdonságú termék.</p>';
+				$label = $attribute['label'].($attribute['unit'] !== '' ? ' ('.$attribute['unit'].')' : '');
+				$side .= $dropdown('attr-'.$slug, $label, $html, count($selected), 'vk-dd-side'.(empty($terms) ? ' vk-dd-disabled' : ''));
 			}
+			if ($side === '') $side = '<p class="vk-dd-empty">Nincs szűrhető tulajdonság. Termékek → Tulajdonságok alatt vehetők fel.</p>';
 
 			$shown = min($total, \VasskisgepTheme\Listing::PER_PAGE * max(1, (int)$L::param('product-page')));
 
-			return '<div class="vk-listing'.($side === '' ? ' vk-listing-noside' : '').'" data-total="'.esc_attr($total).'">
+			return '<div class="vk-listing" data-total="'.esc_attr($total).'">
 				<div class="vk-filter-bar">
 					<div class="vk-filter-bar-left">'.$bar.'</div>
 					<div class="vk-filter-bar-right">'.$bar_right.'</div>
 				</div>
 				<div class="vk-listing-body">
-					'.($side !== '' ? '<aside class="vk-filter-side"><button type="button" class="vk-side-toggle">Részletes szűrés</button><div class="vk-side-inner"><h4 class="iu-heading">Részletes szűrés</h4>'.$side.'</div></aside>' : '').'
+					<aside class="vk-filter-side"><button type="button" class="vk-side-toggle">Részletes szűrés</button><div class="vk-side-inner"><h4 class="iu-heading">Részletes szűrés</h4>'.$side.'</div></aside>
 					<div class="vk-results-wrap">
 						<div class="vk-results">'.$results.'</div>
 						<div class="vk-more"'.($total <= $shown ? ' hidden' : '').'>
