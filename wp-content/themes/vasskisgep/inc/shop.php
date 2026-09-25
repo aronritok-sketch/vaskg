@@ -43,8 +43,18 @@ class Shop {
         add_filter('woocommerce_product_single_add_to_cart_text', function(){ return 'Kosárba teszem'; });
         add_filter('woocommerce_product_add_to_cart_text', [$this, 'loop_add_to_cart_text'], 10, 2);
 
+        // A WooCommerce márka-archívuma saját sablonfájlt töltene be (fejléc,
+        // lábléc nélkül); a téma sablonmotorja kell (tax_product_brand_content.html).
+        add_filter('template_include', [$this, 'brand_template'], 99);
+
         // Márkaoldal: a terméklista a márkára szűr.
         add_filter('woocommerce_shortcode_products_query', [$this, 'brand_archive_filter'], 20, 2);
+
+        // Az iu_woocommerce az is_archive('product_cat') feltétellel minden
+        // archívumon (márka, címke) a lekérdezett elem slugját kategóriaként
+        // adja át a [products] listának; ez a márka/címke oldalakon üres listát ad.
+        add_filter('shortcode_atts_products', [$this, 'fix_archive_category'], 20, 3);
+        add_filter('render_block_iu/breadcrumbs', [$this, 'term_breadcrumbs'], 10, 2);
 
         // Kosár / pénztár apróságok.
         add_filter('woocommerce_cart_item_thumbnail', [$this, 'cart_thumbnail'], 10, 3);
@@ -125,6 +135,41 @@ class Shop {
         if (!$product->is_purchasable() || !$product->is_in_stock()) return 'Részletek';
         if ($product->is_type('variable')) return 'Kiválasztom';
         return 'Kosárba';
+    }
+
+    function fix_archive_category($out, $pairs, $atts){
+        if (!isset($atts['class']) || $atts['class'] !== 'mainquery') return $out;
+        if (!is_tax(['product_brand', 'product_tag']) || empty($out['category'])) return $out;
+
+        $queried = get_queried_object();
+        if ($queried && $out['category'] === $queried->slug && empty($_GET['product-categories'])){
+            $out['category'] = '';
+        }
+        if (is_tax('product_tag') && !wp_doing_ajax()) $out['tag'] = $queried->slug;
+        return $out;
+    }
+
+    /** A keretrendszer morzsamenüje a márka- és címkeoldalakat nem ismeri. */
+    function term_breadcrumbs($content, $block){
+        if (!is_tax(['product_brand', 'product_tag'])) return $content;
+
+        $separator = !empty($block['attrs']['separator']) ? $block['attrs']['separator'] : '/';
+        $shop_id = wc_get_page_id('shop');
+        $home = get_post(get_option('page_on_front'));
+
+        return '<div class="iu-breadcrumbs" itemscope itemtype="http://schema.org/BreadcrumbList"><div class="iu-breadcrumbs-wrap">'
+            .'<span itemprop="itemListElement" itemtype="http://schema.org/ListItem"><a href="'.esc_url(home_url('/')).'">'.esc_html($home ? $home->post_title : 'Kezdőlap').'</a></span>'
+            .'<span class="iu-breadcrumbs-separator">'.esc_html($separator).'</span>'
+            .'<span itemprop="itemListElement" itemtype="http://schema.org/ListItem"><a href="'.esc_url(get_permalink($shop_id)).'">'.esc_html(get_the_title($shop_id)).'</a></span>'
+            .'<span class="iu-breadcrumbs-separator">'.esc_html($separator).'</span>'
+            .'<span class="iu-breadcrumbs-current">'.esc_html(single_term_title('', false)).'</span>'
+            .'</div></div>';
+    }
+
+    function brand_template($template){
+        if (!is_tax('product_brand')) return $template;
+        $index = locate_template('index.php');
+        return $index ?: $template;
     }
 
     function brand_archive_filter($query_args, $atts){
