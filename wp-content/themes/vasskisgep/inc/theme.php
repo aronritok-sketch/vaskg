@@ -8,6 +8,8 @@ require_once(__DIR__.'/shop.php');
 require_once(__DIR__.'/lists.php');
 require_once(__DIR__.'/forms.php');
 require_once(__DIR__.'/reviews.php');
+require_once(__DIR__.'/catalog.php');
+require_once(__DIR__.'/listing.php');
 
 class Theme {
     private static $instance;
@@ -25,6 +27,8 @@ class Theme {
         Lists::get_instance();
         Forms::get_instance();
         Reviews::get_instance();
+        Catalog::get_instance();
+        Listing::get_instance();
 
         add_action('after_setup_theme', [$this, 'editor_styles'], 999);
         add_action('wp_enqueue_scripts', [$this, 'enqueue'], 99);

@@ -6,7 +6,8 @@ set -e
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 python3 "$ROOT/dev/content/pages.py" > /dev/null
 python3 "$ROOT/dev/content/managed.py" > /dev/null
-for f in "$ROOT"/wp-content/themes/vasskisgep/setup/pages/*.html "$ROOT"/wp-content/themes/vasskisgep/setup/managed/*.html; do
+python3 "$ROOT/dev/content/posts.py" > /dev/null
+for f in "$ROOT"/wp-content/themes/vasskisgep/setup/pages/*.html "$ROOT"/wp-content/themes/vasskisgep/setup/managed/*.html "$ROOT"/wp-content/themes/vasskisgep/setup/posts/*.html; do
 	printf '%s: ' "$(basename "$f")"
 	"$ROOT/dev/canon.sh" "$f" home | head -1
 done

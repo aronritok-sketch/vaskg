@@ -87,6 +87,7 @@
 	});
 
 	$(refresh);
+	$(document).on('vk:products-updated', refresh);
 
 
 	/* ---------- Termékoldal: fülek közötti ugrás, mennyiség ---------- */
@@ -98,6 +99,16 @@
 		$tabs.eq(1).trigger('click');
 		$('html, body').animate({ scrollTop: $('.vk-product-tabs').offset().top - 120 }, 300);
 	});
+
+	/* ---------- Térkép: csak kattintásra töltődik be ---------- */
+
+	$(document).on('click', '.vk-map-load', function(){
+		const $map = $(this).closest('.vk-map');
+		$('<iframe loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>')
+			.attr({ src: $map.data('src'), title: $map.data('title') })
+			.appendTo($map.empty().addClass('vk-map-loaded'));
+	});
+
 
 	/* ---------- Kezdőlap: márka-hero mobilon (érintésre nyílik) ---------- */
 

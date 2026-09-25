@@ -2,7 +2,7 @@
 
 	iucb_add_block('vasskisgep/term-header', [
 		'title' => 'Kategória / márka fejléc',
-		'description' => 'A kategória vagy márka leírása, logója és alkategóriái (archív oldalakra).',
+		'description' => 'A kategória vagy márka leírása és logója (archív oldalakra).',
 		'category' => 'iu-woocommerce',
 		'attributes' => [],
 		'editJS' => 'return "Kategória / márka fejléc";',
@@ -18,22 +18,6 @@
 				}
 				if (!empty($term->description)){
 					$html .= '<div class="vk-term-description iu-text">'.wpautop(wp_kses_post($term->description)).'</div>';
-				}
-				$parent = $term->taxonomy === 'product_cat' ? $term->term_id : null;
-			} else {
-				$parent = 0;
-			}
-
-			// Alkategóriák (a Termékek oldalon a főkategóriák).
-			if (!is_null($parent)){
-				$children = get_terms([ 'taxonomy' => 'product_cat', 'parent' => $parent, 'hide_empty' => false, 'orderby' => 'meta_value_num', 'meta_key' => 'order' ]);
-				$children = array_filter($children, function($t){ return $t->slug !== 'egyeb'; });
-				if (!empty($children)){
-					$html .= '<ul class="vk-subcategories">';
-					foreach($children as $child){
-						$html .= '<li><a href="'.esc_url(get_term_link($child)).'">'.esc_html($child->name).'</a></li>';
-					}
-					$html .= '</ul>';
 				}
 			}
 

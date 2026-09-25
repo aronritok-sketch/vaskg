@@ -23,9 +23,56 @@ class Lists {
         return self::$instance;
     }
 
+    /** A kártyán már kirajzolt gombok terméke (a Loop Product mintában lévő blokk ne duplázódjon). */
+    private static $loop_rendered = null;
+
+    const PAGES = [ 'Kedvencek' => 'kedvencek', 'Összehasonlítás' => 'osszehasonlitas' ];
+
     function __construct(){
         add_action('wp_ajax_vasskisgep_list_sync', [$this, 'ajax_sync']);
         add_action('wp_login', [$this, 'merge_on_login'], 10, 2);
+
+        // Terméklista kártya: a gombok a termékkép jobb felső sarkában; ha a Loop Product
+        // mintában nincs kép-blokk, a kártya elején (a mintától függetlenül mindig megjelennek).
+        add_filter('render_block_iu-woocommerce/loop-product-image', [$this, 'image_buttons'], 20, 2);
+        add_action('woocommerce_before_shop_loop_item', [$this, 'loop_buttons'], 2);
+
+        // Fejléc: a link nélküli „Kedvencek” / „Összehasonlítás” ikon-szövegek is a listaoldalra mutassanak.
+        add_filter('render_block_iu/icon-text', [$this, 'header_links'], 10, 2);
+    }
+
+    static function page_url($list){
+        $page = get_page_by_path($list === 'wishlist' ? 'kedvencek' : 'osszehasonlitas');
+        return $page ? get_permalink($page) : home_url('/'.($list === 'wishlist' ? 'kedvencek' : 'osszehasonlitas').'/');
+    }
+
+    function image_buttons($content, $block){
+        $product = wc_get_product();
+        if (!$product) return $content;
+        $buttons = self::buttons($product->get_id(), true);
+        $count = 0;
+        $content = preg_replace_callback('/<div class="iu-woocommerce-loop-gallery[^>]*>/', function($m) use ($buttons){ return $m[0].$buttons; }, $content, 1, $count);
+        if (!$count) $content = $buttons.$content;
+        return $content;
+    }
+
+    function loop_buttons(){
+        $product = wc_get_product();
+        if (!$product) return;
+        if (self::$loop_rendered === $product->get_id()){
+            self::$loop_rendered = null;
+            return;
+        }
+        echo self::buttons($product->get_id(), true);
+        self::$loop_rendered = null;
+    }
+
+    function header_links($content, $block){
+        $text = trim($block['attrs']['text'] ?? '');
+        if (!isset(self::PAGES[$text]) || !empty($block['attrs']['linkUrl'])) return $content;
+        if (strpos($content, 'href=') !== false) return $content;
+        $url = self::page_url($text === 'Kedvencek' ? 'wishlist' : 'compare');
+        return preg_replace('/<a class="iu-icon-text/', '<a href="'.esc_url($url).'" class="iu-icon-text', $content, 1);
     }
 
     /** A lista termékazonosítói (csak létező, közzétett termékek). */
@@ -75,6 +122,7 @@ class Lists {
 
     /** Kedvencek / összehasonlítás gombok egy termékhez. */
     static function buttons($product_id, $compact = false){
+        if ($compact) self::$loop_rendered = (int)$product_id;
         $heart = '<svg width="18" height="16" viewBox="0 0 18 15" fill="none" aria-hidden="true"><path d="M16.75 5.33824C16.75 9.16177 8.75 13.75 8.75 13.75C8.75 13.75 0.75 9.16177 0.75 5.33824C0.75 -0.397053 8.75 -0.397059 8.75 4.30394C8.75 -0.397059 16.75 -0.205885 16.75 5.33824Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
         $compare = '<svg width="16" height="16" viewBox="0 0 14 16" fill="none" aria-hidden="true"><rect x="0.75" y="3.375" width="9.625" height="11.375" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M3.375 0.75H11.25C12.3546 0.75 13.25 1.64543 13.25 2.75V12.125" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
 

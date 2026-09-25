@@ -200,7 +200,7 @@ pages['kapcsolat'] = '\n\n'.join([
                  textarea_field('message', 'Üzenet', 'Miben segíthetünk?', 'required|Írja meg az üzenetét'),
                  accept_field()),
             width='1-2'),
-        col(html_block('<div class="vk-map"><iframe title="Vass Kisgép – Kisvárda" src="https://maps.google.com/maps?q=Vass%20Kisg%C3%A9p%20Kisv%C3%A1rda%20V%C3%A1rosmajor%20%C3%BAt%2020&amp;z=15&amp;output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe></div>'), width='1-2'),
+        col(custom('vasskisgep/map', query='Vass Kisgép Kisvárda Városmajor út 20', title='Vass Kisgép – Kisvárda'), width='1-2'),
         columns='1-2|1-2'), bgColor='light'),
 ])
 

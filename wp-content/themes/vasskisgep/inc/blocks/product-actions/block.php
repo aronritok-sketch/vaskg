@@ -16,7 +16,7 @@
 				'fields' => [
 					'compact' => [
 						'type' => 'toggle',
-						'label' => 'Csak ikonok (terméklista kártyához)'
+						'label' => 'Csak ikonok (elavult: a kártyán automatikusan megjelenik)'
 					]
 				]
 			]
@@ -27,6 +27,8 @@
 			$current = $product instanceof \WC_Product ? $product : wc_get_product();
 			if (!$current) return '';
 
-			return \VasskisgepTheme\Lists::buttons($current->get_id(), !empty($attributes['compact']));
+			// Kártyán a gombokat a Lists osztály a termékképre teszi (régebbi mintákban maradt blokk).
+			if (!empty($attributes['compact'])) return '';
+			return \VasskisgepTheme\Lists::buttons($current->get_id());
 		}
 	]);

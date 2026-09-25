@@ -26,6 +26,9 @@ class Setup {
         7 => 'managed_content',
         8 => 'menu',
         9 => 'permalinks',
+        10 => 'blog_posts',
+        11 => 'email_branding',
+        12 => 'demo_products',
     ];
 
     private $log = [];
@@ -377,65 +380,48 @@ class Setup {
         update_option('woocommerce_gateway_order', [ 'barion' => 0, 'cod' => 1, 'bacs' => 2, 'cheque' => 3 ]);
     }
 
-    /** Termékkategória-fa és márkák a kezdőlapon szereplő gyártókkal. */
+    /**
+     * Termékkategória-fa (a Figma megamenüje alapján: fül → oszlop → csoport → kategória),
+     * szűrhető tulajdonságok (globális attribútumok), márkák, évszak címkék.
+     */
     function product_taxonomies(){
-        $tree = [
-            'Kertészeti gépek' => [ 'kerteszeti-gepek', [
-                'Fűnyírók' => 'funyirok',
-                'Robotfűnyírók' => 'robotfunyirok',
-                'Fűnyíró traktorok' => 'funyiro-traktorok',
-                'Fűkaszák, szegélynyírók' => 'fukaszak-szegelynyirok',
-                'Sövényvágók' => 'sovenyvagok',
-                'Lombfúvók, lombszívók' => 'lombfuvok-lombszivok',
-                'Kapálógépek, talajmarók' => 'kapalogepek-talajmarok',
-                'Permetezők' => 'permetezok',
-                'Metszőollók' => 'metszoollok',
-            ]],
-            'Erdészeti gépek' => [ 'erdeszeti-gepek', [
-                'Láncfűrészek' => 'lancfureszek',
-                'Magassági ágvágók' => 'magassagi-agvagok',
-                'Rönkhasítók' => 'ronkhasitok',
-                'Ágaprítók' => 'agapritok',
-            ]],
-            'Építőipari gépek' => [ 'epitoipari-gepek', [
-                'Áramfejlesztők' => 'aramfejlesztok',
-                'Daraboló- és vágógépek' => 'darabolo-es-vagogepek',
-                'Földfúrók' => 'foldfurok',
-                'Magasnyomású mosók' => 'magasnyomasu-mosok',
-            ]],
-            'Alkatrészek, tartozékok' => [ 'alkatreszek-tartozekok', [
-                'Láncok, vezetőlemezek' => 'lancok-vezetolemezek',
-                'Damilok, fűkaszafejek' => 'damilok-fukaszafejek',
-                'Akkumulátorok, töltők' => 'akkumulatorok-toltok',
-                'Kenőanyagok, üzemanyagok' => 'kenoanyagok-uzemanyagok',
-            ]],
-            'Munkaruházat, védőfelszerelés' => [ 'munkaruhazat-vedofelszereles', []],
-        ];
+        $catalog = json_decode(self::content_file('catalog/categories.json'), true);
 
-        $order = 0;
-        foreach($tree as $name => [$slug, $children]){
-            $parent = $this->ensure_term($name, 'product_cat', $slug);
-            update_term_meta($parent, 'order', $order++);
-            $child_order = 0;
-            foreach($children as $child_name => $child_slug){
-                $child = $this->ensure_term($child_name, 'product_cat', $child_slug, $parent);
-                update_term_meta($child, 'order', $child_order++);
+        $create = function($nodes, $parent) use (&$create){
+            $order = 0;
+            foreach($nodes as $node){
+                [$name, $children] = is_array($node) ? $node : [$node, []];
+                $existing = get_terms([ 'taxonomy' => 'product_cat', 'name' => $name, 'parent' => $parent, 'hide_empty' => false, 'number' => 1 ]);
+                if (!empty($existing) && !is_wp_error($existing)){
+                    $term_id = $existing[0]->term_id;
+                } else {
+                    $result = wp_insert_term($name, 'product_cat', [ 'parent' => $parent ]);
+                    if (is_wp_error($result)) continue;
+                    $term_id = $result['term_id'];
+                }
+                update_term_meta($term_id, 'order', $order++);
+                if (!empty($children)) $create($children, $term_id);
+            }
+        };
+        $create($catalog['tree'], 0);
+        delete_option('product_cat_children');
+        $this->log[] = 'Termékkategóriák létrehozva (megamenü szerinti fa)';
+
+        foreach($catalog['attributes'] as $attribute){
+            if (!wc_attribute_taxonomy_id_by_name($attribute['slug'])){
+                wc_create_attribute([
+                    'name' => $attribute['label'],
+                    'slug' => $attribute['slug'],
+                    'type' => 'select',
+                    'order_by' => 'name_num',
+                    'has_archives' => false
+                ]);
+                $this->log[] = 'Tulajdonság: '.$attribute['label'].' ('.$attribute['unit'].')';
             }
         }
-        $this->log[] = 'Termékkategóriák létrehozva';
+        delete_transient('wc_attribute_taxonomies');
 
-        // A tesztként feltöltött fűnyírók a Fűnyírók kategóriába kerülnek.
-        $mowers = get_term_by('slug', 'funyirok', 'product_cat');
         $other = get_term_by('slug', 'egyeb', 'product_cat');
-        if ($mowers){
-            // (Nem 's' keresés: a téma a keresést bejegyzésekre szűkíti.)
-            $products = get_posts([ 'post_type' => 'product', 'numberposts' => -1, 'post_status' => 'any' ]);
-            foreach($products as $product){
-                if (mb_stripos($product->post_title, 'fűnyíró') === false) continue;
-                wp_set_object_terms($product->ID, [(int)$mowers->term_id], 'product_cat');
-            }
-        }
-        if ($other) update_option('default_product_cat', $other->term_id);
 
         if (taxonomy_exists('product_brand')){
             $brands = [
@@ -627,6 +613,172 @@ class Setup {
             'menu-item-position' => $item->menu_order,
             'menu-item-status' => 'publish'
         ]);
+    }
+
+    /**
+     * Tudástár: a mentésben lévő "Lorem ipsum dolor" helyőrző bejegyzések helyére
+     * valódi cikkek (csak ha a bejegyzés még a helyőrző címet viseli).
+     */
+    function blog_posts(){
+        $data = json_decode(self::content_file('posts/posts.json'), true);
+        if (empty($data)) return;
+
+        $topics = [];
+        foreach($data['topics'] as $slug => $name){
+            $topics[$slug] = $this->ensure_term($name, 'category', $slug);
+        }
+
+        foreach($data['posts'] as $item){
+            $post = get_post($item['id']);
+            if (!$post || $post->post_type !== 'post' || $post->post_title !== 'Lorem ipsum dolor') continue;
+
+            wp_update_post([
+                'ID' => $post->ID,
+                'post_title' => $item['title'],
+                'post_name' => $item['slug'],
+                'post_excerpt' => $item['excerpt'],
+                'post_content' => wp_slash(self::content_file('posts/'.$item['slug'].'.html')),
+                'post_status' => 'publish'
+            ]);
+            if (!empty($topics[$item['topic']])) wp_set_post_categories($post->ID, [ $topics[$item['topic']] ]);
+
+            $image = $this->attachment_by_name($item['image']);
+            if ($image) set_post_thumbnail($post->ID, $image);
+
+            $this->log[] = 'Tudástár cikk: '.$item['title'];
+        }
+
+        // A helyőrző "Kategória" téma üresen maradt.
+        $placeholder = get_term_by('slug', 'kategoria', 'category');
+        if ($placeholder && $placeholder->name === 'Kategória'){
+            $placeholder = get_term($placeholder->term_id, 'category');
+            if ((int)$placeholder->count === 0) wp_delete_term($placeholder->term_id, 'category');
+        }
+    }
+
+    /**
+     * Bemutató termékek (SKU: DEMO-xxx) a webshop teszteléséhez. A korábbi,
+     * egyforma "TESZT001" termékek piszkozatba kerülnek. Élesítés előtt a DEMO
+     * termékek törlendők (Termékek → keresés: DEMO-).
+     */
+    function demo_products(){
+        $products = json_decode(self::content_file('catalog/demo-products.json'), true);
+        if (empty($products)) return;
+
+        // Az újonnan létrehozott attribútum-taxonómiák ebben a kérésben még nincsenek regisztrálva.
+        foreach(wc_get_attribute_taxonomies() as $tax){
+            $taxonomy = wc_attribute_taxonomy_name($tax->attribute_name);
+            if (!taxonomy_exists($taxonomy)) register_taxonomy($taxonomy, 'product', [ 'hierarchical' => false, 'public' => false ]);
+        }
+
+        foreach(get_posts([ 'post_type' => 'product', 'numberposts' => -1, 'post_status' => 'publish' ]) as $post){
+            $sku = get_post_meta($post->ID, '_sku', true);
+            if (strpos($sku, 'TESZT001') === 0){
+                wp_update_post([ 'ID' => $post->ID, 'post_status' => 'draft' ]);
+            }
+        }
+
+        $ids_by_sku = [];
+        foreach($products as $item){
+            $id = wc_get_product_id_by_sku($item['sku']);
+            $product = $id ? wc_get_product($id) : new \WC_Product_Simple();
+
+            $product->set_name($item['name']);
+            $product->set_sku($item['sku']);
+            $product->set_status('publish');
+            $product->set_regular_price((string)$item['regular_price']);
+            $product->set_sale_price($item['sale_price'] ? (string)$item['sale_price'] : '');
+            $product->set_short_description($item['short_description']);
+            $product->set_description($item['description']);
+            $product->set_featured(!empty($item['featured']));
+            $product->set_weight((string)$item['weight']);
+
+            [$status, $qty] = array_pad(explode(':', $item['stock']), 2, null);
+            if ($status === 'instock'){
+                $product->set_manage_stock(true);
+                $product->set_stock_quantity((int)$qty);
+                $product->set_backorders('no');
+            } elseif ($status === 'backorder'){
+                $product->set_manage_stock(true);
+                $product->set_stock_quantity(0);
+                $product->set_backorders('notify');
+            } else {
+                $product->set_manage_stock(true);
+                $product->set_stock_quantity(0);
+                $product->set_backorders('no');
+            }
+
+            $category = get_terms([ 'taxonomy' => 'product_cat', 'name' => $item['category'], 'hide_empty' => false, 'number' => 1 ]);
+            if (!empty($category) && !is_wp_error($category)) $product->set_category_ids([ $category[0]->term_id ]);
+
+            $tags = [];
+            foreach($item['seasons'] as $season){
+                $tag = get_term_by('slug', $season, 'product_tag');
+                if ($tag) $tags[] = $tag->term_id;
+            }
+            $product->set_tag_ids($tags);
+
+            if (!empty($item['image'])){
+                $image = $this->attachment_by_name($item['image']);
+                if ($image) $product->set_image_id($image);
+            }
+
+            $attributes = [];
+            $attribute_terms = [];
+            $position = 0;
+            foreach($item['attributes'] as $slug => $value){
+                $taxonomy = wc_attribute_taxonomy_name($slug);
+                $term = get_term_by('name', $value, $taxonomy);
+                if (!$term){
+                    // Tizedes értéknél a vessző helyett kötőjel a slugban („0,9” → 0-9, nem 09).
+                    $result = wp_insert_term($value, $taxonomy, [ 'slug' => sanitize_title(str_replace([',', '.'], '-', $value)) ]);
+                    if (is_wp_error($result)) continue;
+                    $term = get_term($result['term_id'], $taxonomy);
+                }
+                $attribute = new \WC_Product_Attribute();
+                $attribute->set_id(wc_attribute_taxonomy_id_by_name($slug));
+                $attribute->set_name($taxonomy);
+                $attribute->set_options([ $term->term_id ]);
+                $attribute_terms[$taxonomy] = (int)$term->term_id;
+                $attribute->set_position($position++);
+                $attribute->set_visible(true);
+                $attribute->set_variation(false);
+                $attributes[] = $attribute;
+            }
+            $product->set_attributes($attributes);
+
+            $product->update_meta_data('_vk_promo', $item['promo']);
+            $product->update_meta_data('_vk_cofidis', $item['cofidis'] ? 'yes' : 'no');
+            $id = $product->save();
+
+            // Az attribútum-kifejezések kapcsolata (a set_attributes csak a termék-metát írja).
+            foreach($attribute_terms as $taxonomy => $term_id){
+                wp_set_object_terms($id, [ $term_id ], $taxonomy);
+            }
+            if (!empty($item['brand'])) wp_set_object_terms($id, $item['brand'], 'product_brand');
+
+            $ids_by_sku[$item['sku']] = $id;
+        }
+
+        foreach($products as $item){
+            if (empty($item['cross_sells'])) continue;
+            $product = wc_get_product($ids_by_sku[$item['sku']]);
+            $product->set_cross_sell_ids(array_values(array_filter(array_map(function($sku) use ($ids_by_sku){ return $ids_by_sku[$sku] ?? 0; }, $item['cross_sells']))));
+            $product->save();
+        }
+
+        wc_delete_product_transients();
+        delete_transient('wc_term_counts');
+        $this->log[] = 'Bemutató termékek: '.count($products).' db (DEMO-001…), a TESZT001 termékek piszkozatba kerültek';
+    }
+
+    /** Rendelési e-mailek a webshop színeivel. */
+    function email_branding(){
+        $this->set_option('woocommerce_email_base_color', '#F36517');
+        $this->set_option('woocommerce_email_background_color', '#F3F4F6');
+        $this->set_option('woocommerce_email_body_background_color', '#FFFFFF');
+        $this->set_option('woocommerce_email_text_color', '#1A1A1A');
+        $this->set_option('woocommerce_email_footer_text_color', '#6B7280');
     }
 
     /** Tudástár cikkek URL-je: /tudastar/cikk-neve/ (dátum nélkül). */

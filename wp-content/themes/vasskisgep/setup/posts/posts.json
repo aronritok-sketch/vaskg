@@ -1,0 +1,33 @@
+{
+    "topics": {
+        "gepvalasztas": "Gépválasztás",
+        "karbantartas": "Karbantartás",
+        "szezonalis-teendok": "Szezonális teendők"
+    },
+    "posts": [
+        {
+            "id": 1,
+            "slug": "hogyan-valasszunk-funyirot",
+            "title": "Hogyan válasszunk fűnyírót?",
+            "topic": "gepvalasztas",
+            "image": "stiga-lawnmower-in-garden",
+            "excerpt": "A kert mérete, a terep és a fű jellege dönti el, hogy benzines, akkumulátoros, önjáró vagy robotfűnyíró a jó választás. Összegyűjtöttük a legfontosabb szempontokat."
+        },
+        {
+            "id": 215,
+            "slug": "funyiro-teli-tarolasa",
+            "title": "A fűnyíró felkészítése a téli tárolásra",
+            "topic": "szezonalis-teendok",
+            "image": "kerti-kisgepek-karbantartasa",
+            "excerpt": "Néhány egyszerű lépéssel elkerülhető, hogy tavasszal ne induljon a gép. Üzemanyag, tisztítás, kés, akkumulátor – mire figyeljen a szezon végén."
+        },
+        {
+            "id": 217,
+            "slug": "lancfuresz-karbantartasa",
+            "title": "Láncfűrész karbantartása: lánc, vezetőlemez, levegőszűrő",
+            "topic": "karbantartas",
+            "image": "stihl-tools-in-forest",
+            "excerpt": "Az éles lánc, a jól kenő vezetőlemez és a tiszta levegőszűrő a biztonságos, hatékony vágás alapja. A legfontosabb rendszeres teendők egy helyen."
+        }
+    ]
+}

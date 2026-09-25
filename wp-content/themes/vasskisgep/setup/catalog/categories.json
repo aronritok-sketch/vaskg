@@ -1,0 +1,298 @@
+{
+ "tree": [
+  [
+   "Kerti és erdészeti gépek",
+   [
+    [
+     "Fűnyírás és gyepápolás",
+     [
+      [
+       "Fűnyírók",
+       [
+        "Benzinmotoros fűnyírók",
+        "Akkumulátoros fűnyírók",
+        "Suhanó- és hengerkéses fűnyírók"
+       ]
+      ],
+      [
+       "Fűnyíró traktorok",
+       [
+        "Fűgyűjtős fűnyíró traktorok",
+        "Oldalkidobós fűnyíró traktorok"
+       ]
+      ],
+      [
+       "További gépek",
+       [
+        "Robotfűnyírók",
+        "Fűkaszák és szegélynyírók",
+        "Gyepszellőztetők",
+        "Kerekes és távirányítású bozótvágók"
+       ]
+      ]
+     ]
+    ],
+    [
+     "Fa- és sövényápolás",
+     [
+      [
+       "Láncfűrészek és ágnyesők",
+       [
+        "Benzines motorfűrészek",
+        "Elektromos láncfűrészek",
+        "Akkumulátoros láncfűrészek",
+        "Magassági ágvágók",
+        "Fagondozó fűrészek"
+       ]
+      ],
+      [
+       "Metszés és sövényápolás",
+       [
+        "Sövénynyírók és sövényvágók",
+        "Metszőollók",
+        "Kéziszerszámok és erdészeti eszközök",
+        "Kerekes bozótvágó"
+       ]
+      ],
+      [
+       "Faanyag-feldolgozás",
+       [
+        "Ágaprítók és ágdarálók",
+        "Komposztaprítók",
+        "Rönkhasítók",
+        "Tuskómarók"
+       ]
+      ]
+     ]
+    ],
+    [
+     "Talajművelés és kertgondozás",
+     [
+      [
+       "Talajművelő gépek",
+       [
+        "Kapálógépek és rotációs kapák",
+        "Talajmarók",
+        "Multifunkciós művelőgépek",
+        "Egytengelyes traktorok"
+       ]
+      ],
+      [
+       "Kombi- és multirendszerek",
+       [
+        "Kombirendszerek",
+        "Multirendszerek",
+        "Adapterek és munkaeszközök"
+       ]
+      ],
+      [
+       "Fúrás, ásás és szállítás",
+       [
+        "Talaj- és gödörfúrók",
+        "Árokásók",
+        "Utánfutók",
+        "Ekék és talajművelő eszközök"
+       ]
+      ],
+      [
+       "Permetezés",
+       [
+        "Kézi és háti permetezők",
+        "Akkumulátoros permetezők",
+        "Motoros permetezőgépek"
+       ]
+      ]
+     ]
+    ],
+    [
+     "Tisztítás, víz és energia",
+     [
+      [
+       "Terület- és kerttisztítás",
+       [
+        "Lombfúvók",
+        "Lombszívók és aprítók",
+        "Seprőgépek",
+        "Térkőtisztítók"
+       ]
+      ],
+      [
+       "Gépi tisztítás",
+       [
+        "Magasnyomású mosók",
+        "Száraz-nedves porszívók"
+       ]
+      ],
+      [
+       "Víz és energia",
+       [
+        "Vízszivattyúk és motorpumpák",
+        "Áramfejlesztők és aggregátorok",
+        "Kompresszorok",
+        "Motorok"
+       ]
+      ]
+     ]
+    ]
+   ]
+  ],
+  [
+   "Építőipari gépek",
+   [
+    [
+     "Vágás és bontás",
+     [
+      [
+       "Daraboló gépek",
+       [
+        "Motoros daraboló gépek",
+        "Akkumulátoros daraboló gépek",
+        "Gyémánt vágótárcsák"
+       ]
+      ],
+      [
+       "Bontás és fúrás",
+       [
+        "Bontókalapácsok",
+        "Magfúrók"
+       ]
+      ]
+     ]
+    ],
+    [
+     "Tömörítés és betonozás",
+     [
+      [
+       "Tömörítő gépek",
+       [
+        "Lapvibrátorok",
+        "Döngölők"
+       ]
+      ],
+      [
+       "Betongépek",
+       [
+        "Betonkeverők",
+        "Betonvibrátorok"
+       ]
+      ]
+     ]
+    ],
+    [
+     "Ipari energia és tisztítás",
+     [
+      [
+       "Energia",
+       [
+        "Ipari áramfejlesztők",
+        "Ipari kompresszorok"
+       ]
+      ],
+      [
+       "Ipari tisztítás",
+       [
+        "Ipari magasnyomású mosók",
+        "Ipari porszívók"
+       ]
+      ]
+     ]
+    ]
+   ]
+  ],
+  [
+   "Alkatrészek és karbantartás",
+   [
+    [
+     "Alkatrészek",
+     [
+      [
+       "Vágóelemek",
+       [
+        "Láncok és vezetőlemezek",
+        "Damilok és fűkaszafejek",
+        "Fűnyírókések"
+       ]
+      ],
+      [
+       "Motoralkatrészek",
+       [
+        "Szűrők",
+        "Gyújtógyertyák"
+       ]
+      ]
+     ]
+    ],
+    [
+     "Kenő- és üzemanyagok",
+     [
+      [
+       "Olajok",
+       [
+        "Motorolajok",
+        "Lánckenő olajok"
+       ]
+      ],
+      [
+       "Üzemanyagok",
+       [
+        "Üzemanyagok és adalékok"
+       ]
+      ]
+     ]
+    ],
+    [
+     "Akkumulátorok és töltők",
+     [
+      [
+       "Energiaellátás",
+       [
+        "Akkumulátorok",
+        "Töltők"
+       ]
+      ]
+     ]
+    ],
+    [
+     "Munkaruházat és védőfelszerelés",
+     [
+      [
+       "Védőfelszerelés",
+       [
+        "Vágásbiztos ruházat",
+        "Sisakok és arcvédők",
+        "Kesztyűk és lábbelik"
+       ]
+      ]
+     ]
+    ]
+   ]
+  ]
+ ],
+ "attributes": [
+  {
+   "slug": "loketterfogat",
+   "label": "Lökettérfogat",
+   "unit": "cm³"
+  },
+  {
+   "slug": "teljesitmeny",
+   "label": "Teljesítmény",
+   "unit": "LE"
+  },
+  {
+   "slug": "tomeg",
+   "label": "Tömeg",
+   "unit": "kg"
+  },
+  {
+   "slug": "vagasszelesseg",
+   "label": "Vágásszélesség",
+   "unit": "cm"
+  },
+  {
+   "slug": "garancia",
+   "label": "Garancia",
+   "unit": "hó"
+  }
+ ]
+}

@@ -26,7 +26,7 @@ ENTRIES = [
     (30, 'iu_template', 'footer.html'),
     (2, 'page', 'front-page.html'),
     (6, 'page', 'termekek.html'),
-    (121, 'iu_pattern', 'loop-product.html'),
+    # A Loop Product mintát már nem kezeljük: a kártya gombjait a Lists osztály teszi a képre.
 ]
 
 
@@ -52,7 +52,8 @@ def header(s):
 
 
 def footer(s):
-    return s.replace('https://dev.otletoldal.hu/adatkezelesi-tajekoztato', HOME + '/adatkezelesi-tajekoztato/')
+    s = s.replace('https://dev.otletoldal.hu/adatkezelesi-tajekoztato', HOME + '/adatkezelesi-tajekoztato/')
+    return s.replace('>Szervíz</a>', '>Szerviz</a>')
 
 
 def front_page(s):
@@ -97,14 +98,11 @@ def front_page(s):
 
 
 def shop_page(s):
-    s = s.replace('<!-- wp:paragraph {"className":""} -->\n<p class="iu-text"></p>\n<!-- /wp:paragraph -->', '')
-    s = s.replace('<div class="iu-column iu-column-3-4"><!-- wp:shortcode -->',
-                  '<div class="iu-column iu-column-3-4"><!-- wp:vasskisgep/term-header /-->\n\n<!-- wp:shortcode -->')
-    return s
-
-
-def loop_product(s):
-    return '<!-- wp:vasskisgep/product-actions {"compact":true} /-->\n\n' + s
+    # A szűrős terméklista (vasskisgep/product-listing) a régi szűrő + [products] helyett.
+    return ('<!-- wp:iu/section {"paddingTop":"1.5rem"} -->\n<section class="iu-section"><!-- wp:iu/row -->\n'
+            '<div class="iu-row"><!-- wp:iu/column -->\n<div class="iu-column iu-column-1-1">'
+            '<!-- wp:vasskisgep/product-listing /--></div>\n<!-- /wp:iu/column --></div>\n<!-- /wp:iu/row --></section>\n'
+            '<!-- /wp:iu/section -->')
 
 
 TRANSFORMS = {
@@ -112,7 +110,6 @@ TRANSFORMS = {
     'footer.html': footer,
     'front-page.html': front_page,
     'termekek.html': shop_page,
-    'loop-product.html': loop_product,
 }
 
 if __name__ == '__main__':

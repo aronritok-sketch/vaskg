@@ -89,8 +89,8 @@ class Shop {
         wp_enqueue_script('vasskisgep-shop', $uri.'/assets/shop.js', ['jquery'], filemtime($dir.'/assets/shop.js'), true);
         wp_localize_script('vasskisgep-shop', 'vasskisgep', [
             'ajax_url' => admin_url('admin-ajax.php'),
-            'wishlist_url' => get_permalink(get_page_by_path('kedvencek')),
-            'compare_url' => get_permalink(get_page_by_path('osszehasonlitas')),
+            'wishlist_url' => Lists::page_url('wishlist'),
+            'compare_url' => Lists::page_url('compare'),
             'compare_limit' => Lists::COMPARE_LIMIT,
             'cookie_path' => COOKIEPATH ?: '/',
             'lists_nonce' => is_user_logged_in() ? wp_create_nonce('vasskisgep-lists') : '',
@@ -149,19 +149,31 @@ class Shop {
         return $out;
     }
 
-    /** A keretrendszer morzsamenüje a márka- és címkeoldalakat nem ismeri. */
+    /** A keretrendszer morzsamenüje a márka- és címkeoldalt nem ismeri, a kategóriaoldalon nem zárja le a markupot. */
     function term_breadcrumbs($content, $block){
-        if (!is_tax(['product_brand', 'product_tag'])) return $content;
+        if (!is_tax(['product_brand', 'product_tag', 'product_cat'])) return $content;
 
         $separator = !empty($block['attrs']['separator']) ? $block['attrs']['separator'] : '/';
         $shop_id = wc_get_page_id('shop');
         $home = get_post(get_option('page_on_front'));
+
+        // Kategóriánál a szülő kategóriák (a keretrendszer ennél nem zárja le a markupot).
+        $ancestors = '';
+        $term = get_queried_object();
+        if ($term->taxonomy === 'product_cat'){
+            foreach(array_reverse(get_ancestors($term->term_id, 'product_cat', 'taxonomy')) as $ancestor_id){
+                $ancestor = get_term($ancestor_id, 'product_cat');
+                $ancestors .= '<span itemprop="itemListElement" itemtype="http://schema.org/ListItem"><a href="'.esc_url(get_term_link($ancestor)).'">'.esc_html($ancestor->name).'</a></span>'
+                    .'<span class="iu-breadcrumbs-separator">'.esc_html($separator).'</span>';
+            }
+        }
 
         return '<div class="iu-breadcrumbs" itemscope itemtype="http://schema.org/BreadcrumbList"><div class="iu-breadcrumbs-wrap">'
             .'<span itemprop="itemListElement" itemtype="http://schema.org/ListItem"><a href="'.esc_url(home_url('/')).'">'.esc_html($home ? $home->post_title : 'Kezdőlap').'</a></span>'
             .'<span class="iu-breadcrumbs-separator">'.esc_html($separator).'</span>'
             .'<span itemprop="itemListElement" itemtype="http://schema.org/ListItem"><a href="'.esc_url(get_permalink($shop_id)).'">'.esc_html(get_the_title($shop_id)).'</a></span>'
             .'<span class="iu-breadcrumbs-separator">'.esc_html($separator).'</span>'
+            .$ancestors
             .'<span class="iu-breadcrumbs-current">'.esc_html(single_term_title('', false)).'</span>'
             .'</div></div>';
     }
