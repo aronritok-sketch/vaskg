@@ -3279,3 +3279,16 @@ footer .iu-form-submit .iu-button-text:after {
 	.vk-price-vat { font-size: .92rem; }
 	.vk-product-summary { gap: 1rem; }
 }
+
+/* Cofidis áruhitel: tájékoztató a köszönőoldalon */
+.vk-cofidis-notice {
+	flex-direction: column;
+	align-items: center;
+	max-width: 36rem;
+	margin: 1.5rem auto;
+	padding: 1.2rem 1.5rem;
+	text-align: center;
+}
+.vk-cofidis-notice p + p {
+	margin-top: .9rem;
+}

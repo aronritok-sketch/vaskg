@@ -75,7 +75,10 @@ A `wp-content/plugins`, `uploads` és `languages` mappák nincsenek verzióköve
 - [ ] **Kategóriafa**: az Építőipari gépek és az Alkatrészek és karbantartás ágat a Figma nem tartalmazza (a „Mega dropdown szöveges tartalma” dokumentum hiányzott) – egyeztetni, és a `setup/catalog/categories.json` alapján vagy az adminban javítani.
 - [ ] **Nyitvatartás**: a Rólunk oldalon a Figma szerinti „H–P: 7:30–16:30, Szo: 7:30–12:00” szerepel – ellenőrizni.
 - [ ] **Keresőmotorok**: élesítéskor Beállítások → Olvasás → „Keresőmotorok…” jelölés kivétele.
-- [ ] **Cofidis** (áruhitel): a kalkulátor kész, de csak akkor jelenik meg, ha a Megjelenés → Beállítások → Cofidis áruhitel fülön meg van adva a **THM** (és igény szerint ügyleti kamat, futamidők, min./max. hitelösszeg, reprezentatív példa szövege) – ezeket a Cofidis adja a kereskedői szerződéssel. A hitelkérelem indítása (fizetési mód a pénztárban) a Cofidis bővítményével / API-jával oldható meg, ehhez partnerazonosító és teszt környezet kell.
+- [ ] **Cofidis** (áruhitel):
+    - *Fizetési mód* (`inc/cofidis.php`, `inc/cofidis-gateway.php`): WooCommerce → Beállítások → Fizetés → **Cofidis áruhitel** → Engedélyezés. Csak akkor jelenik meg a pénztárban, ha a kosár minden terméke „Cofidis áruhitel” jelölésű és a végösszeg a min./max. határon belül van. A rendelés „Függőben” állapotba kerül (a készlet lefoglalva), a vásárló tájékoztatást kap (köszönőoldal + e-mail, opcionálisan a Cofidis hitelkérelmi linkjével). Hitelbírálat után a rendelésnél a *Rendelés műveletek* közül: „Cofidis: hitel jóváhagyva” (→ Feldolgozás alatt) vagy „elutasítva” (→ Törölve, a készlet visszaáll).
+    - *Kalkulátor*: Megjelenés → Beállítások → Cofidis áruhitel fülön THM, ügyleti kamat, futamidők, min./max. hitelösszeg, reprezentatív példa (a Cofidis szerződés adatai).
+    - *Online hitelkérelem (API)*: a Cofidis **webshop / online áruhitel** kereskedői dokumentációja kell hozzá (a PSD2 számlainformációs API nem erre való). Bekötési pontok: `vasskisgep_cofidis_start_application` szűrő (a rendelésből hitelkérelmet indít, az átirányítási URL-t adja vissza) és `vasskisgep_cofidis_callback` szűrő a `/wp-json/vasskisgep/v1/cofidis/callback` végponthoz (hitelesség ellenőrzése, `['order_id' => …, 'status' => 'approved'|'rejected'|'pending']`). Bekötés nélkül a végpont 501-gyel elutasít.
 
 ## Funkciók
 
