@@ -153,6 +153,34 @@ li.product > .star-rating {
 .iu-woocommerce-loop-gallery {
 	position: relative;
 }
+/* Egyforma magas kártyák a rácsban és a karusszelekben: a kártya kitölti a sort, az ár + gomb sor alulra kerül. */
+.iu-woocommerce-product-carousel .slick-track > .slick-slide {
+	display: flex;
+	height: auto;
+}
+ul.products:not(.columns-1) > li.product {
+	display: flex;
+	flex-direction: column;
+}
+.iu-woocommerce-product-carousel .slick-slide > .iu-woocommerce-loop-product,
+ul.products:not(.columns-1) > li.product > .iu-woocommerce-loop-product {
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+	width: 100%;
+}
+.iu-woocommerce-product-carousel .slick-slide > .iu-woocommerce-loop-product > .iu-group-direction-column,
+ul.products:not(.columns-1) > li.product > .iu-woocommerce-loop-product > .iu-group-direction-column {
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+	gap: 0;
+}
+.iu-woocommerce-product-carousel .slick-slide > .iu-woocommerce-loop-product > .iu-group-direction-column > :last-child,
+ul.products:not(.columns-1) > li.product > .iu-woocommerce-loop-product > .iu-group-direction-column > :last-child {
+	margin-top: auto;
+	padding-top: .75rem;
+}
 /* Készletállapot színei a design szerint. */
 p.stock.in-stock {
 	color: #237a43;
