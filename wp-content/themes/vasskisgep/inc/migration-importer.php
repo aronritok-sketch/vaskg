@@ -79,6 +79,8 @@ class MigrationImporter {
         // Készlet: a régi boltban a „nincs készleten” = „Visszaigazolástól 1-5 munkanap” (rendelhető).
         $product->set_manage_stock(false);
         $product->set_stock_status(substr((string)($data['availability'] ?? ''), -7) === 'InStock' ? 'instock' : 'onbackorder');
+        // Darabszám, ha a készlet CSV-ben szerepel (MigrationStock).
+        MigrationStock::apply($product, $data);
 
         $sku = trim((string)($data['sku'] ?? ''));
         if ($sku !== ''){

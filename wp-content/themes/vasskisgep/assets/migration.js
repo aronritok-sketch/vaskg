@@ -72,7 +72,7 @@
 	$(document).on('change', '.vk-mig-upload', function(){
 		if (!this.files.length) return;
 		const form = new FormData();
-		form.append('action', 'vk_mig_upload');
+		form.append('action', 'vk_mig_' + ($(this).data('action') || 'upload'));
 		form.append('nonce', cfg.nonce);
 		form.append('file', this.files[0]);
 		$.ajax({ url: cfg.ajax, method: 'POST', data: form, processData: false, contentType: false }).done(function(response){

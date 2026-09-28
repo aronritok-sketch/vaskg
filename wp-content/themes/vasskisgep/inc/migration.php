@@ -5,6 +5,7 @@ namespace VasskisgepTheme;
 require_once(__DIR__.'/migration-source.php');
 require_once(__DIR__.'/migration-classifier.php');
 require_once(__DIR__.'/migration-importer.php');
+require_once(__DIR__.'/migration-stock.php');
 
 /**
  * Ideiglenes átköltöztető a régi (Joomla + VirtueMart) webshopból: Termékek → Régi webshop átköltöztetés.
@@ -48,7 +49,7 @@ class Migration {
         add_action('init', [$this, 'register']);
         add_action('admin_menu', [$this, 'menu'], 60);
         add_action('admin_enqueue_scripts', [$this, 'assets']);
-        foreach([ 'crawl', 'map', 'ai', 'import', 'set', 'save', 'upload', 'close' ] as $action){
+        foreach([ 'crawl', 'map', 'ai', 'import', 'set', 'save', 'upload', 'stock', 'close' ] as $action){
             add_action('wp_ajax_vk_mig_'.$action, [$this, 'ajax_'.$action]);
         }
         add_action('admin_post_vk_mig_export', [$this, 'export']);
@@ -245,6 +246,15 @@ class Migration {
         wp_send_json_success([ 'message' => $count.' termék betöltve a fájlból.', 'done' => true ]);
     }
 
+    /** Készlet CSV feltöltése (MigrationStock). */
+    function ajax_stock(){
+        $this->check();
+        if (empty($_FILES['file']['tmp_name'])) wp_send_json_error([ 'message' => 'Nincs fájl.' ]);
+        $rows = MigrationStock::parse($_FILES['file']['tmp_name']);
+        if (is_wp_error($rows)) wp_send_json_error([ 'message' => $rows->get_error_message() ]);
+        wp_send_json_success([ 'message' => MigrationStock::message(MigrationStock::load($rows)), 'done' => true ]);
+    }
+
     /** A beolvasott adatok letöltése JSON-ként (egy másik telepítésbe feltölthető). */
     function export(){
         if (!current_user_can('manage_woocommerce') || !check_admin_referer('vk_mig_export')) wp_die('', '', [ 'response' => 403 ]);
@@ -379,6 +389,16 @@ class Migration {
         echo '<p><button class="button button-primary vk-mig-run" data-action="import">Import indítása ('.(int)$counts['ready'].' jóváhagyott termék)</button> <span class="description">A bemutató (DEMO-) termékeket az import előtt törölni érdemes: Termékek → keresés: DEMO-.</span></p>';
         echo '<div class="vk-mig-progress"></div><div class="vk-mig-log" hidden></div></div>';
 
+        // Készlet (CSV)
+        $stock = MigrationStock::stored();
+        echo '<div class="card"><h2>Készlet (CSV)</h2>';
+        echo '<p>A régi bolt nyilvános oldalain csak a készletállapot látszik, a darabszám a régi adatbázisban van. A tárhely phpMyAdmin felületén futtasd ezt a lekérdezést (a tábla előtagja eltérhet, pl. <code>jos_</code>), majd az eredményt exportáld CSV-be, <em>oszlopnevekkel az első sorban</em>:</p>';
+        echo '<p><code>SELECT virtuemart_product_id, product_sku, product_in_stock, product_ordered FROM xxx_virtuemart_products;</code></p>';
+        echo '<p>Más forrásból (raktárprogram, Excel) is jó: pontosvesszővel vagy vesszővel elválasztott CSV, első sorban <code>cikkszám;készlet</code> (vagy <code>virtuemart_product_id</code>). A már importált termékek készlete azonnal frissül, a többié az importkor. Elfogyott termék rendelhető marad („visszaigazolástól 1-5 munkanap”). Újra feltölthető (élesítés napján a friss készlettel).</p>';
+        echo '<p><label class="button button-primary">Készlet CSV betöltése<input type="file" class="vk-mig-upload" data-action="stock" accept=".csv,text/csv,text/plain" hidden></label>';
+        if ($stock['updated']) echo ' <span class="description">Utolsó betöltés: '.esc_html(wp_date('Y-m-d H:i', $stock['updated'])).', '.(int)max(count($stock['id']), count($stock['sku'])).' tétel.</span>';
+        echo '</p></div>';
+
         // 5. Lezárás
         echo '<div class="card"><h2>5. Lezárás</h2><p>Ha minden termék átkerült: az átmeneti adatok és az API-kulcs törlése. Az átirányítások megmaradnak.</p>';
         echo '<p><button class="button vk-mig-run" data-action="close" data-confirm="Biztosan lezárod? Az átmeneti adatok törlődnek.">Átköltöztetés lezárása</button></p><div class="vk-mig-progress"></div></div>';
@@ -430,12 +450,18 @@ class Migration {
         }
     }
 
-    /* ---------- WP-CLI: wp vasskisgep migrate <crawl|map|ai|import|status> ---------- */
+    /* ---------- WP-CLI: wp vasskisgep migrate <crawl|map|ai|import|stock <fájl.csv>|status> ---------- */
 
     function cli($args, $assoc = []){
         $what = $args[0] ?? 'status';
         $loops = [ 'crawl' => function(){ return MigrationSource::step(); }, 'map' => function(){ return MigrationClassifier::apply_map(400); }, 'ai' => function(){ return MigrationClassifier::ai_step(); }, 'import' => function(){ return MigrationImporter::step(); } ];
         if ($what === 'crawl' && !empty($assoc['reset'])) MigrationSource::reset();
+        if ($what === 'stock'){
+            $rows = MigrationStock::parse($args[1] ?? '');
+            if (is_wp_error($rows)) \WP_CLI::error($rows->get_error_message());
+            \WP_CLI::success(MigrationStock::message(MigrationStock::load($rows)));
+            return;
+        }
         if (isset($loops[$what])){
             do {
                 $result = $loops[$what]();
