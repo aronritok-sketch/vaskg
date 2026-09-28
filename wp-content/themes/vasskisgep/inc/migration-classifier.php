@@ -91,11 +91,12 @@ class MigrationClassifier {
             $data = Migration::data($id);
             [$leaf, $unsure] = self::match($data);
             $note = '';
+            // Csak tájékoztatás, a besorolást nem teszi bizonytalanná.
             if (!empty($data['fields']['Méret']) && stripos($data['fields']['Méret'], 'Válasszon') !== false){
-                $unsure = true;
                 $note = 'Méretválasztós termék a régi boltban – egyszerű termékként jön át';
             }
-            if ((float)($data['price'] ?? 0) <= 0) $note = trim($note.' Nincs ár a régi boltban (az új boltban nem lesz megvásárolható, amíg nem kap árat).');
+            $no_price = (float)($data['price'] ?? 0) <= 0;
+            if ($no_price) $note = trim($note.' Nincs ár a régi boltban (az új boltban nem lesz megvásárolható, amíg nem kap árat).');
             $suggestion = [ 'term' => $leaves[$leaf][0] ?? 0, 'source' => 'megfeleltetés', 'confidence' => $unsure ? 0.6 : 0.95, 'note' => $note ];
             $status = !$suggestion['term'] ? 'review' : ($unsure ? 'check' : 'ready');
             // Claude előzetes, termékenkénti besorolása: a vegyes régi kategóriák termékei, valamint
@@ -105,7 +106,8 @@ class MigrationClassifier {
                 $suggestion = [ 'term' => $leaves[$pre[0]][0], 'source' => 'claude', 'confidence' => (float)$pre[1], 'note' => trim($note.' '.($pre[2] ?? '')) ];
                 $status = (float)$pre[1] >= $threshold ? 'ready' : 'review';
             }
-            if ($note !== '' && $status === 'ready') $status = 'review';
+            // Ár nélkül nem vásárolható: ezt mindenképp nézze meg valaki.
+            if ($no_price && $status === 'ready') $status = 'review';
             Migration::set_suggestion($id, $suggestion, $status);
             $status === 'ready' ? $ready++ : $check++;
         }
@@ -234,7 +236,7 @@ class MigrationClassifier {
             $confidence = max(0, min(1, (float)($item['confidence'] ?? 0)));
             $previous = Migration::suggestion($id);
             $suggestion = [ 'term' => $leaves[$item['category']][0], 'source' => 'claude', 'confidence' => $confidence, 'note' => trim((string)($item['note'] ?? '')) ?: ($previous['note'] ?? '') ];
-            $ok = $confidence >= $threshold && strpos((string)($previous['note'] ?? ''), 'Méretválasztós') === false && strpos((string)($previous['note'] ?? ''), 'Nincs ár') === false;
+            $ok = $confidence >= $threshold && strpos((string)($previous['note'] ?? ''), 'Nincs ár') === false;
             Migration::set_suggestion($id, $suggestion, $ok ? 'ready' : 'review');
             $ok ? $ready++ : $review++;
         }

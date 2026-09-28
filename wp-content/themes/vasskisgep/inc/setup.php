@@ -41,6 +41,7 @@ class Setup {
         22 => 'price_format',
         23 => 'demo_notices',
         24 => 'catalog_extension',
+        25 => 'migration_rescore',
     ];
 
     /**
@@ -828,6 +829,25 @@ class Setup {
      * A kategóriafa bővítése a régi webshop kínálatához (Tartozékok főkategória, hiányzó géptípusok,
      * munkaruházat, ajándéktárgyak); a Termékek almenü és a megamenü frissítése.
      */
+    /**
+     * 25. Átköltöztetés: a már beolvasott (még nem importált) régi termékek újrabesorolása a
+     * termékszintű Claude-besorolással; a méretválasztós termékek már nem kerülnek emiatt
+     * ellenőrzésre. A kézzel beállított kategóriákhoz nem nyúl.
+     */
+    function migration_rescore(){
+        if (!class_exists(__NAMESPACE__.'\\Migration')) return;
+        $reset = 0;
+        foreach(Migration::ids([ 'check', 'review', 'ready' ]) as $id){
+            if ((Migration::suggestion($id)['source'] ?? '') === 'kézi') continue;
+            update_post_meta($id, '_vk_mig_status', 'new');
+            $reset++;
+        }
+        if (!$reset) return;
+        do { $result = MigrationClassifier::apply_map(); } while (!$result['done']);
+        $counts = Migration::counts();
+        $this->log[] = sprintf('Régi termékek újrabesorolva: %d; jóváhagyva %d, ellenőrizendő %d.', $reset, $counts['ready'], $counts['review'] + $counts['check']);
+    }
+
     function catalog_extension(){
         $this->category_tree();
         $this->products_submenu();
