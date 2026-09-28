@@ -450,12 +450,16 @@ class Migration {
         }
     }
 
-    /* ---------- WP-CLI: wp vasskisgep migrate <crawl|map|ai|import|stock <fájl.csv>|status> ---------- */
+    /* ---------- WP-CLI: wp vasskisgep migrate <crawl [--reset]|map|ai|import [--refresh]|stock <fájl.csv>|status> ---------- */
 
     function cli($args, $assoc = []){
         $what = $args[0] ?? 'status';
         $loops = [ 'crawl' => function(){ return MigrationSource::step(); }, 'map' => function(){ return MigrationClassifier::apply_map(400); }, 'ai' => function(){ return MigrationClassifier::ai_step(); }, 'import' => function(){ return MigrationImporter::step(); } ];
         if ($what === 'crawl' && !empty($assoc['reset'])) MigrationSource::reset();
+        // Újraimport a friss beolvasásból (a WooCommerce-ben azóta kézzel módosított adatokat felülírja).
+        if ($what === 'import' && !empty($assoc['refresh'])){
+            foreach(self::ids('imported') as $id) update_post_meta($id, '_vk_mig_status', 'ready');
+        }
         if ($what === 'stock'){
             $rows = MigrationStock::parse($args[1] ?? '');
             if (is_wp_error($rows)) \WP_CLI::error($rows->get_error_message());

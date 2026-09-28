@@ -110,7 +110,7 @@ Ideiglenes eszköz: **Termékek → Régi webshop átköltöztetés** (`inc/migr
 6. **Átirányítás** – a régi termékcímek (`/termekek/stihl/…/stihl-ms-172-…`) 301-gyel az új termékre, a régi kategóriacímek az ott lévő termékek leggyakoribb új kategóriájára, a régi márka-főkategóriák (`/termekek/stihl`) a márka oldalára. A lezárás után is működik (`vk_mig_redirects` opció).
 7. **Lezárás** – az átmeneti rekordok és az API-kulcs törlése.
 
-WP-CLI (nagy importhoz, időkorlát nélkül): `wp vasskisgep migrate crawl [--reset]`, `wp vasskisgep migrate map`, `wp vasskisgep migrate ai`, `wp vasskisgep migrate import`, `wp vasskisgep migrate status`.
+WP-CLI (nagy importhoz, időkorlát nélkül): `wp vasskisgep migrate crawl [--reset]`, `wp vasskisgep migrate map`, `wp vasskisgep migrate ai`, `wp vasskisgep migrate import [--refresh]` (a `--refresh` a már importáltakat is frissíti a legutóbbi beolvasásból, a kézi módosításaikat felülírva), `wp vasskisgep migrate stock fajl.csv`, `wp vasskisgep migrate status`.
 
 A kategóriafa a régi kínálathoz bővült (24. telepítő lépés): **Tartozékok** főkategória (gépcsaládonként), elektromos fűnyírók, helyben forduló és frontkaszás fűnyíró traktorok, szórókocsik, betonsimítók, műgyanta vágótárcsák, szerviz csomagok, kannák, ápolószerek, akkus kiegészítők, hallás- és szemvédők, munkaruházat, ajándéktárgyak.
 
