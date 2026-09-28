@@ -8,7 +8,8 @@ class CofidisGateway extends \WC_Payment_Gateway {
     function __construct(){
         $this->id = Cofidis::ID;
         $this->method_title = 'Cofidis áruhitel';
-        $this->method_description = 'Vásárlás Cofidis áruhitellel. Csak akkor választható, ha a kosár minden terméke „Cofidis áruhitel” jelölésű, és az összeg a Megjelenés → Beállítások → Cofidis áruhitel fülön megadott határokon belül van. Kézi ügyintézés: a rendelés „Függőben” állapotba kerül; a hitelbírálat után a rendelés műveleteinél „Cofidis: hitel jóváhagyva / elutasítva”.';
+        $this->method_description = 'Vásárlás Cofidis áruhitellel. Csak akkor választható, ha a kosár minden terméke „Cofidis áruhitel” jelölésű, és az összeg a Megjelenés → Beállítások → Cofidis áruhitel fülön megadott határokon belül van. Kézi ügyintézés: a rendelés „Függőben” állapotba kerül; a hitelbírálat után a rendelés műveleteinél „Cofidis: hitel jóváhagyva / elutasítva”.'
+            .'<br>Visszahívási cím (online hitelkérelem bekötésekor ezt kell a Cofidisnak megadni): <code>'.esc_html(rest_url('vasskisgep/v1/cofidis/callback')).'</code>';
         $this->has_fields = false;
         $this->supports = [ 'products' ];
 

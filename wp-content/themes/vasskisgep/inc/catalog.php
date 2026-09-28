@@ -9,6 +9,39 @@ namespace VasskisgepTheme;
 class Catalog {
     private static $attributes;
 
+    /**
+     * Az első telepítő változat kategóriái (slug => [név, új kategória útvonala a
+     * categories.json fájában]). A 19. telepítő lépés ezek termékeit átsorolja és törli őket;
+     * a régi címek átirányítódnak az új kategóriára.
+     */
+    const LEGACY_CATEGORIES = [
+        'funyirok' => [ 'Fűnyírók', 'Kerti és erdészeti gépek/Fűnyírás és gyepápolás/Fűnyírók' ],
+        'robotfunyirok' => [ 'Robotfűnyírók', 'Kerti és erdészeti gépek/Fűnyírás és gyepápolás/További gépek/Robotfűnyírók' ],
+        'funyiro-traktorok' => [ 'Fűnyíró traktorok', 'Kerti és erdészeti gépek/Fűnyírás és gyepápolás/Fűnyíró traktorok' ],
+        'fukaszak-szegelynyirok' => [ 'Fűkaszák, szegélynyírók', 'Kerti és erdészeti gépek/Fűnyírás és gyepápolás/További gépek/Fűkaszák és szegélynyírók' ],
+        'sovenyvagok' => [ 'Sövényvágók', 'Kerti és erdészeti gépek/Fa- és sövényápolás/Metszés és sövényápolás/Sövénynyírók és sövényvágók' ],
+        'lombfuvok-lombszivok' => [ 'Lombfúvók, lombszívók', 'Kerti és erdészeti gépek/Tisztítás, víz és energia/Terület- és kerttisztítás/Lombfúvók' ],
+        'kapalogepek-talajmarok' => [ 'Kapálógépek, talajmarók', 'Kerti és erdészeti gépek/Talajművelés és kertgondozás/Talajművelő gépek/Kapálógépek és rotációs kapák' ],
+        'permetezok' => [ 'Permetezők', 'Kerti és erdészeti gépek/Talajművelés és kertgondozás/Permetezés' ],
+        'metszoollok' => [ 'Metszőollók', 'Kerti és erdészeti gépek/Fa- és sövényápolás/Metszés és sövényápolás/Metszőollók' ],
+        'lancfureszek' => [ 'Láncfűrészek', 'Kerti és erdészeti gépek/Fa- és sövényápolás/Láncfűrészek és ágnyesők' ],
+        'magassagi-agvagok' => [ 'Magassági ágvágók', 'Kerti és erdészeti gépek/Fa- és sövényápolás/Láncfűrészek és ágnyesők/Magassági ágvágók' ],
+        'ronkhasitok' => [ 'Rönkhasítók', 'Kerti és erdészeti gépek/Fa- és sövényápolás/Faanyag-feldolgozás/Rönkhasítók' ],
+        'agapritok' => [ 'Ágaprítók', 'Kerti és erdészeti gépek/Fa- és sövényápolás/Faanyag-feldolgozás/Ágaprítók és ágdarálók' ],
+        'aramfejlesztok' => [ 'Áramfejlesztők', 'Kerti és erdészeti gépek/Tisztítás, víz és energia/Víz és energia/Áramfejlesztők és aggregátorok' ],
+        'darabolo-es-vagogepek' => [ 'Daraboló- és vágógépek', 'Építőipari gépek/Vágás és bontás/Daraboló gépek' ],
+        'foldfurok' => [ 'Földfúrók', 'Kerti és erdészeti gépek/Talajművelés és kertgondozás/Fúrás, ásás és szállítás/Talaj- és gödörfúrók' ],
+        'magasnyomasu-mosok' => [ 'Magasnyomású mosók', 'Kerti és erdészeti gépek/Tisztítás, víz és energia/Gépi tisztítás/Magasnyomású mosók' ],
+        'lancok-vezetolemezek' => [ 'Láncok, vezetőlemezek', 'Alkatrészek és karbantartás/Alkatrészek/Vágóelemek/Láncok és vezetőlemezek' ],
+        'damilok-fukaszafejek' => [ 'Damilok, fűkaszafejek', 'Alkatrészek és karbantartás/Alkatrészek/Vágóelemek/Damilok és fűkaszafejek' ],
+        'akkumulatorok-toltok' => [ 'Akkumulátorok, töltők', 'Alkatrészek és karbantartás/Akkumulátorok és töltők' ],
+        'kenoanyagok-uzemanyagok' => [ 'Kenőanyagok, üzemanyagok', 'Alkatrészek és karbantartás/Kenő- és üzemanyagok' ],
+        'kerteszeti-gepek' => [ 'Kertészeti gépek', 'Kerti és erdészeti gépek' ],
+        'erdeszeti-gepek' => [ 'Erdészeti gépek', 'Kerti és erdészeti gépek/Fa- és sövényápolás' ],
+        'alkatreszek-tartozekok' => [ 'Alkatrészek, tartozékok', 'Alkatrészek és karbantartás' ],
+        'munkaruhazat-vedofelszereles' => [ 'Munkaruházat, védőfelszerelés', 'Alkatrészek és karbantartás/Munkaruházat és védőfelszerelés' ],
+    ];
+
     private static $instance;
     static function get_instance(){
         if (is_null(self::$instance)){
@@ -28,6 +61,63 @@ class Catalog {
         // Termékkártya a design szerint: promóciós szöveg a cím alatt, Cofidis jelvény a képen.
         add_filter('render_block_iu-woocommerce/loop-product-title', [$this, 'card_promo'], 10, 2);
         add_filter('render_block_iu-woocommerce/loop-product-image', [$this, 'card_cofidis'], 10, 2);
+
+        // Régi / hibás kategóriacímek átirányítása (pl. /termekkategoria/kerteszeti-gepek/funyirok/).
+        add_action('template_redirect', [$this, 'redirect_legacy_category'], 5);
+    }
+
+    /** Kategória útvonal (név szerint, „Szülő/Gyerek”) → kategória. */
+    static function category_by_path($path){
+        $parent = 0;
+        $term = null;
+        foreach(explode('/', $path) as $name){
+            $terms = get_terms([ 'taxonomy' => 'product_cat', 'name' => $name, 'parent' => $parent, 'hide_empty' => false, 'number' => 1 ]);
+            if (empty($terms) || is_wp_error($terms)) return null;
+            $term = $terms[0];
+            $parent = $term->term_id;
+        }
+        return $term;
+    }
+
+    /**
+     * Egy /termekkategoria/ utáni útvonalhoz az érvényes kategória címe, ha a régi fa
+     * kategóriája vagy más útvonalon megadott, létező kategória; különben ''.
+     */
+    static function legacy_category_url($path){
+        $slug = basename(trim($path, '/'));
+        if ($slug === '') return '';
+        $term = null;
+        if (isset(self::LEGACY_CATEGORIES[$slug])){
+            $current = get_term_by('slug', $slug, 'product_cat');
+            if (!$current || $current->name !== self::LEGACY_CATEGORIES[$slug][0]){
+                $term = self::category_by_path(self::LEGACY_CATEGORIES[$slug][1]);
+            }
+        }
+        if (!$term) $term = get_term_by('slug', $slug, 'product_cat');
+        if (!$term) return '';
+        $url = get_term_link($term);
+        return is_wp_error($url) ? '' : $url;
+    }
+
+    function redirect_legacy_category(){
+        $is_category = is_tax('product_cat') && !is_paged();
+        if (!is_404() && !$is_category) return;
+        $path = trim(rawurldecode((string)parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH)), '/');
+        $home = trim((string)parse_url(home_url('/'), PHP_URL_PATH), '/');
+        if ($home !== '' && strpos($path, $home.'/') === 0) $path = substr($path, strlen($home) + 1);
+        if (strpos($path, 'termekkategoria/') !== 0) return;
+
+        if ($is_category){
+            // Létező kategória más (pl. régi) szülő-útvonalon: a helyes címre.
+            $url = get_term_link(get_queried_object());
+        } else {
+            $url = self::legacy_category_url(substr($path, strlen('termekkategoria/')));
+        }
+        if (!$url || is_wp_error($url)) return;
+        if (trim((string)parse_url($url, PHP_URL_PATH), '/') === trim($home.'/'.$path, '/')) return;
+        $query = (string)parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_QUERY);
+        wp_safe_redirect($url.($query !== '' ? '?'.$query : ''), 301);
+        exit;
     }
 
     static function promo_html($product, $class = 'vk-promo', $tag = 'p'){

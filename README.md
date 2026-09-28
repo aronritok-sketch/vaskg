@@ -37,6 +37,7 @@ A `wp-content/plugins`, `uploads` és `languages` mappák nincsenek verzióköve
 3. Lépj be adminisztrátorként. Az első admin oldalbetöltéskor lefutnak a telepítő lépések, és egy zöld értesítés felsorolja, mi történt.
    - WP-CLI-vel is futtatható: `wp vasskisgep setup --user=<admin>`.
    - Minden lépés csak egyszer fut (`vasskisgep_setup_version` opció).
+   - Ha egy `setup/pages/*.html` fájl változik, a lecserélt változat ujjlenyomatát (szóközök nélküli tartalom md5-je) a `Setup::PAGE_HISTORY`-hoz kell adni, és egy új lépésben a `pages_refresh()`-t újra kell futtatni – így a már telepített, nem szerkesztett oldalak is frissülnek.
 4. A meglévő fejlécet, láblécet, kezdőlapot és Termékek oldalt a telepítő **csak akkor írja felül, ha 2026-09-25 óta nem szerkesztették**. Ha közben módosultak, az értesítésben „FIGYELEM” sor jelenik meg, és az új változat a `setup/managed/` mappában található; ezt kézzel kell átvezetni.
 5. Beállítások → Közvetlen linkek: egy mentés nem árt (a telepítő a Tudástár URL-jeit `/tudastar/cikk/`-re állítja).
 
@@ -58,6 +59,7 @@ A `wp-content/plugins`, `uploads` és `languages` mappák nincsenek verzióköve
 | Lábléc, megamenü | a design szövegei; rövid menünevek (`vk_menu_label`) és „Összes …” linkek (`vk_menu_all`) kategória term metában |
 | Oldalak | Rólunk (Figma szerint), Szolgáltatások, Ajánlatkérés, Szerviz, Kapcsolat, Kedvencek, Összehasonlítás, Szállítás és fizetés, ÁSZF, Adatkezelési tájékoztató, Elállás és visszaküldés |
 | Menü | Főmenü linkjei, a Termékek alatt a főkategóriák |
+| Frissítés régebbi telepítésről (19–21.) | **19.** a régi kategóriafa (Kertészeti gépek, Erdészeti gépek, …) helyett a Figma szerinti: a termékek átsorolása, a régi kategóriák és menüpontjaik törlése, hiányzó tulajdonságok létrehozása, a tulajdonság nélküli bemutató termékek újratöltése, régi kategórialinkek cseréje a tartalmakban; a régi kategória-URL-ek 301-gyel az újra mutatnak (`Catalog::LEGACY_CATEGORIES`). **20.** a még lorem ipsumos kezelt tartalmak (pl. kezdőlap) cseréje a kész változatra. **21.** a korábbi telepítői változatukon maradt, nem szerkesztett oldalak frissítése (`Setup::PAGE_HISTORY`). Az előző változat mindig a revíziók között marad. |
 | Tartalom | fejléc: Kedvencek/Összehasonlítás link; lábléc: hibás adatkezelési link javítva; kezdőlap: gomb-linkek, válogatott karusszelek (kiemelt, szezonális, népszerű), valódi Google értékelések a lorem ipsum helyett; Termékek oldal: szűrős terméklista |
 
 ## Teendők élesítés előtt
@@ -78,7 +80,7 @@ A `wp-content/plugins`, `uploads` és `languages` mappák nincsenek verzióköve
 - [ ] **Cofidis** (áruhitel):
     - *Fizetési mód* (`inc/cofidis.php`, `inc/cofidis-gateway.php`): WooCommerce → Beállítások → Fizetés → **Cofidis áruhitel** → Engedélyezés. Csak akkor jelenik meg a pénztárban, ha a kosár minden terméke „Cofidis áruhitel” jelölésű és a végösszeg a min./max. határon belül van. A rendelés „Függőben” állapotba kerül (a készlet lefoglalva), a vásárló tájékoztatást kap (köszönőoldal + e-mail, opcionálisan a Cofidis hitelkérelmi linkjével). Hitelbírálat után a rendelésnél a *Rendelés műveletek* közül: „Cofidis: hitel jóváhagyva” (→ Feldolgozás alatt) vagy „elutasítva” (→ Törölve, a készlet visszaáll).
     - *Kalkulátor*: Megjelenés → Beállítások → Cofidis áruhitel fülön THM, ügyleti kamat, futamidők, min./max. hitelösszeg, reprezentatív példa (a Cofidis szerződés adatai).
-    - *Online hitelkérelem (API)*: a Cofidis **webshop / online áruhitel** kereskedői dokumentációja kell hozzá (a PSD2 számlainformációs API nem erre való). Bekötési pontok: `vasskisgep_cofidis_start_application` szűrő (a rendelésből hitelkérelmet indít, az átirányítási URL-t adja vissza) és `vasskisgep_cofidis_callback` szűrő a `/wp-json/vasskisgep/v1/cofidis/callback` végponthoz (hitelesség ellenőrzése, `['order_id' => …, 'status' => 'approved'|'rejected'|'pending']`). Bekötés nélkül a végpont 501-gyel elutasít.
+    - *Online hitelkérelem (API)*: a Cofidis **webshop / online áruhitel** kereskedői dokumentációja kell hozzá (a PSD2 számlainformációs API nem erre való). Bekötési pontok: `vasskisgep_cofidis_start_application` szűrő (a rendelésből hitelkérelmet indít, az átirányítási URL-t adja vissza) és `vasskisgep_cofidis_callback` szűrő a `rest_url('vasskisgep/v1/cofidis/callback')` végponthoz (az iu_theme a REST előtagot átnevezi, a pontos cím a fizetési mód beállításainál látszik) (hitelesség ellenőrzése, `['order_id' => …, 'status' => 'approved'|'rejected'|'pending']`). Bekötés nélkül a végpont 501-gyel elutasít.
 
 ## Funkciók
 

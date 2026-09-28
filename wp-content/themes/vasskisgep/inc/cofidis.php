@@ -16,7 +16,8 @@ namespace VasskisgepTheme;
  *
  * Online hitelkérelem (API): a `vasskisgep_cofidis_start_application` szűrő kapja meg a rendelést;
  * ha egy URL-t ad vissza, a vásárló oda irányítódik. A Cofidis visszahívása a
- * /wp-json/vasskisgep/v1/cofidis/callback címre érkezhet; a feldolgozása a
+ * rest_url('vasskisgep/v1/cofidis/callback') címre érkezhet (az iu_theme a REST előtagot átnevezi,
+ * a pontos cím a fizetési mód beállításainál látszik); a feldolgozása a
  * `vasskisgep_cofidis_callback` szűrőben történik (lásd README). Amíg ezek nincsenek bekötve,
  * a kézi folyamat működik.
  */

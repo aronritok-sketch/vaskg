@@ -36,6 +36,7 @@ class Shop {
         add_action('wp', [$this, 'setup_single_product']);
 
         add_filter('iu_title', [$this, 'archive_titles']);
+        add_filter('render_block_iu/breadcrumbs', [$this, 'escape_search_breadcrumb']);
         add_filter('woocommerce_get_breadcrumb', '__return_empty_array');
 
         // Termékoldal: kapcsolódó termékek, készlet szövegek.
@@ -121,7 +122,23 @@ class Shop {
         if (is_category()){
             return 'Téma: '.single_term_title('', false);
         }
+        // A keretrendszer a keresőszót escape nélkül írná ki ($_GET['s']).
+        if (is_search()){
+            return 'Keresés erre: '.esc_html(get_search_query(false));
+        }
+        // Fiók végpontok (Elfelejtett jelszó, Rendelések, …): a végpont címe a „Fiókom” helyett.
+        if (function_exists('is_account_page') && is_account_page() && is_wc_endpoint_url()){
+            $endpoint = WC()->query->get_current_endpoint();
+            $endpoint_title = $endpoint ? WC()->query->get_endpoint_title($endpoint) : '';
+            if ($endpoint_title !== '') return esc_html($endpoint_title);
+        }
         return $title;
+    }
+
+    /** A keretrendszer morzsamenüje a keresőszót escape nélkül írja ki ($_GET['s']). */
+    function escape_search_breadcrumb($content){
+        if (!is_search() || !isset($_GET['s']) || !is_string($_GET['s'])) return $content;
+        return str_replace('Keresés erre: '.$_GET['s'].'</span>', 'Keresés erre: '.esc_html(get_search_query(false)).'</span>', $content);
     }
 
     function availability_text($text, $product){

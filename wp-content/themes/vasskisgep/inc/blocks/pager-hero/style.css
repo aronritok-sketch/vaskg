@@ -16,6 +16,9 @@
 .vasskisgep-pager-hero-slide.open {
 	flex: 1;
 }
+.vasskisgep-pager-hero-slide {
+	container-type: inline-size;
+}
 .vasskisgep-pager-hero:has(.open) .vasskisgep-pager-hero-slide:not(.open) {
 	flex: unset;
 	width: 9.6rem;
@@ -41,6 +44,14 @@
 	bottom: 0;
 	left: 0;
 	width: 100%;
+}
+/* A belső réteg 57vw széles és középre igazított; ha a nyitott sáv keskenyebb, a szöveg a
+   látható részhez igazodik (különben a bal széle kilógna). */
+@supports (width: 1cqw) {
+	.vasskisgep-pager-hero-slide-content {
+		left: max(0px, calc((57vw - 100cqw) / 2));
+		width: min(100%, 100cqw);
+	}
 }
 .vasskisgep-pager-hero-slide-open {
 	clip-path: shape(from 0% 0%, line to 66.666% 15%, line to 100% 0%, line to 100% 100%, line to 0% 100%, close);

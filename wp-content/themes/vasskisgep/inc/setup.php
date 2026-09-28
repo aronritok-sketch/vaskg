@@ -35,6 +35,28 @@ class Setup {
         16 => 'wc_pages_layout',
         17 => 'footer_design',
         18 => 'megamenu_labels',
+        19 => 'category_migration',
+        20 => 'managed_placeholders',
+        21 => 'pages_refresh',
+    ];
+
+    /**
+     * A setup/pages/*.html korábbi (már lecserélt) változatainak ujjlenyomata (szóközök nélküli
+     * tartalom md5-je, {{home}} helyőrzővel). A 21. lépés az ezekkel egyező, tehát kézzel nem
+     * szerkesztett oldalakat frissíti a jelenlegi változatra. Új oldalváltozat kiadásakor a
+     * lecserélt változat ujjlenyomata ide kerül (README: Élesítés).
+     */
+    const PAGE_HISTORY = [
+        'adatkezelesi-tajekoztato.html' => [ '71930b8697ba9ed32f8ef9c6fc9f2193' ],
+        'ajanlatkeres.html' => [ 'ba30da8d047fba9e9c8344b62de9aa87', '9e813817fc61db2d4f7f1f1844b3364e' ],
+        'aszf.html' => [ '50cca4ea2a93dbe44e988ea27414e81c' ],
+        'elallas-es-visszakuldes.html' => [ '8a7133c4b6a14f9bc9280e0e91954bc5' ],
+        'kapcsolat.html' => [ 'dd652189b88f647786cf5838e19d6707' ],
+        'osszehasonlitas.html' => [ '18b68a7bb657d063a9e5ef746e3703ac' ],
+        'rolunk.html' => [ '9da10ceb55f530036a8337d9b6c436f4', 'c2ed85e14ed60101b676d3bcc9f975d4', '0b2e38cf5959735af55591eb1d813683' ],
+        'szallitas-es-fizetes.html' => [ '91632ae63430f8afdc3b978ce3e01b41', '193b6a94d1bd67053b36620f5ed18196' ],
+        'szerviz.html' => [ '24f48617e651a65c780605f4d3cd29f4', 'ce5c2c9617940dd4ad418e9d491146ad', 'e59c3e4d3fd3b65c485e6812a5c78bfc' ],
+        'szolgaltatasok.html' => [ 'db0d0a451060f55c8b4d6c7285106006' ],
     ];
 
     private $log = [];
@@ -467,24 +489,7 @@ class Setup {
     function product_taxonomies(){
         $catalog = json_decode(self::content_file('catalog/categories.json'), true);
 
-        $create = function($nodes, $parent) use (&$create){
-            $order = 0;
-            foreach($nodes as $node){
-                [$name, $children] = is_array($node) ? $node : [$node, []];
-                $existing = get_terms([ 'taxonomy' => 'product_cat', 'name' => $name, 'parent' => $parent, 'hide_empty' => false, 'number' => 1 ]);
-                if (!empty($existing) && !is_wp_error($existing)){
-                    $term_id = $existing[0]->term_id;
-                } else {
-                    $result = wp_insert_term($name, 'product_cat', [ 'parent' => $parent ]);
-                    if (is_wp_error($result)) continue;
-                    $term_id = $result['term_id'];
-                }
-                update_term_meta($term_id, 'order', $order++);
-                if (!empty($children)) $create($children, $term_id);
-            }
-        };
-        $create($catalog['tree'], 0);
-        delete_option('product_cat_children');
+        $this->category_tree();
         $this->log[] = 'Termékkategóriák létrehozva (megamenü szerinti fa)';
 
         foreach($catalog['attributes'] as $attribute){
@@ -533,6 +538,144 @@ class Setup {
         $this->log[] = 'Évszak címkék: Tavasz, Nyár, Ősz, Tél (a termékeknél címkeként adhatók meg)';
 
         delete_transient('wc_term_counts');
+    }
+
+    /**
+     * A categories.json fája (név + szülő alapján: a meglévőt használja, a hiányzót létrehozza,
+     * beállítja az `order` term metát). Visszaadja a fa kategóriáinak azonosítóit
+     * név-útvonal szerint („Szülő/Gyerek”).
+     */
+    private function category_tree(){
+        $catalog = json_decode(self::content_file('catalog/categories.json'), true);
+        $ids = [];
+        $create = function($nodes, $parent, $path) use (&$create, &$ids){
+            $order = 0;
+            foreach($nodes as $node){
+                [$name, $children] = is_array($node) ? $node : [$node, []];
+                $existing = get_terms([ 'taxonomy' => 'product_cat', 'name' => $name, 'parent' => $parent, 'hide_empty' => false, 'number' => 1 ]);
+                if (!empty($existing) && !is_wp_error($existing)){
+                    $term_id = $existing[0]->term_id;
+                } else {
+                    $result = wp_insert_term($name, 'product_cat', [ 'parent' => $parent ]);
+                    if (is_wp_error($result)) continue;
+                    $term_id = $result['term_id'];
+                }
+                update_term_meta($term_id, 'order', $order++);
+                $ids[ltrim($path.'/'.$name, '/')] = (int)$term_id;
+                if (!empty($children)) $create($children, $term_id, $path.'/'.$name);
+            }
+        };
+        $create($catalog['tree'], 0, '');
+        delete_option('product_cat_children');
+        return $ids;
+    }
+
+    /**
+     * Az első telepítő változat kategóriafájáról (Kertészeti gépek, Erdészeti gépek, …) a Figma
+     * szerinti fára: a fa létrehozása, a régi kategóriák termékeinek átsorolása a megfelelő új
+     * kategóriába, a régi kategóriák (és menüpontjaik) törlése, a bemutató termékek besorolása,
+     * a Termékek almenü és a megamenü frissítése. Ahol a régi fa nincs meg, csak a fát és a
+     * bemutató termékeket ellenőrzi.
+     */
+    function category_migration(){
+        // Fa + szűrhető tulajdonságok + márkák + évszakok (a régi 5. lépésben még nem voltak tulajdonságok).
+        $this->product_taxonomies();
+        $ids = $this->category_tree();
+        $new = array_flip($ids);
+
+        $moved = 0;
+        $removed = 0;
+        foreach(Catalog::LEGACY_CATEGORIES as $slug => [$name, $target]){
+            $term = get_term_by('slug', $slug, 'product_cat');
+            // Csak a régi fa kategóriája (azonos név), és nem az új fa része.
+            if (!$term || $term->name !== $name || isset($new[(int)$term->term_id]) || empty($ids[$target])) continue;
+            $target_id = $ids[$target];
+
+            $products = get_posts([ 'post_type' => 'product', 'post_status' => 'any', 'numberposts' => -1, 'fields' => 'ids',
+                'tax_query' => [[ 'taxonomy' => 'product_cat', 'terms' => [ (int)$term->term_id ], 'include_children' => false ]] ]);
+            foreach($products as $product_id){
+                $terms = wp_get_object_terms($product_id, 'product_cat', [ 'fields' => 'ids' ]);
+                $terms = array_diff(array_map('intval', $terms), [ (int)$term->term_id ]);
+                $terms[] = $target_id;
+                wp_set_object_terms($product_id, array_values(array_unique($terms)), 'product_cat');
+                $moved++;
+            }
+            // (A lista előbb a gyerekeket sorolja, így törléskor a régi szülőnek már nincs gyereke.)
+            wp_delete_term($term->term_id, 'product_cat');
+            $removed++;
+        }
+        delete_option('product_cat_children');
+        if ($removed) $this->log[] = 'Régi kategóriák törölve: '.$removed.', átsorolt termékek: '.$moved;
+
+        // A régi kategóriák miatt kapott „-2” / „-szulo-kategoria” végű slugok helyett a név
+        // szerinti slug, ha már szabad.
+        foreach($ids as $term_id){
+            $term = get_term($term_id, 'product_cat');
+            if (!$term || is_wp_error($term)) continue;
+            $slug = sanitize_title($term->name);
+            if ($slug !== $term->slug && strpos($term->slug, $slug.'-') === 0 && !get_term_by('slug', $slug, 'product_cat')){
+                wp_update_term($term_id, 'product_cat', [ 'slug' => $slug ]);
+            }
+        }
+
+        // Régi kategórialinkek a bejegyzésekben, oldalakon (pl. Tudástár cikkek, Szerviz).
+        global $wpdb;
+        $posts = $wpdb->get_col("SELECT ID FROM {$wpdb->posts} WHERE post_type IN ('post','page','iu_template','iu_managed') AND post_status <> 'trash' AND post_content LIKE '%termekkategoria/%'");
+        $links = 0;
+        foreach($posts as $post_id){
+            $content = get_post_field('post_content', $post_id, 'raw');
+            $updated = preg_replace_callback('~(https?://[^"\'\s<>]+?|\{\{home\}\})?/termekkategoria/([a-z0-9/-]+?)/?(?=["\'\s<>#?])~', function($m){
+                $url = Catalog::legacy_category_url($m[2]);
+                return $url ?: $m[0];
+            }, $content);
+            $updated = str_replace([ '"text":"Alkatrészek, tartozékok"', '<span>Alkatrészek, tartozékok</span>', '>Láncok, vezetőlemezek<', '>Láncfűrészek<' ], [ '"text":"Alkatrészek és karbantartás"', '<span>Alkatrészek és karbantartás</span>', '>Láncok és vezetőlemezek<', '>Láncfűrészek és ágnyesők<' ], $updated);
+            if ($updated !== $content){
+                wp_update_post([ 'ID' => $post_id, 'post_content' => wp_slash($updated) ]);
+                $links++;
+            }
+        }
+        if ($links) $this->log[] = 'Régi kategórialinkek frissítve: '.$links.' tartalomban';
+
+        // Bemutató termékek tulajdonságok nélkül (a tulajdonságok a régi telepítésből hiányoztak):
+        // a bemutató termékek újratöltése a demo-products.json alapján.
+        $products = json_decode(self::content_file('catalog/demo-products.json'), true) ?: [];
+        foreach($products as $item){
+            $id = wc_get_product_id_by_sku($item['sku']);
+            $product = $id ? wc_get_product($id) : null;
+            if ($product && !empty($item['attributes']) && empty($product->get_attributes())){
+                $this->demo_products();
+                break;
+            }
+        }
+
+        // Bemutató termékek a saját kategóriájukba (az „Egyéb”-be kerültek, ha a fa hiányzott).
+        $by_name = [];
+        foreach($ids as $path => $term_id){
+            $by_name[basename($path)] = $term_id;
+        }
+        $other = get_term_by('slug', 'egyeb', 'product_cat');
+        $fixed = 0;
+        foreach($products as $item){
+            $id = wc_get_product_id_by_sku($item['sku']);
+            if (!$id || empty($by_name[$item['category']])) continue;
+            $current = array_map('intval', wp_get_object_terms($id, 'product_cat', [ 'fields' => 'ids' ]));
+            $in_tree = array_intersect($current, $ids);
+            if (!empty($in_tree) && !($other && in_array((int)$other->term_id, $current, true))) continue;
+            wp_set_object_terms($id, [ $by_name[$item['category']] ], 'product_cat');
+            $fixed++;
+        }
+        if ($fixed) $this->log[] = 'Bemutató termékek besorolva: '.$fixed;
+
+        // Kategóriák termékszámai (a WooCommerce saját számlálója).
+        if (function_exists('_wc_term_recount')){
+            $terms = get_terms([ 'taxonomy' => 'product_cat', 'hide_empty' => false ]);
+            if (!is_wp_error($terms)) _wc_term_recount($terms, get_taxonomy('product_cat'), true, false);
+        }
+        delete_transient('wc_term_counts');
+
+        $this->products_submenu();
+        $this->megamenu_labels();
+        $this->log[] = 'Kategóriafa a Figma szerint';
     }
 
     /** Hiányzó oldalak és a jogi oldalak. */
@@ -619,6 +762,44 @@ class Setup {
         }
     }
 
+    /**
+     * A 7. lépés az md5 eltérés miatt kihagyja a mentés óta módosult tartalmat. Ha egy ilyen
+     * tartalomban még az eredeti helyőrző szövegek (lorem ipsum, kitalált vélemények) vannak,
+     * a kész változatra cseréljük; az előző változat a revíziók között visszaállítható.
+     */
+    function managed_placeholders(){
+        $manifest = json_decode(self::content_file('managed/manifest.json'), true);
+        foreach((array)$manifest as $entry){
+            $post = get_post($entry['id']);
+            if (!$post || $post->post_type !== $entry['post_type']) continue;
+            if (!preg_match('/lorem ipsum|temposssrj/i', $post->post_content)) continue;
+            $new = self::content_file('managed/'.$entry['file']);
+            if (preg_match('/lorem ipsum/i', $new)) continue;
+            if ($post->post_type === 'page') wp_save_post_revision($post->ID);
+            wp_update_post([ 'ID' => $post->ID, 'post_content' => wp_slash($new) ]);
+            $this->log[] = 'Helyőrző szövegek lecserélve: '.$post->post_title.' (az előző változat a revíziók között)';
+        }
+    }
+
+    /**
+     * A 6. lépés a meglévő oldalt nem írja felül, ezért a korábbi telepítéssel létrehozott oldalak
+     * a régi változatukon maradnak. Ha egy oldal tartalma valamelyik korábbi telepítői
+     * változattal egyezik (nem szerkesztették), a jelenlegire frissül.
+     */
+    function pages_refresh(){
+        foreach(self::PAGE_HISTORY as $file => $hashes){
+            $page = get_page_by_path(basename($file, '.html'), OBJECT, 'page');
+            if (!$page) continue;
+            $hash = md5(preg_replace('/\s+/', '', self::collapse($page->post_content)));
+            if (!in_array($hash, $hashes, true)) continue;
+            wp_save_post_revision($page->ID);
+            wp_update_post([ 'ID' => $page->ID, 'post_content' => wp_slash(self::content_file('pages/'.$file)) ]);
+            $this->log[] = 'Oldal frissítve a jelenlegi változatra: '.$page->post_title;
+        }
+        // Rólunk: saját fejléc és hero fotó a Figma szerint.
+        $this->about_design();
+    }
+
     /** Főmenü: valós célok, a Termékek alatt a főkategóriák. */
     function menu(){
         $menu = wp_get_nav_menu_object('fomenu');
@@ -657,28 +838,7 @@ class Setup {
             }
         }
 
-        if ($products_item){
-            $position = 0;
-            $parents = get_terms([ 'taxonomy' => 'product_cat', 'parent' => 0, 'hide_empty' => false, 'orderby' => 'meta_value_num', 'meta_key' => 'order' ]);
-            foreach($parents as $term){
-                if ($term->slug === 'egyeb') continue;
-                $exists = false;
-                foreach($items as $item){
-                    if ($item->object === 'product_cat' && (int)$item->object_id === $term->term_id) $exists = true;
-                }
-                if ($exists) continue;
-
-                wp_update_nav_menu_item($menu->term_id, 0, [
-                    'menu-item-object-id' => $term->term_id,
-                    'menu-item-object' => 'product_cat',
-                    'menu-item-type' => 'taxonomy',
-                    'menu-item-parent-id' => $products_item,
-                    'menu-item-position' => ++$position,
-                    'menu-item-status' => 'publish'
-                ]);
-            }
-            $this->log[] = 'Főmenü: Termékek almenü a főkategóriákkal';
-        }
+        if ($products_item) $this->products_submenu();
         $this->log[] = 'Főmenü: linkek beállítva';
     }
 
@@ -1014,6 +1174,40 @@ class Setup {
     }
 
     /** Megamenü a design szerint: rövid menünevek és „Összes …” linkek a csoportok alatt. */
+    /** A főmenü Termékek pontja alá a főkategóriák (mobil menü; asztalon a megamenü látszik). */
+    private function products_submenu(){
+        $menu = wp_get_nav_menu_object('fomenu');
+        if (!$menu || !function_exists('wc_get_page_id')) return;
+        $items = wp_get_nav_menu_items($menu->term_id, [ 'post_status' => 'any' ]) ?: [];
+        $products_item = 0;
+        foreach($items as $item){
+            if ((int)$item->menu_item_parent === 0 && $item->object === 'page' && (int)$item->object_id === (int)wc_get_page_id('shop')) $products_item = $item->ID;
+        }
+        if (!$products_item) return;
+
+        $position = 0;
+        $parents = get_terms([ 'taxonomy' => 'product_cat', 'parent' => 0, 'hide_empty' => false, 'orderby' => 'meta_value_num', 'meta_key' => 'order' ]);
+        foreach(is_wp_error($parents) ? [] : $parents as $term){
+            if (in_array($term->slug, MegaMenu::HIDDEN_CATEGORIES, true)) continue;
+            $position++;
+            $exists = false;
+            foreach($items as $item){
+                if ($item->object === 'product_cat' && (int)$item->object_id === $term->term_id) $exists = true;
+            }
+            if ($exists) continue;
+
+            wp_update_nav_menu_item($menu->term_id, 0, [
+                'menu-item-object-id' => $term->term_id,
+                'menu-item-object' => 'product_cat',
+                'menu-item-type' => 'taxonomy',
+                'menu-item-parent-id' => $products_item,
+                'menu-item-position' => $position,
+                'menu-item-status' => 'publish'
+            ]);
+        }
+        $this->log[] = 'Főmenü: Termékek almenü a főkategóriákkal';
+    }
+
     function megamenu_labels(){
         $labels = [ 'Fűgyűjtős fűnyíró traktorok' => 'Fűgyűjtős', 'Oldalkidobós fűnyíró traktorok' => 'Oldalkidobós' ];
         $all = [ 'Láncfűrészek és ágnyesők' => 'Összes láncfűrész', 'Talajművelő gépek' => 'Összes talajművelő gép', 'Permetezés' => 'Összes permetező' ];
