@@ -241,4 +241,29 @@
 		$grid.append($dots);
 		show(0);
 	});
+
+	// Termékoldal: a bélyegképek egy sorban; ha nem férnek ki, két oldalt nyíllal görgethetők.
+	const thumbsNav = function(){
+		$('.vk-product-gallery .flex-control-thumbs').each(function(){
+			const list = this;
+			if (list.parentNode.classList.contains('vk-thumbs-scroll') || list.scrollWidth <= list.clientWidth + 2) return;
+			const $wrap = $(list).wrap('<div class="vk-thumbs-scroll"></div>').parent();
+			const arrow = function(dir){ return '<button type="button" class="vk-thumbs-nav vk-thumbs-' + dir + '" aria-label="' + (dir === 'prev' ? 'Előző képek' : 'További képek') + '"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' + (dir === 'prev' ? 'm15 6-6 6 6 6' : 'm9 6 6 6-6 6') + '"/></svg></button>'; };
+			$wrap.prepend(arrow('prev')).append(arrow('next'));
+			const update = function(){
+				$wrap.find('.vk-thumbs-prev').prop('disabled', list.scrollLeft <= 2);
+				$wrap.find('.vk-thumbs-next').prop('disabled', list.scrollLeft + list.clientWidth >= list.scrollWidth - 2);
+			};
+			$wrap.on('click', '.vk-thumbs-nav', function(){
+				list.scrollLeft += ($(this).hasClass('vk-thumbs-prev') ? -1 : 1) * list.clientWidth * 0.8;
+			});
+			$(list).on('scroll', update);
+			// A kiválasztott kép bélyegképe látszódjon (a főkép lapozásakor is).
+			$(list).on('click', 'img', function(){ this.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' }); });
+			update();
+		});
+	};
+	$(window).on('load', function(){ setTimeout(thumbsNav, 300); });
+	$(document).on('wc-product-gallery-after-init', function(){ setTimeout(thumbsNav, 100); });
+
 })(jQuery);

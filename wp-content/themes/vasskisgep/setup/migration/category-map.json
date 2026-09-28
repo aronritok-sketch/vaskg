@@ -1,0 +1,1054 @@
+{
+ "rules": [
+  [
+   "Kiemelt ajánlatunk",
+   "Rönkhasítók",
+   true
+  ],
+  [
+   "AGRIMOTOR",
+   "Motoros permetezőgépek",
+   false
+  ],
+  [
+   "LONCIN",
+   "Kapálógépek és rotációs kapák",
+   false
+  ],
+  [
+   "MEDIA LINE",
+   "Kapálógépek és rotációs kapák",
+   false
+  ],
+  [
+   "ALPINA > Fűnyírók > Benzines fűnyírók",
+   "Benzinmotoros fűnyírók",
+   false
+  ],
+  [
+   "ALPINA > Fűnyírók > Elektromos fűnyírók",
+   "Elektromos fűnyírók",
+   false
+  ],
+  [
+   "BLUEBIRD > AKKUMULÁTOROS METSZŐOLLÓK ÉS TARTOZÉKAIK > AKKUMULÁTOROS METSZŐOLLÓK ÉS ÁGVÁGÓK",
+   "Metszőollók",
+   true
+  ],
+  [
+   "BLUEBIRD > AKKUMULÁTOROS METSZŐOLLÓK ÉS TARTOZÉKAIK > BlueBird Akkumulátorok",
+   "Akkumulátorok",
+   false
+  ],
+  [
+   "BLUEBIRD > AKKUMULÁTOROS METSZŐOLLÓK ÉS TARTOZÉKAIK > HOSSZABBÍTÓSZÁRAK, TARTOZÉKOK",
+   "Akkus rendszer kiegészítők",
+   true
+  ],
+  [
+   "BLUEBIRD > Bluebird Fűnyíró traktorok > Bluebird Fűgyűjtős Fűnyíró Traktorok",
+   "Fűgyűjtős fűnyíró traktorok",
+   false
+  ],
+  [
+   "BLUEBIRD > Bluebird Fűnyíró traktorok > Bluebird Helyben Forduló Fűnyíró Traktor",
+   "Helyben forduló fűnyíró traktorok",
+   false
+  ],
+  [
+   "BLUEBIRD > Bluebird Fűnyíró traktorok > Bluebird Oldalkidobós Fűnyíró traktorok",
+   "Oldalkidobós fűnyíró traktorok",
+   false
+  ],
+  [
+   "BLUEBIRD > RÁDIÓ VEZÉRELT MAGASGAZVÁGÓK",
+   "Kerekes és távirányítású bozótvágók",
+   false
+  ],
+  [
+   "BRIGGSANDSTRATTON > Motorolaj",
+   "Motorolajok",
+   false
+  ],
+  [
+   "Vass Kisgép OILS > Hajtóműolaj",
+   "Hajtóműolajok",
+   false
+  ],
+  [
+   "Vass Kisgép OILS > Lánckenőolajok",
+   "Lánckenő olajok",
+   false
+  ],
+  [
+   "Vass Kisgép OILS > Motorolaj",
+   "Motorolajok",
+   false
+  ],
+  [
+   "Berrin > Rotációs kapa tartozékok",
+   "Kapálógép- és talajmaró-tartozékok",
+   false
+  ],
+  [
+   "Berrin > Rotációs kapa",
+   "Kapálógépek és rotációs kapák",
+   false
+  ],
+  [
+   "Berrin > Utánfutó",
+   "Utánfutók",
+   false
+  ],
+  [
+   "CASTELGARDEN > Fűgyűjtős fűnyírótraktorok",
+   "Fűgyűjtős fűnyíró traktorok",
+   false
+  ],
+  [
+   "CASTELGARDEN > Oldalkidobós fűnyírótraktorok",
+   "Oldalkidobós fűnyíró traktorok",
+   false
+  ],
+  [
+   "Cedrus > Cedrus Alkatrészek és Kiegészítők > Cedrus Kiegészítők",
+   "Kannák és töltőrendszerek",
+   true
+  ],
+  [
+   "Cedrus > Cedrus Alkatrészek és Kiegészítők > Cedrus Ágaprító Kések/Ellenkések",
+   "Aprító-tartozékok",
+   false
+  ],
+  [
+   "Cedrus > Cedrus Alkatrészek és Kiegészítők > Olajszűrők",
+   "Szűrők",
+   false
+  ],
+  [
+   "Cedrus > Cedrus Benzinmotoros Szórókocsi",
+   "Szórókocsik",
+   false
+  ],
+  [
+   "Cedrus > Cedrus Szórókocsi",
+   "Szórókocsik",
+   false
+  ],
+  [
+   "Cedrus > Cedrus Egytengelyes Traktor > Cedrus Egytengelyes Kerti Traktor",
+   "Egytengelyes traktorok",
+   false
+  ],
+  [
+   "Cedrus > Cedrus Egytengelyes Traktor > Cedrus Egytengelyes Traktor Tartozékai",
+   "Egytengelyes traktor tartozékok",
+   false
+  ],
+  [
+   "Cedrus > Cedrus Fűnyíró Traktorok > Cedrus Fűgyűjtős Fűnyíró Traktorok",
+   "Fűgyűjtős fűnyíró traktorok",
+   false
+  ],
+  [
+   "Cedrus > Cedrus Fűnyíró Traktorok > Cedrus Professzionális Fűgyűjtős Fűnyíró Traktorok",
+   "Fűgyűjtős fűnyíró traktorok",
+   false
+  ],
+  [
+   "Cedrus > Cedrus Fűnyíró Traktorok > Cedrus Fűnyíró traktorok Tartozékai",
+   "Fűnyíró traktor tartozékok",
+   true
+  ],
+  [
+   "Cedrus > Cedrus Fűnyíró Traktorok > Cedrus Helyben Forduló Fűnyíró Traktorok",
+   "Helyben forduló fűnyíró traktorok",
+   false
+  ],
+  [
+   "Cedrus > Cedrus Fűnyíró Traktorok > Cedrus Oldalkidobós Fűnyíró Traktorok",
+   "Oldalkidobós fűnyíró traktorok",
+   false
+  ],
+  [
+   "Cedrus > Cedrus Gyepszellőztetők > Gyepszellőztetők Tartozékai",
+   "Gyepszellőztető-tartozékok",
+   false
+  ],
+  [
+   "Cedrus > Cedrus Gyepszellőztetők",
+   "Gyepszellőztetők",
+   false
+  ],
+  [
+   "Cedrus > Cedrus Gödörfúrók > Cedrus Gödörfúró Tarozékai",
+   "Talajfúró-tartozékok",
+   false
+  ],
+  [
+   "Cedrus > Cedrus Gödörfúrók",
+   "Talaj- és gödörfúrók",
+   false
+  ],
+  [
+   "Cedrus > Cedrus Hengerkéses Fűnyírógépek > Cedrus Hengerkéses Fűnyírógépek Tartozékai",
+   "Fűnyíró-tartozékok",
+   false
+  ],
+  [
+   "Cedrus > Cedrus Hengerkéses Fűnyírógépek",
+   "Suhanó- és hengerkéses fűnyírók",
+   false
+  ],
+  [
+   "Cedrus > Cedrus Kapálógépek / Talajmarók > Cedrus Kapálógépek / Rotációs Kapák",
+   "Kapálógépek és rotációs kapák",
+   false
+  ],
+  [
+   "Cedrus > Cedrus Kapálógépek / Talajmarók > Cedrus Talajmarók",
+   "Talajmarók",
+   false
+  ],
+  [
+   "Cedrus > Cedrus Kéziszerszámok",
+   "Kéziszerszámok és erdészeti eszközök",
+   false
+  ],
+  [
+   "Cedrus > Cedrus Lombfúvó és Szívó gépek",
+   "Lombfúvók",
+   true
+  ],
+  [
+   "Cedrus > Lombszívó és aprító benzinmotoros",
+   "Lombszívók és aprítók",
+   false
+  ],
+  [
+   "Cedrus > Cedrus Magasgazvágók",
+   "Kerekes és távirányítású bozótvágók",
+   false
+  ],
+  [
+   "Cedrus > Cedrus Motorok",
+   "Motorok",
+   false
+  ],
+  [
+   "Cedrus > Cedrus Seprőgépek és Tartozékai > Cedrus Seprőgépek Tartozékai",
+   "Seprőgép- és térkőtisztító tartozékok",
+   false
+  ],
+  [
+   "Cedrus > Cedrus Seprőgépek és Tartozékai > Cedrus Seprőgépek",
+   "Seprőgépek",
+   false
+  ],
+  [
+   "Cedrus > Cedrus Tuskómarók",
+   "Tuskómarók",
+   false
+  ],
+  [
+   "Cedrus > Cedrus többfunkciós kistraktor",
+   "Multifunkciós művelőgépek",
+   true
+  ],
+  [
+   "Cedrus > Cedrus Árokásók",
+   "Árokásók",
+   false
+  ],
+  [
+   "Cedrus > Fűnyíró gépek > Benzinmotoros fűnyíró gépek",
+   "Benzinmotoros fűnyírók",
+   false
+  ],
+  [
+   "Cedrus > Fűnyíró gépek > Elektromos fűnyíró gépek",
+   "Elektromos fűnyírók",
+   false
+  ],
+  [
+   "Cedrus > Rönkhasító / Hasogatógépek > Rönkhasító / Hasogatógépek Tartozékok",
+   "Rönkhasító-tartozékok",
+   false
+  ],
+  [
+   "Cedrus > Rönkhasító / Hasogatógépek > Rönkhasító / Hasogatógépek",
+   "Rönkhasítók",
+   false
+  ],
+  [
+   "Cedrus > Térkőtisztító > Cedrus Térkőtisztító Tartozékok",
+   "Seprőgép- és térkőtisztító tartozékok",
+   false
+  ],
+  [
+   "Cedrus > Térkőtisztító > Cedrus Térkőtisztító",
+   "Térkőtisztítók",
+   false
+  ],
+  [
+   "Cedrus > Ágaprító / Ágdaráló gépek",
+   "Ágaprítók és ágdarálók",
+   false
+  ],
+  [
+   "Cedrus Épitőipari gépek > Cedrus Betonkeverők",
+   "Betonkeverők",
+   false
+  ],
+  [
+   "Cedrus Épitőipari gépek > Cedrus Betonsimítók",
+   "Betonsimítók",
+   false
+  ],
+  [
+   "Cedrus Épitőipari gépek > Cedrus Döngölőbékák",
+   "Döngölők",
+   false
+  ],
+  [
+   "Cedrus Épitőipari gépek > Cedrus Kompresszorok",
+   "Ipari kompresszorok",
+   false
+  ],
+  [
+   "Cedrus Épitőipari gépek > Cedrus Lapvibrátorok",
+   "Lapvibrátorok",
+   false
+  ],
+  [
+   "Cedrus Épitőipari gépek > Cedrus Áramfejlesztők (Inverter / AVR)",
+   "Ipari áramfejlesztők",
+   false
+  ],
+  [
+   "EUROSYSTEMS > Benzinmotoros kapálógépek tartozékai",
+   "Kapálógép- és talajmaró-tartozékok",
+   false
+  ],
+  [
+   "EUROSYSTEMS > Benzinmotoros kapálógépek",
+   "Kapálógépek és rotációs kapák",
+   false
+  ],
+  [
+   "EUROSYSTEMS > Benzinmotoros talajmarók",
+   "Talajmarók",
+   false
+  ],
+  [
+   "EUROSYSTEMS > Multifunkciós művelőgépek tartozékai",
+   "Multifunkciós művelőgép tartozékok",
+   false
+  ],
+  [
+   "EUROSYSTEMS > Multifunkciós művelőgépek",
+   "Multifunkciós művelőgépek",
+   false
+  ],
+  [
+   "GRILLO > Fűnyíró traktorok > Fű és bozótvágó traktorok",
+   "Kerekes és távirányítású bozótvágók",
+   false
+  ],
+  [
+   "GRILLO > Fűnyíró traktorok > GRILLO gyűjtős frontkaszás fűnyíró traktor",
+   "Frontkaszás fűnyíró traktorok",
+   false
+  ],
+  [
+   "GRILLO > Fűnyíró traktorok > Helyben forduló fűnyíró traktorok",
+   "Helyben forduló fűnyíró traktorok",
+   false
+  ],
+  [
+   "GRILLO > Fűnyíró traktorok > Magas ürítésű frontkaszás fűnyíró traktorok",
+   "Frontkaszás fűnyíró traktorok",
+   false
+  ],
+  [
+   "GRILLO > Fűnyírók",
+   "Kerekes és távirányítású bozótvágók",
+   false
+  ],
+  [
+   "GRILLO > Kerekes bozótvágók",
+   "Kerekes bozótvágó",
+   false
+  ],
+  [
+   "GRILLO > Tartozékok > Fű és bozótvágó traktorok tartozékai",
+   "Bozót- és magasfűvágó tartozékok",
+   false
+  ],
+  [
+   "GRILLO > Tartozékok > Helyben forduló fűnyíró traktorok tartozékai",
+   "Fűnyíró traktor tartozékok",
+   false
+  ],
+  [
+   "GRILLO > Tartozékok > Kerekes bozótvágók tartozékai",
+   "Bozót- és magasfűvágó tartozékok",
+   false
+  ],
+  [
+   "GRILLO > Tartozékok > Magas ürítésű frontkaszás fűnyíró traktorok tartozékai",
+   "Fűnyíró traktor tartozékok",
+   false
+  ],
+  [
+   "GRILLO > Tartozékok > Magasfűnyírók tartozékai",
+   "Bozót- és magasfűvágó tartozékok",
+   false
+  ],
+  [
+   "KASEI > Akkumulátoros permetező gépek",
+   "Akkumulátoros permetezők",
+   false
+  ],
+  [
+   "KASEI > Fűkaszák és szegélyvágók",
+   "Fűkaszák és szegélynyírók",
+   false
+  ],
+  [
+   "KASEI > Fűnyírók",
+   "Benzinmotoros fűnyírók",
+   true
+  ],
+  [
+   "KASEI > Gödörfúró Tartozékok",
+   "Talajfúró-tartozékok",
+   false
+  ],
+  [
+   "KASEI > Gödörfúrók",
+   "Talaj- és gödörfúrók",
+   false
+  ],
+  [
+   "KASEI > Lombfúvók",
+   "Lombszívók és aprítók",
+   false
+  ],
+  [
+   "KASEI > Láncfűrész és magassági ágvágó",
+   "Benzines motorfűrészek",
+   true
+  ],
+  [
+   "KASEI > Permetező gépek",
+   "Motoros permetezőgépek",
+   true
+  ],
+  [
+   "KASEI > Sövényvágó",
+   "Sövénynyírók és sövényvágók",
+   false
+  ],
+  [
+   "KASEI > Vízszivattyúk",
+   "Vízszivattyúk és motorpumpák",
+   false
+  ],
+  [
+   "RATO > Aggregátorok, áramfejlesztők, generátorok > Aggregátorok és áramfejlesztők (Generátorok)",
+   "Áramfejlesztők és aggregátorok",
+   false
+  ],
+  [
+   "RATO > Aggregátorok, áramfejlesztők, generátorok > Áramfejlesztő kiegészítők",
+   "Áramfejlesztő-tartozékok",
+   false
+  ],
+  [
+   "RATO > FŰNYÍRÓK",
+   "Benzinmotoros fűnyírók",
+   false
+  ],
+  [
+   "RATO > Motorok",
+   "Motorok",
+   false
+  ],
+  [
+   "RATO > Rotációs kapák",
+   "Kapálógépek és rotációs kapák",
+   false
+  ],
+  [
+   "RATO > Tartozékok Rotációs kapákhoz",
+   "Kapálógép- és talajmaró-tartozékok",
+   false
+  ],
+  [
+   "RATO > Vízszivattyúk",
+   "Vízszivattyúk és motorpumpák",
+   false
+  ],
+  [
+   "STIGA > Akkumulátoros metszőolló",
+   "Metszőollók",
+   false
+  ],
+  [
+   "STIGA > Bozótvágók",
+   "Fűkaszák és szegélynyírók",
+   false
+  ],
+  [
+   "STIGA > Fűnyírók > Akkumulátoros fűnyírók",
+   "Akkumulátoros fűnyírók",
+   false
+  ],
+  [
+   "STIGA > Fűnyírók > Benzinmotoros fűnyírók",
+   "Benzinmotoros fűnyírók",
+   false
+  ],
+  [
+   "STIGA > Fűnyírótarktorok > Akkumulátoros Fűnyíró traktor Tartozékok",
+   "Akkumulátorok",
+   false
+  ],
+  [
+   "STIGA > Fűnyírótarktorok > Akkumulátoros fűnyírótraktorok",
+   "Fűgyűjtős fűnyíró traktorok",
+   true
+  ],
+  [
+   "STIGA > Fűnyírótarktorok > Frontkaszás fűnyírótraktorok",
+   "Frontkaszás fűnyíró traktorok",
+   false
+  ],
+  [
+   "STIGA > Fűnyírótarktorok > Fűgyűjtős fűnyírótraktorok",
+   "Fűgyűjtős fűnyíró traktorok",
+   false
+  ],
+  [
+   "STIGA > Fűnyírótarktorok > Helyben forduló fűnyíró traktorok",
+   "Helyben forduló fűnyíró traktorok",
+   false
+  ],
+  [
+   "STIGA > Fűnyírótarktorok > Oldalkidobós fűnyírótraktorok",
+   "Oldalkidobós fűnyíró traktorok",
+   false
+  ],
+  [
+   "STIGA > Fűszegélynyírók",
+   "Fűkaszák és szegélynyírók",
+   false
+  ],
+  [
+   "STIGA > Gyepszellőztetők",
+   "Gyepszellőztetők",
+   false
+  ],
+  [
+   "STIGA > Kapálógépek",
+   "Kapálógépek és rotációs kapák",
+   false
+  ],
+  [
+   "STIGA > Komposztaprítók",
+   "Komposztaprítók",
+   false
+  ],
+  [
+   "STIGA > Lombszívók, lombfúvók",
+   "Lombfúvók",
+   true
+  ],
+  [
+   "STIGA > Láncfűrészek > Akkumulátoros láncfűrészek és magassági ágvágók",
+   "Akkumulátoros láncfűrészek",
+   true
+  ],
+  [
+   "STIGA > Láncfűrészek > Benzinmotoros láncfűrészek",
+   "Benzines motorfűrészek",
+   false
+  ],
+  [
+   "STIGA > Láncfűrészek > Elektromos láncfűrészek",
+   "Elektromos láncfűrészek",
+   false
+  ],
+  [
+   "STIGA > Magasnyomású mosók",
+   "Magasnyomású mosók",
+   false
+  ],
+  [
+   "STIGA > Robotfűnyírók",
+   "Robotfűnyírók",
+   true
+  ],
+  [
+   "STIGA > STIGA Motorolaj",
+   "Motorolajok",
+   false
+  ],
+  [
+   "STIGA > Seprőgépek",
+   "Seprőgépek",
+   false
+  ],
+  [
+   "STIGA > Sövényvágók > Akkumulátoros többfunkciós eszköz",
+   "Sövénynyírók és sövényvágók",
+   true
+  ],
+  [
+   "STIGA > Sövényvágók",
+   "Sövénynyírók és sövényvágók",
+   false
+  ],
+  [
+   "STIGA > Tartozékok > Akkumulátorok és akkumulátor töltők",
+   "Akkumulátorok",
+   true
+  ],
+  [
+   "STIGA > Tartozékok > Frontkaszás fűnyírótraktorok tartozékai",
+   "Fűnyíró traktor tartozékok",
+   false
+  ],
+  [
+   "STIGA > Tartozékok > Frontkaszás fűnyírótraktorok vágóasztalai",
+   "Fűnyíró traktor tartozékok",
+   false
+  ],
+  [
+   "STIGA > Tartozékok > Fűnyírótraktorok tartozékai",
+   "Fűnyíró traktor tartozékok",
+   false
+  ],
+  [
+   "STIGA > Tartozékok > Seprőgépek tartozékai",
+   "Seprőgép- és térkőtisztító tartozékok",
+   false
+  ],
+  [
+   "STIGA > Tartozékok > Suhanófűnyírók tartozékai",
+   "Fűnyíró-tartozékok",
+   false
+  ],
+  [
+   "STIHL > AKKUMULÁTOROS METSZŐOLLÓ",
+   "Metszőollók",
+   false
+  ],
+  [
+   "STIHL > Akkumulátorok és akkumulátor töltők > AS 2 Akkumulátor és töltő",
+   "Akkumulátorok",
+   true
+  ],
+  [
+   "STIHL > Akkumulátorok és akkumulátor töltők > HORDOZHATÓ TÁPEGYSÉG",
+   "Akkus rendszer kiegészítők",
+   false
+  ],
+  [
+   "STIHL > Akkumulátorok és akkumulátor töltők",
+   "Akkumulátorok",
+   true
+  ],
+  [
+   "STIHL > Akkumulátoros seprőgép",
+   "Seprőgépek",
+   false
+  ],
+  [
+   "STIHL > Aprítógépek > Kerti aprítógépek tartozékai",
+   "Aprító-tartozékok",
+   false
+  ],
+  [
+   "STIHL > Aprítógépek",
+   "Komposztaprítók",
+   false
+  ],
+  [
+   "STIHL > Egyéni védőfelszerelések > Arc és hallásvédők",
+   "Sisakok és arcvédők",
+   false
+  ],
+  [
+   "STIHL > Egyéni védőfelszerelések > Bakancsok",
+   "Kesztyűk és lábbelik",
+   false
+  ],
+  [
+   "STIHL > Egyéni védőfelszerelések > Erdészeti munkaruha",
+   "Erdészeti munkaruha",
+   true
+  ],
+  [
+   "STIHL > Egyéni védőfelszerelések > FUNCTION ERDÉSZETI MUNKARUHÁK",
+   "Vágásbiztos ruházat",
+   false
+  ],
+  [
+   "STIHL > Egyéni védőfelszerelések > Hallásvédelem",
+   "Hallás- és szemvédők",
+   true
+  ],
+  [
+   "STIHL > Egyéni védőfelszerelések > IDŐJÁRÁSÁLLÓ ÉS FUNKCIONÁLIS RUHÁZAT",
+   "Időjárásálló és láthatósági ruházat",
+   false
+  ],
+  [
+   "STIHL > Egyéni védőfelszerelések > Láthatósági Ruházat",
+   "Időjárásálló és láthatósági ruházat",
+   true
+  ],
+  [
+   "STIHL > Egyéni védőfelszerelések > Munkakesztyűk",
+   "Kesztyűk és lábbelik",
+   false
+  ],
+  [
+   "STIHL > Egyéni védőfelszerelések > Tartozékok",
+   "Védőfelszerelés-kiegészítők",
+   false
+  ],
+  [
+   "STIHL > Egyéni védőfelszerelések > Védőnadrágok motoros kaszákhoz",
+   "Vágásbiztos ruházat",
+   false
+  ],
+  [
+   "STIHL > Egyéni védőfelszerelések > Védősisakok",
+   "Sisakok és arcvédők",
+   false
+  ],
+  [
+   "STIHL > Egyéni védőfelszerelések > Védőszemüvegek",
+   "Hallás- és szemvédők",
+   false
+  ],
+  [
+   "STIHL > Fúvógépek > Tartozékok fúvógépekhez",
+   "Fúvógép-tartozékok",
+   false
+  ],
+  [
+   "STIHL > Fúvógépek > Benzines, elektromos és akkumulátoros lombszívó szecskavágók",
+   "Lombszívók és aprítók",
+   false
+  ],
+  [
+   "STIHL > Fúvógépek",
+   "Lombfúvók",
+   false
+  ],
+  [
+   "STIHL > Fűnyíró gépek > Fűnyíró gépek tartozékai",
+   "Fűnyíró-tartozékok",
+   false
+  ],
+  [
+   "STIHL > Fűnyíró gépek > Benzinmotoros fűnyíró gépek",
+   "Benzinmotoros fűnyírók",
+   false
+  ],
+  [
+   "STIHL > Fűnyíró gépek > Elektromos fűnyíró gépek",
+   "Elektromos fűnyírók",
+   false
+  ],
+  [
+   "STIHL > Fűnyíró gépek",
+   "Akkumulátoros fűnyírók",
+   false
+  ],
+  [
+   "STIHL > Fűnyíró traktorok > Fűnyíró traktor tartozékok",
+   "Fűnyíró traktor tartozékok",
+   false
+  ],
+  [
+   "STIHL > Fűnyíró traktorok > FŰGYŰJTŐS FŰNYÍRÓTRAKTOROK",
+   "Fűgyűjtős fűnyíró traktorok",
+   false
+  ],
+  [
+   "STIHL > Fűnyíró traktorok > Oldalkidobós fűnyírótraktorok",
+   "Oldalkidobós fűnyíró traktorok",
+   false
+  ],
+  [
+   "STIHL > Fűrészláncok",
+   "Láncok és vezetőlemezek",
+   false
+  ],
+  [
+   "STIHL > Vezetőlemez",
+   "Láncok és vezetőlemezek",
+   false
+  ],
+  [
+   "STIHL > Gyepszellőztetők > Gyepszellőztető tartozékok",
+   "Gyepszellőztető-tartozékok",
+   false
+  ],
+  [
+   "STIHL > Gyepszellőztetők",
+   "Gyepszellőztetők",
+   false
+  ],
+  [
+   "STIHL > Kapálógépek",
+   "Kapálógépek és rotációs kapák",
+   false
+  ],
+  [
+   "STIHL > Kombirendszer és multirendszer > Kombirendszer",
+   "Kombirendszerek",
+   false
+  ],
+  [
+   "STIHL > Kombirendszer és multirendszer > Multirendszer",
+   "Multirendszerek",
+   false
+  ],
+  [
+   "STIHL > Kombirendszer és multirendszer > Tartozékok kombi és multirendszerekhez",
+   "Adapterek és munkaeszközök",
+   true
+  ],
+  [
+   "STIHL > Kompresszor",
+   "Kompresszorok",
+   false
+  ],
+  [
+   "STIHL > Magasnyomású mosók > Hidegvizes magasnyomású mosók",
+   "Magasnyomású mosók",
+   false
+  ],
+  [
+   "STIHL > Magasnyomású mosók > Tartozékok tisztítógépekhez",
+   "Magasnyomású mosó tartozékok",
+   false
+  ],
+  [
+   "STIHL > Magasnyomású mosók > Tisztító és ápolószerek",
+   "Tisztító- és ápolószerek",
+   false
+  ],
+  [
+   "STIHL > Motorfűrészek és magassági ágnyesők > Akkumulátoros fűrészek",
+   "Akkumulátoros láncfűrészek",
+   true
+  ],
+  [
+   "STIHL > Motorfűrészek és magassági ágnyesők > Benzines motorfűrészek",
+   "Benzines motorfűrészek",
+   false
+  ],
+  [
+   "STIHL > Motorfűrészek és magassági ágnyesők > Elektromos fűrészek",
+   "Elektromos láncfűrészek",
+   false
+  ],
+  [
+   "STIHL > Motorfűrészek és magassági ágnyesők > Fagondozó fűrészek",
+   "Fagondozó fűrészek",
+   false
+  ],
+  [
+   "STIHL > Motorfűrészek és magassági ágnyesők > Magassági ágnyesők",
+   "Magassági ágvágók",
+   false
+  ],
+  [
+   "STIHL > Motorfűrészek és magassági ágnyesők > Tartozékok motorfűrészekhez",
+   "Motorfűrész-tartozékok",
+   true
+  ],
+  [
+   "STIHL > Olajok, kenőanyagok és kannák > Kannák és töltőrendszerek",
+   "Kannák és töltőrendszerek",
+   false
+  ],
+  [
+   "STIHL > Olajok, kenőanyagok és kannák > STIHL Motorolajok",
+   "Motorolajok",
+   false
+  ],
+  [
+   "STIHL > Olajok, kenőanyagok és kannák > Üzem és kenőanyagok",
+   "Üzemanyagok és adalékok",
+   true
+  ],
+  [
+   "STIHL > Permetezőgépek és kézi permetezők > Akkumulátoros permetezők",
+   "Akkumulátoros permetezők",
+   false
+  ],
+  [
+   "STIHL > Permetezőgépek és kézi permetezők > Kézi permetezők",
+   "Kézi és háti permetezők",
+   false
+  ],
+  [
+   "STIHL > Permetezőgépek és kézi permetezők > Permetezőgépek",
+   "Motoros permetezőgépek",
+   false
+  ],
+  [
+   "STIHL > Permetezőgépek és kézi permetezők > Tartozékok kézi permetezőkhöz",
+   "Permetező-tartozékok",
+   false
+  ],
+  [
+   "STIHL > Reklámtárgyak > Férfi",
+   "Ruházat és sapkák",
+   false
+  ],
+  [
+   "STIHL > Reklámtárgyak > Gyerek",
+   "Gyerekjátékok",
+   false
+  ],
+  [
+   "STIHL > Reklámtárgyak > Kiegészítők",
+   "Ajándék- és reklámtárgyak",
+   false
+  ],
+  [
+   "STIHL > Robotfűnyírók > Robotfűnyíró tartozékok",
+   "Robotfűnyíró-tartozékok",
+   false
+  ],
+  [
+   "STIHL > Robotfűnyírók > Robotfűnyírók",
+   "Robotfűnyírók",
+   false
+  ],
+  [
+   "STIHL > Szegélynyírók és kaszák > Fűkasza tartozékok",
+   "Fűkasza- és szegélynyíró-tartozékok",
+   true
+  ],
+  [
+   "STIHL > Szegélynyírók és kaszák",
+   "Fűkaszák és szegélynyírók",
+   false
+  ],
+  [
+   "STIHL > Szerszámok és erdészeti eszközök > Metszőollók, gallyazó ollók, ágfűrészek",
+   "Metszőollók",
+   false
+  ],
+  [
+   "STIHL > Szerszámok és erdészeti eszközök",
+   "Kéziszerszámok és erdészeti eszközök",
+   false
+  ],
+  [
+   "STIHL > Szerviz Csomagok",
+   "Szerviz csomagok",
+   false
+  ],
+  [
+   "STIHL > Száraz, Nedves porszívók > Porszívók",
+   "Száraz-nedves porszívók",
+   false
+  ],
+  [
+   "STIHL > Száraz, Nedves porszívók > Tartozékok porszívókhoz",
+   "Porszívó-tartozékok",
+   false
+  ],
+  [
+   "STIHL > Sövénynyírók és sövényvágók > Tartozékok sövénynyírókhoz és sövényvágókhoz",
+   "Sövényvágó-tartozékok",
+   false
+  ],
+  [
+   "STIHL > Sövénynyírók és sövényvágók",
+   "Sövénynyírók és sövényvágók",
+   false
+  ],
+  [
+   "STIHL > Talajfúró gépek > Talajfúró gépek",
+   "Talaj- és gödörfúrók",
+   false
+  ],
+  [
+   "STIHL > Talajfúró gépek > Tartozékok talajfúró gépekhez",
+   "Talajfúró-tartozékok",
+   false
+  ],
+  [
+   "STIHL > Tisztító és kenőanyagok",
+   "Tisztító- és ápolószerek",
+   false
+  ],
+  [
+   "STIHL > VÍZSZIVATTYÚK",
+   "Vízszivattyúk és motorpumpák",
+   false
+  ],
+  [
+   "STIHL > Vágótárcsás gépek > Tartozékok vágótárcsás gépekhez",
+   "Vágótárcsás gép tartozékok",
+   false
+  ],
+  [
+   "STIHL > Vágótárcsás gépek > Vágótárcsák",
+   "Műgyanta vágótárcsák",
+   true
+  ],
+  [
+   "STIHL > Vágótárcsás gépek > Vágótárcsás gépek",
+   "Motoros daraboló gépek",
+   false
+  ]
+ ],
+ "brands": {
+  "Stihl": "Stihl",
+  "Stiga": "Stiga",
+  "Cedrus": "Cedrus",
+  "Cedrus ": "Cedrus",
+  "EUROSYSTEMS": "Eurosystems",
+  "Grillo": "Grillo",
+  "BlueBird": "Bluebird",
+  "Rato": "Rato",
+  "Kasei": "Kasei",
+  "Berrin": "Berrin",
+  "CASTELGARDEN": "Castelgarden",
+  "VassKisgép Oils": "Vass Kisgép",
+  "Alpina": "Alpina",
+  "BRIGGSANDSTRATTON": "Briggs & Stratton",
+  "LONCIN": "Loncin",
+  "MEDIALINE": "Media Line",
+  "AGRIMOTOR": "Agrimotor"
+ },
+ "fields": {
+  "Lökettérfogat cm3": "loketterfogat",
+  "Teljesítmény LE": "teljesitmeny",
+  "Tömeg": "tomeg",
+  "Vágásszélesség": "vagasszelesseg",
+  "Garancia": "garancia"
+ },
+ "local_fields": {
+  "Vágáshossz": "cm",
+  "Kapasor szélesség": "cm",
+  "Max Teljesítmény": "kW",
+  "Munkanyomás": "bar",
+  "Légszállítás": "",
+  "Vízáteresztő képesség": "",
+  "Vízszállítás": "m³/h"
+ }
+}

@@ -273,13 +273,50 @@ ul.products:not(.columns-1) li.product .iu-group.brand:has(.vk-cofidis-badge) .i
 .vk-product-gallery .flex-control-thumbs {
 	display: flex;
 	flex-direction: row;
-	flex-wrap: wrap;
-	justify-content: center;
+	flex-wrap: nowrap;
+	justify-content: safe center;
 	gap: .6rem;
 	width: auto;
 	margin: .9rem 0 0;
 	padding: 0;
+	overflow-x: auto;
+	scroll-behavior: smooth;
+	scrollbar-width: none;
 }
+.vk-product-gallery .flex-control-thumbs::-webkit-scrollbar {
+	display: none;
+}
+/* Sok kép: egy sor, két oldalt nyíllal (design: Termékoldal). */
+.vk-thumbs-scroll {
+	position: relative;
+	padding: 0 2.4rem;
+}
+.vk-thumbs-scroll .flex-control-thumbs {
+	justify-content: flex-start;
+}
+.vk-thumbs-nav {
+	position: absolute;
+	top: 50%;
+	z-index: 2;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.7rem;
+	height: 1.7rem;
+	margin-top: calc(.45rem - .85rem);
+	padding: 0;
+	border: 1px solid var(--iu-text-color);
+	border-radius: 50%;
+	background: var(--wp--preset--color--white);
+	color: var(--iu-text-color);
+	cursor: pointer;
+}
+.vk-thumbs-nav[disabled] {
+	opacity: .3;
+	cursor: default;
+}
+.vk-thumbs-prev { left: 0; }
+.vk-thumbs-next { right: 0; }
 .vk-product-gallery .flex-control-thumbs li {
 	flex: 0 0 4.2rem;
 	width: 4.2rem !important;
@@ -1812,6 +1849,8 @@ ul.products:not(.columns-1) li.product .iu-group.brand:has(.vk-cofidis-badge) .i
 	width: 16rem;
 }
 .vk-dd-options {
+	max-height: 60vh;
+	overflow-y: auto;
 	display: flex;
 	flex-wrap: wrap;
 	gap: .6rem;
@@ -1965,6 +2004,10 @@ ul.products:not(.columns-1) li.product .iu-group.brand:has(.vk-cofidis-badge) .i
 }
 .vk-filter-side .vk-dd-options {
 	gap: .4rem;
+	/* Sok érték (pl. tömeg a teljes kínálatban): görgethető lista. */
+	max-height: 16rem;
+	overflow-y: auto;
+	overscroll-behavior: contain;
 }
 .vk-filter-side .vk-pill span {
 	padding: .35rem .8rem;

@@ -11,14 +11,17 @@
        [
         "Benzinmotoros fűnyírók",
         "Akkumulátoros fűnyírók",
-        "Suhanó- és hengerkéses fűnyírók"
+        "Suhanó- és hengerkéses fűnyírók",
+        "Elektromos fűnyírók"
        ]
       ],
       [
        "Fűnyíró traktorok",
        [
         "Fűgyűjtős fűnyíró traktorok",
-        "Oldalkidobós fűnyíró traktorok"
+        "Oldalkidobós fűnyíró traktorok",
+        "Helyben forduló fűnyíró traktorok",
+        "Frontkaszás fűnyíró traktorok"
        ]
       ],
       [
@@ -99,7 +102,8 @@
        [
         "Kézi és háti permetezők",
         "Akkumulátoros permetezők",
-        "Motoros permetezőgépek"
+        "Motoros permetezőgépek",
+        "Szórókocsik"
        ]
       ]
      ]
@@ -147,7 +151,8 @@
        [
         "Motoros daraboló gépek",
         "Akkumulátoros daraboló gépek",
-        "Gyémánt vágótárcsák"
+        "Gyémánt vágótárcsák",
+        "Műgyanta vágótárcsák"
        ]
       ],
       [
@@ -173,7 +178,8 @@
        "Betongépek",
        [
         "Betonkeverők",
-        "Betonvibrátorok"
+        "Betonvibrátorok",
+        "Betonsimítók"
        ]
       ]
      ]
@@ -217,7 +223,8 @@
        "Motoralkatrészek",
        [
         "Szűrők",
-        "Gyújtógyertyák"
+        "Gyújtógyertyák",
+        "Szerviz csomagok"
        ]
       ]
      ]
@@ -229,13 +236,21 @@
        "Olajok",
        [
         "Motorolajok",
-        "Lánckenő olajok"
+        "Lánckenő olajok",
+        "Hajtóműolajok"
        ]
       ],
       [
        "Üzemanyagok",
        [
-        "Üzemanyagok és adalékok"
+        "Üzemanyagok és adalékok",
+        "Kannák és töltőrendszerek"
+       ]
+      ],
+      [
+       "Ápolás",
+       [
+        "Tisztító- és ápolószerek"
        ]
       ]
      ]
@@ -247,7 +262,8 @@
        "Energiaellátás",
        [
         "Akkumulátorok",
-        "Töltők"
+        "Töltők",
+        "Akkus rendszer kiegészítők"
        ]
       ]
      ]
@@ -260,7 +276,110 @@
        [
         "Vágásbiztos ruházat",
         "Sisakok és arcvédők",
-        "Kesztyűk és lábbelik"
+        "Kesztyűk és lábbelik",
+        "Hallás- és szemvédők",
+        "Védőfelszerelés-kiegészítők"
+       ]
+      ],
+      [
+       "Munkaruházat",
+       [
+        "Erdészeti munkaruha",
+        "Időjárásálló és láthatósági ruházat"
+       ]
+      ],
+      [
+       "Ajándéktárgyak",
+       [
+        "Ruházat és sapkák",
+        "Gyerekjátékok",
+        "Ajándék- és reklámtárgyak"
+       ]
+      ]
+     ]
+    ]
+   ]
+  ],
+  [
+   "Tartozékok",
+   [
+    [
+     "Fűnyírás és gyepápolás",
+     [
+      [
+       "Fűnyírók és traktorok",
+       [
+        "Fűnyíró-tartozékok",
+        "Fűnyíró traktor tartozékok",
+        "Robotfűnyíró-tartozékok"
+       ]
+      ],
+      [
+       "Kaszák és bozótvágók",
+       [
+        "Fűkasza- és szegélynyíró-tartozékok",
+        "Bozót- és magasfűvágó tartozékok",
+        "Gyepszellőztető-tartozékok"
+       ]
+      ]
+     ]
+    ],
+    [
+     "Fa- és sövényápolás",
+     [
+      [
+       "Fűrészek és sövényvágók",
+       [
+        "Motorfűrész-tartozékok",
+        "Sövényvágó-tartozékok"
+       ]
+      ],
+      [
+       "Faanyag-feldolgozás",
+       [
+        "Aprító-tartozékok",
+        "Rönkhasító-tartozékok"
+       ]
+      ]
+     ]
+    ],
+    [
+     "Talajművelés és kertgondozás",
+     [
+      [
+       "Talajművelés",
+       [
+        "Kapálógép- és talajmaró-tartozékok",
+        "Multifunkciós művelőgép tartozékok",
+        "Egytengelyes traktor tartozékok",
+        "Talajfúró-tartozékok"
+       ]
+      ],
+      [
+       "Kertgondozás",
+       [
+        "Permetező-tartozékok"
+       ]
+      ]
+     ]
+    ],
+    [
+     "Tisztítás és energia",
+     [
+      [
+       "Tisztítás",
+       [
+        "Fúvógép-tartozékok",
+        "Porszívó-tartozékok",
+        "Magasnyomású mosó tartozékok",
+        "Seprőgép- és térkőtisztító tartozékok"
+       ]
+      ],
+      [
+       "Energia és vágás",
+       [
+        "Áramfejlesztő-tartozékok",
+        "Vágótárcsás gép tartozékok"
        ]
       ]
      ]

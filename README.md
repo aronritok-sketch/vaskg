@@ -97,6 +97,23 @@ A `wp-content/plugins`, `uploads` és `languages` mappák nincsenek verzióköve
 - **Űrlapok**: visszahívás (lábléc), ajánlatkérés, szervizbejelentés, kapcsolat, termékkérdés. Az e-mail minden kitöltött mezőt tartalmaz, a válaszcím a kitöltő e-mail címe. Címzett: `Forms::RECIPIENT` (`inc/forms.php`).
 - **Pénztár**: cégnév és adószám (a rendelésben és az e-mailekben is megjelenik), ÁSZF és adatkezelés elfogadása.
 
+## Régi webshop átköltöztetés (Joomla / VirtueMart → WooCommerce)
+
+Ideiglenes eszköz: **Termékek → Régi webshop átköltöztetés** (`inc/migration*.php`, `assets/migration.js`). A régi bolt (https://www.vasskisgep.hu, Joomla + VirtueMart) nyilvános oldalait olvassa – a Joomla adminhoz, adatbázishoz nem kell hozzáférés, a régi oldalon semmi nem változik. Kb. 1700 termék, 340 régi kategória.
+
+1. **Beolvasás** – a kategóriaoldalakat bejárva minden termékoldalt feldolgoz: név, cikkszám, ár és akciós ár, készletállapot, márka, régi kategóriaútvonal, összes kép, leírás, műszaki adatok, csatolt PDF-ek (kezelési útmutató, robbantott ábra). Újrafuttatható (a régi azonosító alapján frissít). Ha a szerver nem éri el a régi boltot: egy másik telepítésben beolvasott adat „Letöltés JSON-ként”, majd itt „JSON fájl betöltése”.
+2. **Besorolás** – a régi bolt márka szerinti volt (STIHL › Motorfűrészek › …), az új funkció szerinti. `setup/migration/category-map.json`: régi útvonal-előtag → új levélkategória (a leghosszabb egyező előtag dönt), a vegyes régi kategóriák (gépek és tartozékok együtt) „ellenőrizendők”. Ezeket **Claude** sorolja be (Anthropic Messages API, eszközhívás a kategórianevek felsorolásával, gyorsítótárazott rendszerüzenettel, 10-es adagok): a küszöb (alapból 80%) feletti megbízhatóság jóváhagyva, alatta kézi ellenőrzés. API-kulcs: `wp-config.php` → `define('VASSKISGEP_ANTHROPIC_API_KEY', '…');` vagy a beállításoknál (lezáráskor törlődik). Modell: `claude-sonnet-5` (módosítható). Kulcs nélkül az ellenőrizendők kézi áttekintésre kerülnek. Becsült költség a ~340 termékre: ~1–2 USD.
+3. **Áttekintés** – táblázat (szűrés állapotra, keresés): a kategória soronként vagy csoportosan módosítható (azonnal jóváhagy), jóváhagyás, kihagyás, „Claude-nak újra”. A régi boltban méretválasztós termékek (kesztyű, ruha) jelölve: egyszerű termékként jönnek át.
+4. **Import** – WooCommerce egyszerű termékek (a régi azonosító `_vk_old_id` alapján frissít): ár (bruttó; ha a régi alapár magasabb, akciós ár), készlet (Raktáron → készleten; „Visszaigazolástól 1-5 munkanap” → utánrendelhető), cikkszám (ha egyedi), kategória, márka (hiányzó márka létrehozása, logóval ha van `setup/media/marka-*.png`), műszaki adatok (a szűrhető tulajdonságok: lökettérfogat, teljesítmény, tömeg, vágásszélesség, garancia; a többi helyi tulajdonságként), leírás (tisztítva, a beágyazott képek a médiatárba), rövid leírás (a leírás eleje), képek, dokumentumok (Dokumentumok fül). Képek: minden / csak főkép / nincs (gyors próba). Állapot: közzétéve vagy piszkozat.
+5. **Átirányítás** – a régi termékcímek (`/termekek/stihl/…/stihl-ms-172-…`) 301-gyel az új termékre, a régi kategóriacímek az ott lévő termékek leggyakoribb új kategóriájára, a régi márka-főkategóriák (`/termekek/stihl`) a márka oldalára. A lezárás után is működik (`vk_mig_redirects` opció).
+6. **Lezárás** – az átmeneti rekordok és az API-kulcs törlése.
+
+WP-CLI (nagy importhoz, időkorlát nélkül): `wp vasskisgep migrate crawl [--reset]`, `wp vasskisgep migrate map`, `wp vasskisgep migrate ai`, `wp vasskisgep migrate import`, `wp vasskisgep migrate status`.
+
+A kategóriafa a régi kínálathoz bővült (24. telepítő lépés): **Tartozékok** főkategória (gépcsaládonként), elektromos fűnyírók, helyben forduló és frontkaszás fűnyíró traktorok, szórókocsik, betonsimítók, műgyanta vágótárcsák, szerviz csomagok, kannák, ápolószerek, akkus kiegészítők, hallás- és szemvédők, munkaruházat, ajándéktárgyak.
+
+Élesítés sorrendje: téma feltöltése → admin belépés (24. lépés) → bemutató (DEMO-) termékek törlése → Beolvasás → Besorolás (+ Claude) → Áttekintés → Import (képekkel ez órákig tarthat; a lap maradjon nyitva, vagy WP-CLI) → ellenőrzés → a domain átállítása után a régi címek átirányítódnak → Lezárás.
+
 ## Helyi fejlesztés
 
 Szükséges: PHP 8.2+ (mysqli), MariaDB/MySQL, WP-CLI, Node + Playwright (a tartalom-ellenőrzéshez).

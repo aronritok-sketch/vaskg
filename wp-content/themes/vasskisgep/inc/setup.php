@@ -40,6 +40,7 @@ class Setup {
         21 => 'pages_refresh',
         22 => 'price_format',
         23 => 'demo_notices',
+        24 => 'catalog_extension',
     ];
 
     /**
@@ -823,6 +824,17 @@ class Setup {
         if ($count) $this->log[] = 'Termékoldali tájékoztató a bemutató gépeken: '.$count.' db';
     }
 
+    /**
+     * A kategóriafa bővítése a régi webshop kínálatához (Tartozékok főkategória, hiányzó géptípusok,
+     * munkaruházat, ajándéktárgyak); a Termékek almenü és a megamenü frissítése.
+     */
+    function catalog_extension(){
+        $this->category_tree();
+        $this->products_submenu();
+        $this->megamenu_labels();
+        $this->log[] = 'Kategóriafa bővítve (Tartozékok, hiányzó géptípusok) – a régi webshop átköltöztetéséhez';
+    }
+
     /** Árformátum a design szerint: ezres elválasztó pont (249.900 Ft). */
     function price_format(){
         update_option('woocommerce_price_thousand_sep', '.');
@@ -1238,7 +1250,7 @@ class Setup {
     }
 
     function megamenu_labels(){
-        $labels = [ 'Fűgyűjtős fűnyíró traktorok' => 'Fűgyűjtős', 'Oldalkidobós fűnyíró traktorok' => 'Oldalkidobós' ];
+        $labels = [ 'Fűgyűjtős fűnyíró traktorok' => 'Fűgyűjtős', 'Oldalkidobós fűnyíró traktorok' => 'Oldalkidobós', 'Helyben forduló fűnyíró traktorok' => 'Helyben forduló', 'Frontkaszás fűnyíró traktorok' => 'Frontkaszás' ];
         $all = [ 'Láncfűrészek és ágnyesők' => 'Összes láncfűrész', 'Talajművelő gépek' => 'Összes talajművelő gép', 'Permetezés' => 'Összes permetező' ];
         foreach([ 'vk_menu_label' => $labels, 'vk_menu_all' => $all ] as $meta => $map){
             foreach($map as $name => $value){
