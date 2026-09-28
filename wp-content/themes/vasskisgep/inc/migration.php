@@ -60,7 +60,7 @@ class Migration {
 
     static function settings(){
         return wp_parse_args((array)get_option(self::OPTION, []), [
-            'source' => 'https://www.vasskisgep.hu',
+            'source' => 'https://vasskisgep.hu',
             'api_key' => '',
             'model' => 'claude-sonnet-5',
             'threshold' => 0.8,
@@ -338,6 +338,12 @@ class Migration {
         echo '<div class="card"><h2>1. Beolvasás a régi webshopból</h2>';
         echo '<p>A régi bolt nyilvános oldalait járja be (kategóriák, termékoldalak) – a régi oldalon semmit nem módosít. Újrafuttatható: a már beolvasott termékek adatai frissülnek, a besorolásuk megmarad.</p>';
         echo '<p><label>Régi webshop címe: <input type="url" class="regular-text vk-mig-setting" name="source" value="'.esc_attr($settings['source']).'"></label></p>';
+        // A domain átállítása után a régi bolt már nem érhető el ezen a címen: addig kell beolvasni.
+        $source_host = preg_replace('/^www\./', '', (string)parse_url($settings['source'], PHP_URL_HOST));
+        $site_host = preg_replace('/^www\./', '', (string)parse_url(home_url(), PHP_URL_HOST));
+        if ($source_host !== '' && $source_host === $site_host){
+            echo '<div class="notice notice-warning inline"><p>A megadott cím ennek az oldalnak a címe: a domain átállítása után a régi bolt már nem olvasható be innen. A beolvasást és az importot az átállítás előtt kell elvégezni (vagy a régi bolt ideiglenes címét megadni).</p></div>';
+        }
         echo '<p><button class="button button-primary vk-mig-run" data-action="crawl" data-reset="1">Beolvasás indítása</button> ';
         if (!empty($crawl['started']) && empty($crawl['finished'])) echo '<button class="button vk-mig-run" data-action="crawl">Folytatás</button> ';
         echo '<label class="button">JSON fájl betöltése<input type="file" class="vk-mig-upload" accept=".json,application/json" hidden></label>';

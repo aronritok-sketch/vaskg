@@ -16,7 +16,7 @@ class MigrationSource {
     /** A régi bolt címe (beállítás), perjel nélkül. */
     static function base(){
         $settings = Migration::settings();
-        return untrailingslashit($settings['source'] ?: 'https://www.vasskisgep.hu');
+        return untrailingslashit($settings['source'] ?: 'https://vasskisgep.hu');
     }
 
     static function state(){
