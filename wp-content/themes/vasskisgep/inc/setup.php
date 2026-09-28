@@ -39,6 +39,7 @@ class Setup {
         20 => 'managed_placeholders',
         21 => 'pages_refresh',
         22 => 'price_format',
+        23 => 'demo_notices',
     ];
 
     /**
@@ -801,6 +802,27 @@ class Setup {
         $this->about_design();
     }
 
+    const DEMO_NOTICE = "Személyes átvétel esetén az ár tartalmazza a gép összeszerelését és beüzemelését.\nMotorolaj nélkül szállítva.";
+
+    /** Motoros bemutató gépeknél (van lökettérfogat) a termékoldali tájékoztató doboz. */
+    private function demo_notice($product, $notice = self::DEMO_NOTICE){
+        $engine = wc_get_product_terms($product->get_id(), 'pa_loketterfogat', [ 'fields' => 'ids' ]);
+        if (empty($engine) || $product->get_meta('_vk_notice') !== '') return false;
+        $product->update_meta_data('_vk_notice', $notice);
+        $product->save();
+        return true;
+    }
+
+    /** A 13. lépés tulajdonságok nélküli bemutató termékeken futott (régebbi telepítés): pótlás. */
+    function demo_notices(){
+        $count = 0;
+        foreach(get_posts([ 'post_type' => 'product', 'numberposts' => -1, 'post_status' => 'any', 'meta_key' => '_sku', 'meta_value' => 'DEMO-', 'meta_compare' => 'LIKE' ]) as $post){
+            $product = wc_get_product($post->ID);
+            if ($product && $this->demo_notice($product)) $count++;
+        }
+        if ($count) $this->log[] = 'Termékoldali tájékoztató a bemutató gépeken: '.$count.' db';
+    }
+
     /** Árformátum a design szerint: ezres elválasztó pont (249.900 Ft). */
     function price_format(){
         update_option('woocommerce_price_thousand_sep', '.');
@@ -1054,7 +1076,7 @@ class Setup {
         $opened = $wpdb->query("UPDATE {$wpdb->posts} SET comment_status = 'open' WHERE post_type = 'product' AND comment_status <> 'open'");
         $this->log[] = 'Értékelések bekapcsolva ('.(int)$opened.' termék)';
 
-        $notice = "Személyes átvétel esetén az ár tartalmazza a gép összeszerelését és beüzemelését.\nMotorolaj nélkül szállítva.";
+        $notice = self::DEMO_NOTICE;
         $reviews = [
             [ 5, 'Gyorsan megérkezett, a gép elsőre indult. Az üzletben mindent elmagyaráztak.' ],
             [ 4, 'Jó ár-érték arány, a kezelése egyszerű. A fűgyűjtő lehetne nagyobb.' ],
@@ -1065,11 +1087,7 @@ class Setup {
             $product = wc_get_product($post->ID);
             if (!$product) continue;
 
-            $engine = wc_get_product_terms($post->ID, 'pa_loketterfogat', [ 'fields' => 'ids' ]);
-            if (!empty($engine) && $product->get_meta('_vk_notice') === ''){
-                $product->update_meta_data('_vk_notice', $notice);
-                $product->save();
-            }
+            $this->demo_notice($product, $notice);
 
             // Minta értékelések a kiemelt bemutató termékekre.
             if (!$product->is_featured() || get_comments([ 'post_id' => $post->ID, 'type' => 'review', 'count' => true ])) continue;
