@@ -298,8 +298,19 @@ class MigrationImporter {
         arsort($votes);
         $first = (int)array_key_first($votes);
         if (reset($votes) / array_sum($votes) >= 0.7 || count($votes) === 1) return $first;
+        // A legnépesebb kategóriák, amelyek együtt a termékek legalább 70%-át adják: ezek közös szülője
+        // (pl. benzines + akkus láncfűrészek + ágvágók → Láncfűrészek és ágnyesők; a néhány kéziszerszám
+        // miatt ne a főkategória legyen).
+        $total = array_sum($votes);
+        $covered = 0;
+        $main = [];
+        foreach($votes as $id => $n){
+            $main[$id] = $n;
+            $covered += $n;
+            if ($covered / $total >= 0.7) break;
+        }
         $common = null;
-        foreach(array_keys($votes) as $id){
+        foreach(array_keys($main) as $id){
             $chain = array_merge([ (int)$id ], array_map('intval', get_ancestors((int)$id, 'product_cat')));
             $common = $common === null ? $chain : array_values(array_intersect($common, $chain));
         }

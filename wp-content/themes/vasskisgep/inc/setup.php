@@ -42,6 +42,7 @@ class Setup {
         23 => 'demo_notices',
         24 => 'catalog_extension',
         25 => 'migration_rescore',
+        26 => 'migration_redirects',
     ];
 
     /**
@@ -846,6 +847,13 @@ class Setup {
         do { $result = MigrationClassifier::apply_map(); } while (!$result['done']);
         $counts = Migration::counts();
         $this->log[] = sprintf('Régi termékek újrabesorolva: %d; jóváhagyva %d, ellenőrizendő %d.', $reset, $counts['ready'], $counts['review'] + $counts['check']);
+    }
+
+    /** 26. Átköltöztetés: a régi kategóriacímek átirányításának újraszámolása (pontosabb közös kategória). */
+    function migration_redirects(){
+        if (!class_exists(__NAMESPACE__.'\\MigrationImporter') || !Migration::ids('imported', 1)) return;
+        MigrationImporter::category_redirects();
+        $this->log[] = 'Régi kategóriacímek átirányítása újraszámolva: '.count(Migration::redirects()['categories']).' kategória.';
     }
 
     function catalog_extension(){
