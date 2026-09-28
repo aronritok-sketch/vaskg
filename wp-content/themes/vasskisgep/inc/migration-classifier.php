@@ -67,9 +67,24 @@ class MigrationClassifier {
         return $best ? [ $best[1], $best[2] ] : [ '', true ];
     }
 
+    /**
+     * Claude előzetes besorolása (setup/migration/claude-categories.json): a vegyes régi kategóriák
+     * termékeire termékenként, a régi bolt 2026-09-28-i állapota alapján. Így ezekhez nem kell API-kulcs;
+     * a később felvett termékeket a Claude API vagy a kézi áttekintés sorolja be.
+     */
+    static function precomputed($old_id){
+        static $items = null;
+        if ($items === null){
+            $file = json_decode(Setup::content_file('migration/claude-categories.json'), true);
+            $items = (array)($file['items'] ?? []);
+        }
+        return $items[(string)(int)$old_id] ?? null;
+    }
+
     /** Az új (még be nem sorolt) rekordok besorolása a megfeleltetés alapján. */
     static function apply_map($limit = 400){
         $leaves = self::leaves();
+        $threshold = (float)Migration::settings()['threshold'];
         $ids = Migration::ids('new', $limit);
         $ready = $check = 0;
         foreach($ids as $id){
@@ -83,6 +98,13 @@ class MigrationClassifier {
             if ((float)($data['price'] ?? 0) <= 0) $note = trim($note.' Nincs ár a régi boltban (az új boltban nem lesz megvásárolható, amíg nem kap árat).');
             $suggestion = [ 'term' => $leaves[$leaf][0] ?? 0, 'source' => 'megfeleltetés', 'confidence' => $unsure ? 0.6 : 0.95, 'note' => $note ];
             $status = !$suggestion['term'] ? 'review' : ($unsure ? 'check' : 'ready');
+            // Claude előzetes, termékenkénti besorolása: a vegyes régi kategóriák termékei, valamint
+            // azok, amelyeket a termék neve alapján máshová kell tenni, mint a régi kategóriájuk szerint.
+            $pre = self::precomputed($data['id'] ?? 0);
+            if ($pre && !empty($leaves[$pre[0]])){
+                $suggestion = [ 'term' => $leaves[$pre[0]][0], 'source' => 'claude', 'confidence' => (float)$pre[1], 'note' => trim($note.' '.($pre[2] ?? '')) ];
+                $status = (float)$pre[1] >= $threshold ? 'ready' : 'review';
+            }
             if ($note !== '' && $status === 'ready') $status = 'review';
             Migration::set_suggestion($id, $suggestion, $status);
             $status === 'ready' ? $ready++ : $check++;

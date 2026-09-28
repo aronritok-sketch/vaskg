@@ -1,0 +1,1840 @@
+{
+ "_leírás": "Claude előzetes besorolása a vegyes régi kategóriák termékeire (régi VirtueMart termékazonosító => [új levélkategória, megbízhatóság, megjegyzés]). A régi bolt 2026-09-28-i állapota alapján; az azóta felvett termékeket a Claude API vagy a kézi áttekintés sorolja be.",
+ "items": {
+  "1070": [
+   "Akkus rendszer kiegészítők",
+   0.92,
+   ""
+  ],
+  "4279": [
+   "Fűnyíró traktor tartozékok",
+   0.92,
+   ""
+  ],
+  "1062": [
+   "Akkus rendszer kiegészítők",
+   0.92,
+   ""
+  ],
+  "451": [
+   "Motorolajok",
+   0.92,
+   ""
+  ],
+  "519": [
+   "Fűkasza- és szegélynyíró-tartozékok",
+   0.92,
+   ""
+  ],
+  "639": [
+   "Adapterek és munkaeszközök",
+   0.92,
+   ""
+  ],
+  "845": [
+   "Adapterek és munkaeszközök",
+   0.8,
+   "Kombimotorhoz való táska"
+  ],
+  "899": [
+   "Kesztyűk és lábbelik",
+   0.92,
+   ""
+  ],
+  "4047": [
+   "Damilok és fűkaszafejek",
+   0.92,
+   ""
+  ],
+  "3637": [
+   "Motorfűrész-tartozékok",
+   0.92,
+   ""
+  ],
+  "517": [
+   "Fűkasza- és szegélynyíró-tartozékok",
+   0.92,
+   ""
+  ],
+  "3590": [
+   "Kesztyűk és lábbelik",
+   0.92,
+   ""
+  ],
+  "819": [
+   "Motorfűrész-tartozékok",
+   0.92,
+   ""
+  ],
+  "518": [
+   "Fűkasza- és szegélynyíró-tartozékok",
+   0.92,
+   ""
+  ],
+  "503": [
+   "Damilok és fűkaszafejek",
+   0.92,
+   ""
+  ],
+  "4034": [
+   "Damilok és fűkaszafejek",
+   0.92,
+   ""
+  ],
+  "500": [
+   "Damilok és fűkaszafejek",
+   0.92,
+   ""
+  ],
+  "479": [
+   "Damilok és fűkaszafejek",
+   0.92,
+   ""
+  ],
+  "494": [
+   "Fűkasza- és szegélynyíró-tartozékok",
+   0.92,
+   ""
+  ],
+  "279": [
+   "Akkumulátorok",
+   0.92,
+   ""
+  ],
+  "482": [
+   "Fűkasza- és szegélynyíró-tartozékok",
+   0.92,
+   ""
+  ],
+  "505": [
+   "Damilok és fűkaszafejek",
+   0.92,
+   ""
+  ],
+  "480": [
+   "Damilok és fűkaszafejek",
+   0.92,
+   ""
+  ],
+  "252": [
+   "Lombszívók és aprítók",
+   0.88,
+   ""
+  ],
+  "4275": [
+   "Fűnyíró traktor tartozékok",
+   0.92,
+   ""
+  ],
+  "641": [
+   "Adapterek és munkaeszközök",
+   0.92,
+   ""
+  ],
+  "1068": [
+   "Akkus rendszer kiegészítők",
+   0.92,
+   ""
+  ],
+  "825": [
+   "Motorfűrész-tartozékok",
+   0.92,
+   ""
+  ],
+  "462": [
+   "Lánckenő olajok",
+   0.92,
+   ""
+  ],
+  "824": [
+   "Motorfűrész-tartozékok",
+   0.92,
+   ""
+  ],
+  "811": [
+   "Motorfűrész-tartozékok",
+   0.92,
+   ""
+  ],
+  "910": [
+   "Hallás- és szemvédők",
+   0.92,
+   ""
+  ],
+  "923": [
+   "Sisakok és arcvédők",
+   0.85,
+   ""
+  ],
+  "276": [
+   "Akkumulátorok",
+   0.92,
+   ""
+  ],
+  "485": [
+   "Fűkasza- és szegélynyíró-tartozékok",
+   0.92,
+   ""
+  ],
+  "843": [
+   "Motorfűrész-tartozékok",
+   0.92,
+   ""
+  ],
+  "755": [
+   "Műgyanta vágótárcsák",
+   0.92,
+   ""
+  ],
+  "280": [
+   "Töltők",
+   0.92,
+   ""
+  ],
+  "834": [
+   "Motorfűrész-tartozékok",
+   0.92,
+   ""
+  ],
+  "644": [
+   "Adapterek és munkaeszközök",
+   0.92,
+   ""
+  ],
+  "3524": [
+   "Időjárásálló és láthatósági ruházat",
+   0.92,
+   ""
+  ],
+  "481": [
+   "Fűkasza- és szegélynyíró-tartozékok",
+   0.92,
+   ""
+  ],
+  "1065": [
+   "Akkus rendszer kiegészítők",
+   0.92,
+   ""
+  ],
+  "912": [
+   "Hallás- és szemvédők",
+   0.92,
+   ""
+  ],
+  "3600": [
+   "Védőfelszerelés-kiegészítők",
+   0.92,
+   ""
+  ],
+  "3195": [
+   "Akkus rendszer kiegészítők",
+   0.92,
+   ""
+  ],
+  "513": [
+   "Damilok és fűkaszafejek",
+   0.92,
+   ""
+  ],
+  "633": [
+   "Adapterek és munkaeszközök",
+   0.92,
+   ""
+  ],
+  "453": [
+   "Motorolajok",
+   0.92,
+   ""
+  ],
+  "501": [
+   "Damilok és fűkaszafejek",
+   0.92,
+   ""
+  ],
+  "4099": [
+   "Metszőollók",
+   0.92,
+   ""
+  ],
+  "760": [
+   "Műgyanta vágótárcsák",
+   0.92,
+   ""
+  ],
+  "3616": [
+   "Időjárásálló és láthatósági ruházat",
+   0.92,
+   ""
+  ],
+  "4260": [
+   "Fűnyíró traktor tartozékok",
+   0.92,
+   ""
+  ],
+  "807": [
+   "Motorfűrész-tartozékok",
+   0.92,
+   ""
+  ],
+  "493": [
+   "Fűkasza- és szegélynyíró-tartozékok",
+   0.92,
+   ""
+  ],
+  "816": [
+   "Motorfűrész-tartozékok",
+   0.92,
+   ""
+  ],
+  "522": [
+   "Fűkasza- és szegélynyíró-tartozékok",
+   0.92,
+   ""
+  ],
+  "3585": [
+   "Kesztyűk és lábbelik",
+   0.92,
+   ""
+  ],
+  "3249": [
+   "Ruházat és sapkák",
+   0.92,
+   ""
+  ],
+  "455": [
+   "Motorolajok",
+   0.92,
+   ""
+  ],
+  "495": [
+   "Fűkasza- és szegélynyíró-tartozékok",
+   0.92,
+   ""
+  ],
+  "515": [
+   "Fűkasza- és szegélynyíró-tartozékok",
+   0.92,
+   ""
+  ],
+  "502": [
+   "Damilok és fűkaszafejek",
+   0.92,
+   ""
+  ],
+  "467": [
+   "Lánckenő olajok",
+   0.92,
+   ""
+  ],
+  "492": [
+   "Fűkasza- és szegélynyíró-tartozékok",
+   0.92,
+   ""
+  ],
+  "506": [
+   "Damilok és fűkaszafejek",
+   0.92,
+   ""
+  ],
+  "4033": [
+   "Üzemanyagok és adalékok",
+   0.92,
+   ""
+  ],
+  "4111": [
+   "Akkus rendszer kiegészítők",
+   0.85,
+   ""
+  ],
+  "491": [
+   "Fűkasza- és szegélynyíró-tartozékok",
+   0.92,
+   ""
+  ],
+  "277": [
+   "Töltők",
+   0.92,
+   ""
+  ],
+  "3623": [
+   "Időjárásálló és láthatósági ruházat",
+   0.92,
+   ""
+  ],
+  "1064": [
+   "Akkus rendszer kiegészítők",
+   0.92,
+   ""
+  ],
+  "490": [
+   "Fűkasza- és szegélynyíró-tartozékok",
+   0.92,
+   ""
+  ],
+  "897": [
+   "Kesztyűk és lábbelik",
+   0.92,
+   ""
+  ],
+  "463": [
+   "Lánckenő olajok",
+   0.92,
+   ""
+  ],
+  "460": [
+   "Motorolajok",
+   0.92,
+   ""
+  ],
+  "635": [
+   "Adapterek és munkaeszközök",
+   0.92,
+   ""
+  ],
+  "456": [
+   "Motorolajok",
+   0.92,
+   ""
+  ],
+  "4484": [
+   "Akkumulátorok",
+   0.92,
+   ""
+  ],
+  "886": [
+   "Akkumulátorok",
+   0.92,
+   ""
+  ],
+  "821": [
+   "Motorfűrész-tartozékok",
+   0.92,
+   ""
+  ],
+  "225": [
+   "Sövénynyírók és sövényvágók",
+   0.92,
+   ""
+  ],
+  "809": [
+   "Motorfűrész-tartozékok",
+   0.92,
+   ""
+  ],
+  "818": [
+   "Motorfűrész-tartozékok",
+   0.92,
+   ""
+  ],
+  "489": [
+   "Fűkasza- és szegélynyíró-tartozékok",
+   0.92,
+   ""
+  ],
+  "762": [
+   "Műgyanta vágótárcsák",
+   0.92,
+   ""
+  ],
+  "645": [
+   "Adapterek és munkaeszközök",
+   0.92,
+   ""
+  ],
+  "1060": [
+   "Akkus rendszer kiegészítők",
+   0.92,
+   ""
+  ],
+  "894": [
+   "Kesztyűk és lábbelik",
+   0.92,
+   ""
+  ],
+  "823": [
+   "Motorfűrész-tartozékok",
+   0.92,
+   ""
+  ],
+  "504": [
+   "Damilok és fűkaszafejek",
+   0.92,
+   ""
+  ],
+  "275": [
+   "Töltők",
+   0.92,
+   ""
+  ],
+  "478": [
+   "Damilok és fűkaszafejek",
+   0.92,
+   ""
+  ],
+  "477": [
+   "Damilok és fűkaszafejek",
+   0.92,
+   ""
+  ],
+  "466": [
+   "Lánckenő olajok",
+   0.92,
+   ""
+  ],
+  "4083": [
+   "Tisztító- és ápolószerek",
+   0.85,
+   ""
+  ],
+  "246": [
+   "Lombfúvók",
+   0.92,
+   ""
+  ],
+  "875": [
+   "Erdészeti munkaruha",
+   0.92,
+   ""
+  ],
+  "758": [
+   "Műgyanta vágótárcsák",
+   0.92,
+   ""
+  ],
+  "804": [
+   "Motorfűrész-tartozékok",
+   0.92,
+   ""
+  ],
+  "274": [
+   "Töltők",
+   0.92,
+   ""
+  ],
+  "452": [
+   "Motorolajok",
+   0.92,
+   ""
+  ],
+  "4482": [
+   "Töltők",
+   0.92,
+   ""
+  ],
+  "829": [
+   "Motorfűrész-tartozékok",
+   0.92,
+   ""
+  ],
+  "756": [
+   "Műgyanta vágótárcsák",
+   0.92,
+   ""
+  ],
+  "514": [
+   "Fűkasza- és szegélynyíró-tartozékok",
+   0.92,
+   ""
+  ],
+  "510": [
+   "Damilok és fűkaszafejek",
+   0.92,
+   ""
+  ],
+  "484": [
+   "Fűkasza- és szegélynyíró-tartozékok",
+   0.92,
+   ""
+  ],
+  "281": [
+   "Töltők",
+   0.92,
+   ""
+  ],
+  "822": [
+   "Motorfűrész-tartozékok",
+   0.92,
+   ""
+  ],
+  "458": [
+   "Motorolajok",
+   0.92,
+   ""
+  ],
+  "841": [
+   "Motorfűrész-tartozékok",
+   0.92,
+   ""
+  ],
+  "820": [
+   "Motorfűrész-tartozékok",
+   0.92,
+   ""
+  ],
+  "486": [
+   "Fűkasza- és szegélynyíró-tartozékok",
+   0.92,
+   ""
+  ],
+  "643": [
+   "Adapterek és munkaeszközök",
+   0.92,
+   ""
+  ],
+  "4456": [
+   "Kannák és töltőrendszerek",
+   0.8,
+   "Olaj- és üzemanyag-leszívó – karbantartási eszköz"
+  ],
+  "838": [
+   "Motorfűrész-tartozékok",
+   0.92,
+   ""
+  ],
+  "640": [
+   "Adapterek és munkaeszközök",
+   0.92,
+   ""
+  ],
+  "461": [
+   "Lánckenő olajok",
+   0.92,
+   ""
+  ],
+  "3645": [
+   "Akkumulátorok",
+   0.92,
+   ""
+  ],
+  "454": [
+   "Motorolajok",
+   0.92,
+   ""
+  ],
+  "909": [
+   "Hallás- és szemvédők",
+   0.92,
+   ""
+  ],
+  "4048": [
+   "Fűkasza- és szegélynyíró-tartozékok",
+   0.92,
+   ""
+  ],
+  "4043": [
+   "Damilok és fűkaszafejek",
+   0.92,
+   ""
+  ],
+  "753": [
+   "Műgyanta vágótárcsák",
+   0.92,
+   ""
+  ],
+  "499": [
+   "Damilok és fűkaszafejek",
+   0.92,
+   ""
+  ],
+  "877": [
+   "Vágásbiztos ruházat",
+   0.85,
+   ""
+  ],
+  "4481": [
+   "Töltők",
+   0.92,
+   ""
+  ],
+  "511": [
+   "Damilok és fűkaszafejek",
+   0.92,
+   ""
+  ],
+  "4254": [
+   "Fűnyíró traktor tartozékok",
+   0.92,
+   ""
+  ],
+  "4277": [
+   "Fűnyíró traktor tartozékok",
+   0.92,
+   ""
+  ],
+  "464": [
+   "Lánckenő olajok",
+   0.92,
+   ""
+  ],
+  "814": [
+   "Motorfűrész-tartozékok",
+   0.92,
+   ""
+  ],
+  "848": [
+   "Motorfűrész-tartozékok",
+   0.92,
+   ""
+  ],
+  "752": [
+   "Műgyanta vágótárcsák",
+   0.92,
+   ""
+  ],
+  "498": [
+   "Fűkasza- és szegélynyíró-tartozékok",
+   0.92,
+   ""
+  ],
+  "4425": [
+   "Fűnyíró traktor tartozékok",
+   0.92,
+   ""
+  ],
+  "831": [
+   "Motorfűrész-tartozékok",
+   0.92,
+   ""
+  ],
+  "889": [
+   "Kesztyűk és lábbelik",
+   0.92,
+   ""
+  ],
+  "488": [
+   "Fűkasza- és szegélynyíró-tartozékok",
+   0.92,
+   ""
+  ],
+  "1061": [
+   "Akkus rendszer kiegészítők",
+   0.92,
+   ""
+  ],
+  "483": [
+   "Fűkasza- és szegélynyíró-tartozékok",
+   0.92,
+   ""
+  ],
+  "844": [
+   "Motorfűrész-tartozékok",
+   0.92,
+   ""
+  ],
+  "4278": [
+   "Fűnyíró traktor tartozékok",
+   0.92,
+   ""
+  ],
+  "892": [
+   "Kesztyűk és lábbelik",
+   0.92,
+   ""
+  ],
+  "887": [
+   "Töltők",
+   0.92,
+   ""
+  ],
+  "884": [
+   "Akkumulátorok",
+   0.92,
+   ""
+  ],
+  "810": [
+   "Motorfűrész-tartozékok",
+   0.92,
+   ""
+  ],
+  "751": [
+   "Műgyanta vágótárcsák",
+   0.92,
+   ""
+  ],
+  "4031": [
+   "Üzemanyagok és adalékok",
+   0.92,
+   ""
+  ],
+  "282": [
+   "Akkumulátorok",
+   0.92,
+   ""
+  ],
+  "4558": [
+   "Damilok és fűkaszafejek",
+   0.92,
+   ""
+  ],
+  "3629": [
+   "Időjárásálló és láthatósági ruházat",
+   0.92,
+   ""
+  ],
+  "516": [
+   "Fűkasza- és szegélynyíró-tartozékok",
+   0.92,
+   ""
+  ],
+  "3309": [
+   "Motorfűrész-tartozékok",
+   0.88,
+   ""
+  ],
+  "3296": [
+   "Kesztyűk és lábbelik",
+   0.92,
+   ""
+  ],
+  "4274": [
+   "Fűnyíró traktor tartozékok",
+   0.92,
+   ""
+  ],
+  "520": [
+   "Fűkasza- és szegélynyíró-tartozékok",
+   0.92,
+   ""
+  ],
+  "1069": [
+   "Akkus rendszer kiegészítők",
+   0.92,
+   ""
+  ],
+  "3552": [
+   "Motorfűrész-tartozékok",
+   0.88,
+   ""
+  ],
+  "523": [
+   "Fűkasza- és szegélynyíró-tartozékok",
+   0.92,
+   ""
+  ],
+  "3751": [
+   "Motorfűrész-tartozékok",
+   0.92,
+   ""
+  ],
+  "817": [
+   "Motorfűrész-tartozékok",
+   0.92,
+   ""
+  ],
+  "812": [
+   "Motorfűrész-tartozékok",
+   0.92,
+   ""
+  ],
+  "874": [
+   "Erdészeti munkaruha",
+   0.92,
+   ""
+  ],
+  "759": [
+   "Műgyanta vágótárcsák",
+   0.92,
+   ""
+  ],
+  "911": [
+   "Hallás- és szemvédők",
+   0.92,
+   ""
+  ],
+  "885": [
+   "Akkumulátorok",
+   0.92,
+   ""
+  ],
+  "1058": [
+   "Töltők",
+   0.92,
+   ""
+  ],
+  "459": [
+   "Motorolajok",
+   0.92,
+   ""
+  ],
+  "634": [
+   "Adapterek és munkaeszközök",
+   0.92,
+   ""
+  ],
+  "457": [
+   "Motorolajok",
+   0.92,
+   ""
+  ],
+  "846": [
+   "Motorfűrész-tartozékok",
+   0.92,
+   ""
+  ],
+  "4046": [
+   "Robotfűnyíró-tartozékok",
+   0.92,
+   ""
+  ],
+  "497": [
+   "Fűkasza- és szegélynyíró-tartozékok",
+   0.92,
+   ""
+  ],
+  "642": [
+   "Adapterek és munkaeszközök",
+   0.92,
+   ""
+  ],
+  "4117": [
+   "Akkus rendszer kiegészítők",
+   0.92,
+   ""
+  ],
+  "815": [
+   "Motorfűrész-tartozékok",
+   0.92,
+   ""
+  ],
+  "805": [
+   "Motorfűrész-tartozékok",
+   0.92,
+   ""
+  ],
+  "4276": [
+   "Fűnyíró traktor tartozékok",
+   0.92,
+   ""
+  ],
+  "476": [
+   "Damilok és fűkaszafejek",
+   0.92,
+   ""
+  ],
+  "754": [
+   "Műgyanta vágótárcsák",
+   0.92,
+   ""
+  ],
+  "4042": [
+   "Akkumulátorok",
+   0.92,
+   ""
+  ],
+  "836": [
+   "Motorfűrész-tartozékok",
+   0.92,
+   ""
+  ],
+  "893": [
+   "Kesztyűk és lábbelik",
+   0.92,
+   ""
+  ],
+  "496": [
+   "Fűkasza- és szegélynyíró-tartozékok",
+   0.92,
+   ""
+  ],
+  "4483": [
+   "Akkumulátorok",
+   0.92,
+   ""
+  ],
+  "890": [
+   "Kesztyűk és lábbelik",
+   0.92,
+   ""
+  ],
+  "4209": [
+   "Rönkhasítók",
+   0.97,
+   ""
+  ],
+  "4366": [
+   "Lombfúvók",
+   0.85,
+   ""
+  ],
+  "4365": [
+   "Lombfúvók",
+   0.85,
+   ""
+  ],
+  "4364": [
+   "Lombfúvók",
+   0.85,
+   ""
+  ],
+  "425": [
+   "Benzines motorfűrészek",
+   0.85,
+   ""
+  ],
+  "426": [
+   "Magassági ágvágók",
+   0.92,
+   ""
+  ],
+  "3977": [
+   "Benzinmotoros fűnyírók",
+   0.8,
+   "Kasei fűnyíró – a hajtás a névből nem derül ki"
+  ],
+  "3978": [
+   "Benzinmotoros fűnyírók",
+   0.8,
+   "Kasei fűnyíró – a hajtás a névből nem derül ki"
+  ],
+  "446": [
+   "Motoros permetezőgépek",
+   0.85,
+   ""
+  ],
+  "441": [
+   "Motoros permetezőgépek",
+   0.85,
+   ""
+  ],
+  "4488": [
+   "Multifunkciós művelőgépek",
+   0.6,
+   "Többfunkciós 4x4 kistraktor – nincs pontos kategória, ellenőrizendő"
+  ],
+  "4265": [
+   "Fűnyíró traktor tartozékok",
+   0.92,
+   ""
+  ],
+  "4270": [
+   "Fűnyíró traktor tartozékok",
+   0.92,
+   ""
+  ],
+  "4256": [
+   "Fűnyíró traktor tartozékok",
+   0.92,
+   ""
+  ],
+  "4263": [
+   "Fűnyíró traktor tartozékok",
+   0.92,
+   ""
+  ],
+  "4268": [
+   "Fűnyíró traktor tartozékok",
+   0.92,
+   ""
+  ],
+  "4253": [
+   "Fűnyíró traktor tartozékok",
+   0.92,
+   ""
+  ],
+  "4252": [
+   "Fűnyíró traktor tartozékok",
+   0.92,
+   ""
+  ],
+  "4312": [
+   "Fűnyíró traktor tartozékok",
+   0.92,
+   ""
+  ],
+  "4261": [
+   "Fűnyíró traktor tartozékok",
+   0.92,
+   ""
+  ],
+  "4257": [
+   "Fűnyíró traktor tartozékok",
+   0.92,
+   ""
+  ],
+  "4249": [
+   "Fűnyíró traktor tartozékok",
+   0.92,
+   ""
+  ],
+  "4269": [
+   "Fűnyíró traktor tartozékok",
+   0.92,
+   ""
+  ],
+  "4264": [
+   "Fűnyíró traktor tartozékok",
+   0.92,
+   ""
+  ],
+  "4255": [
+   "Fűnyíró traktor tartozékok",
+   0.92,
+   ""
+  ],
+  "4266": [
+   "Fűnyíró traktor tartozékok",
+   0.92,
+   ""
+  ],
+  "4267": [
+   "Fűnyíró traktor tartozékok",
+   0.92,
+   ""
+  ],
+  "4262": [
+   "Fűnyíró traktor tartozékok",
+   0.92,
+   ""
+  ],
+  "4539": [
+   "Fűnyíró traktor tartozékok",
+   0.92,
+   ""
+  ],
+  "4259": [
+   "Fűnyíró traktor tartozékok",
+   0.92,
+   ""
+  ],
+  "4271": [
+   "Fűnyíró traktor tartozékok",
+   0.92,
+   ""
+  ],
+  "4273": [
+   "Fűnyíró traktor tartozékok",
+   0.92,
+   ""
+  ],
+  "4318": [
+   "Fűnyíró traktor tartozékok",
+   0.92,
+   ""
+  ],
+  "4386": [
+   "Fűnyíró traktor tartozékok",
+   0.92,
+   ""
+  ],
+  "4251": [
+   "Fűnyíró traktor tartozékok",
+   0.92,
+   ""
+  ],
+  "4258": [
+   "Fűnyíró traktor tartozékok",
+   0.92,
+   ""
+  ],
+  "4250": [
+   "Fűnyíró traktor tartozékok",
+   0.92,
+   ""
+  ],
+  "4314": [
+   "Fűnyíró traktor tartozékok",
+   0.92,
+   ""
+  ],
+  "4272": [
+   "Fűnyíró traktor tartozékok",
+   0.92,
+   ""
+  ],
+  "4313": [
+   "Fűnyíró traktor tartozékok",
+   0.92,
+   ""
+  ],
+  "4319": [
+   "Fűnyíró traktor tartozékok",
+   0.92,
+   ""
+  ],
+  "3955": [
+   "Robotfűnyírók",
+   0.92,
+   ""
+  ],
+  "3221": [
+   "Robotfűnyírók",
+   0.92,
+   ""
+  ],
+  "3218": [
+   "Robotfűnyírók",
+   0.92,
+   ""
+  ],
+  "3219": [
+   "Robotfűnyírók",
+   0.92,
+   ""
+  ],
+  "3220": [
+   "Robotfűnyírók",
+   0.92,
+   ""
+  ],
+  "3952": [
+   "Robotfűnyírók",
+   0.92,
+   ""
+  ],
+  "3954": [
+   "Robotfűnyírók",
+   0.92,
+   ""
+  ],
+  "3951": [
+   "Robotfűnyírók",
+   0.92,
+   ""
+  ],
+  "4027": [
+   "Robotfűnyírók",
+   0.92,
+   ""
+  ],
+  "3957": [
+   "Robotfűnyírók",
+   0.92,
+   ""
+  ],
+  "4424": [
+   "Robotfűnyírók",
+   0.92,
+   ""
+  ],
+  "3222": [
+   "Robotfűnyírók",
+   0.92,
+   ""
+  ],
+  "3958": [
+   "Robotfűnyírók",
+   0.92,
+   ""
+  ],
+  "3956": [
+   "Robotfűnyírók",
+   0.92,
+   ""
+  ],
+  "3241": [
+   "Helyben forduló fűnyíró traktorok",
+   0.92,
+   ""
+  ],
+  "4422": [
+   "Oldalkidobós fűnyíró traktorok",
+   0.92,
+   ""
+  ],
+  "3240": [
+   "Helyben forduló fűnyíró traktorok",
+   0.92,
+   ""
+  ],
+  "4423": [
+   "Fűgyűjtős fűnyíró traktorok",
+   0.88,
+   ""
+  ],
+  "4419": [
+   "Oldalkidobós fűnyíró traktorok",
+   0.92,
+   ""
+  ],
+  "4421": [
+   "Fűgyűjtős fűnyíró traktorok",
+   0.88,
+   ""
+  ],
+  "3299": [
+   "Fűgyűjtős fűnyíró traktorok",
+   0.88,
+   ""
+  ],
+  "3225": [
+   "Helyben forduló fűnyíró traktorok",
+   0.92,
+   ""
+  ],
+  "222": [
+   "Akkumulátoros láncfűrészek",
+   0.92,
+   ""
+  ],
+  "3972": [
+   "Akkumulátoros láncfűrészek",
+   0.92,
+   ""
+  ],
+  "3974": [
+   "Akkumulátoros láncfűrészek",
+   0.92,
+   ""
+  ],
+  "3214": [
+   "Magassági ágvágók",
+   0.92,
+   ""
+  ],
+  "235": [
+   "Akkumulátoros láncfűrészek",
+   0.92,
+   ""
+  ],
+  "3973": [
+   "Akkumulátoros láncfűrészek",
+   0.92,
+   ""
+  ],
+  "284": [
+   "Akkumulátorok",
+   0.92,
+   ""
+  ],
+  "283": [
+   "Akkumulátorok",
+   0.92,
+   ""
+  ],
+  "3337": [
+   "Akkus rendszer kiegészítők",
+   0.92,
+   ""
+  ],
+  "286": [
+   "Akkus rendszer kiegészítők",
+   0.92,
+   ""
+  ],
+  "285": [
+   "Akkumulátorok",
+   0.92,
+   ""
+  ],
+  "3970": [
+   "Kombirendszerek",
+   0.85,
+   ""
+  ],
+  "3331": [
+   "Kombirendszerek",
+   0.85,
+   ""
+  ],
+  "3215": [
+   "Kombirendszerek",
+   0.85,
+   ""
+  ],
+  "3969": [
+   "Sövénynyírók és sövényvágók",
+   0.92,
+   ""
+  ],
+  "250": [
+   "Lombszívók és aprítók",
+   0.88,
+   ""
+  ],
+  "249": [
+   "Lombfúvók",
+   0.92,
+   ""
+  ],
+  "251": [
+   "Lombfúvók",
+   0.92,
+   ""
+  ],
+  "3211": [
+   "Lombszívók és aprítók",
+   0.88,
+   ""
+  ],
+  "3336": [
+   "Lombfúvók",
+   0.92,
+   ""
+  ],
+  "247": [
+   "Lombfúvók",
+   0.92,
+   ""
+  ],
+  "3975": [
+   "Lombfúvók",
+   0.92,
+   ""
+  ],
+  "248": [
+   "Lombfúvók",
+   0.92,
+   ""
+  ],
+  "4110": [
+   "Akkus rendszer kiegészítők",
+   0.85,
+   ""
+  ],
+  "4108": [
+   "Akkus rendszer kiegészítők",
+   0.85,
+   ""
+  ],
+  "4109": [
+   "Akkus rendszer kiegészítők",
+   0.85,
+   ""
+  ],
+  "4106": [
+   "Metszőollók",
+   0.92,
+   ""
+  ],
+  "4100": [
+   "Metszőollók",
+   0.92,
+   ""
+  ],
+  "4105": [
+   "Metszőollók",
+   0.92,
+   ""
+  ],
+  "4199": [
+   "Fagondozó fűrészek",
+   0.85,
+   ""
+  ],
+  "4104": [
+   "Metszőollók",
+   0.92,
+   ""
+  ],
+  "4103": [
+   "Metszőollók",
+   0.92,
+   ""
+  ],
+  "4102": [
+   "Metszőollók",
+   0.92,
+   ""
+  ],
+  "4107": [
+   "Metszőollók",
+   0.92,
+   ""
+  ],
+  "4201": [
+   "Metszőollók",
+   0.92,
+   ""
+  ],
+  "4197": [
+   "Metszőollók",
+   0.92,
+   ""
+  ],
+  "4198": [
+   "Metszőollók",
+   0.92,
+   ""
+  ],
+  "4101": [
+   "Metszőollók",
+   0.92,
+   ""
+  ],
+  "4200": [
+   "Metszőollók",
+   0.92,
+   ""
+  ],
+  "626": [
+   "Adapterek és munkaeszközök",
+   0.92,
+   ""
+  ],
+  "632": [
+   "Adapterek és munkaeszközök",
+   0.92,
+   ""
+  ],
+  "625": [
+   "Adapterek és munkaeszközök",
+   0.92,
+   ""
+  ],
+  "637": [
+   "Adapterek és munkaeszközök",
+   0.92,
+   ""
+  ],
+  "631": [
+   "Adapterek és munkaeszközök",
+   0.92,
+   ""
+  ],
+  "629": [
+   "Adapterek és munkaeszközök",
+   0.92,
+   ""
+  ],
+  "636": [
+   "Adapterek és munkaeszközök",
+   0.92,
+   ""
+  ],
+  "4123": [
+   "Adapterek és munkaeszközök",
+   0.92,
+   ""
+  ],
+  "620": [
+   "Adapterek és munkaeszközök",
+   0.92,
+   ""
+  ],
+  "621": [
+   "Adapterek és munkaeszközök",
+   0.92,
+   ""
+  ],
+  "630": [
+   "Adapterek és munkaeszközök",
+   0.92,
+   ""
+  ],
+  "627": [
+   "Adapterek és munkaeszközök",
+   0.92,
+   ""
+  ],
+  "638": [
+   "Adapterek és munkaeszközök",
+   0.92,
+   ""
+  ],
+  "3574": [
+   "Erdészeti munkaruha",
+   0.92,
+   ""
+  ],
+  "3567": [
+   "Erdészeti munkaruha",
+   0.92,
+   ""
+  ],
+  "868": [
+   "Erdészeti munkaruha",
+   0.92,
+   ""
+  ],
+  "3559": [
+   "Erdészeti munkaruha",
+   0.92,
+   ""
+  ],
+  "3553": [
+   "Erdészeti munkaruha",
+   0.92,
+   ""
+  ],
+  "870": [
+   "Erdészeti munkaruha",
+   0.92,
+   ""
+  ],
+  "3610": [
+   "Időjárásálló és láthatósági ruházat",
+   0.92,
+   ""
+  ],
+  "3514": [
+   "Időjárásálló és láthatósági ruházat",
+   0.92,
+   ""
+  ],
+  "3535": [
+   "Vágásbiztos ruházat",
+   0.85,
+   ""
+  ],
+  "3603": [
+   "Vágásbiztos ruházat",
+   0.85,
+   ""
+  ],
+  "871": [
+   "Erdészeti munkaruha",
+   0.92,
+   ""
+  ],
+  "873": [
+   "Erdészeti munkaruha",
+   0.92,
+   ""
+  ],
+  "915": [
+   "Hallás- és szemvédők",
+   0.92,
+   ""
+  ],
+  "3261": [
+   "Motorolajok",
+   0.92,
+   ""
+  ],
+  "468": [
+   "Lánckenő olajok",
+   0.92,
+   ""
+  ],
+  "761": [
+   "Gyémánt vágótárcsák",
+   0.92,
+   ""
+  ],
+  "3272": [
+   "Akkumulátoros láncfűrészek",
+   0.92,
+   ""
+  ],
+  "4460": [
+   "Akkumulátoros láncfűrészek",
+   0.92,
+   ""
+  ],
+  "793": [
+   "Akkumulátoros láncfűrészek",
+   0.92,
+   ""
+  ],
+  "4131": [
+   "Fagondozó fűrészek",
+   0.92,
+   ""
+  ],
+  "3271": [
+   "Akkumulátoros láncfűrészek",
+   0.92,
+   ""
+  ],
+  "794": [
+   "Akkumulátoros láncfűrészek",
+   0.92,
+   ""
+  ],
+  "3310": [
+   "Akkumulátoros láncfűrészek",
+   0.92,
+   ""
+  ],
+  "792": [
+   "Akkumulátoros láncfűrészek",
+   0.92,
+   ""
+  ],
+  "1142": [
+   "Akkumulátoros láncfűrészek",
+   0.92,
+   ""
+  ],
+  "4459": [
+   "Akkumulátoros láncfűrészek",
+   0.92,
+   ""
+  ],
+  "3270": [
+   "Akkumulátoros láncfűrészek",
+   0.92,
+   ""
+  ],
+  "849": [
+   "Motorfűrész-tartozékok",
+   0.92,
+   ""
+  ],
+  "840": [
+   "Motorfűrész-tartozékok",
+   0.92,
+   ""
+  ],
+  "813": [
+   "Motorfűrész-tartozékok",
+   0.92,
+   ""
+  ],
+  "837": [
+   "Motorfűrész-tartozékok",
+   0.92,
+   ""
+  ],
+  "833": [
+   "Motorfűrész-tartozékok",
+   0.92,
+   ""
+  ],
+  "830": [
+   "Motorfűrész-tartozékok",
+   0.92,
+   ""
+  ],
+  "808": [
+   "Motorfűrész-tartozékok",
+   0.92,
+   ""
+  ],
+  "826": [
+   "Motorfűrész-tartozékok",
+   0.92,
+   ""
+  ],
+  "4115": [
+   "Akkus rendszer kiegészítők",
+   0.92,
+   ""
+  ],
+  "4118": [
+   "Akkus rendszer kiegészítők",
+   0.92,
+   ""
+  ],
+  "4128": [
+   "Akkumulátorok",
+   0.92,
+   ""
+  ],
+  "4545": [
+   "Akkumulátorok",
+   0.92,
+   ""
+  ],
+  "4126": [
+   "Akkus rendszer kiegészítők",
+   0.92,
+   ""
+  ],
+  "4547": [
+   "Akkumulátorok",
+   0.92,
+   ""
+  ],
+  "3163": [
+   "Akkumulátorok",
+   0.92,
+   ""
+  ],
+  "4127": [
+   "Akkumulátorok",
+   0.92,
+   ""
+  ],
+  "4546": [
+   "Akkumulátorok",
+   0.92,
+   ""
+  ],
+  "4548": [
+   "Akkumulátorok",
+   0.92,
+   ""
+  ],
+  "4124": [
+   "Töltők",
+   0.92,
+   ""
+  ],
+  "4113": [
+   "Akkumulátorok",
+   0.92,
+   ""
+  ],
+  "4549": [
+   "Akkumulátorok",
+   0.92,
+   ""
+  ],
+  "4114": [
+   "Akkumulátorok",
+   0.92,
+   ""
+  ],
+  "1059": [
+   "Töltők",
+   0.92,
+   ""
+  ],
+  "4544": [
+   "Töltők",
+   0.92,
+   ""
+  ],
+  "4485": [
+   "Akkumulátorok",
+   0.92,
+   ""
+  ],
+  "4487": [
+   "Akkumulátorok",
+   0.92,
+   ""
+  ],
+  "4486": [
+   "Akkumulátorok",
+   0.92,
+   ""
+  ],
+  "4040": [
+   "Magassági ágvágók",
+   0.95,
+   ""
+  ],
+  "750": [
+   "Akkumulátoros daraboló gépek",
+   0.95,
+   ""
+  ],
+  "560": [
+   "Kéziszerszámok és erdészeti eszközök",
+   0.9,
+   ""
+  ],
+  "561": [
+   "Kéziszerszámok és erdészeti eszközök",
+   0.9,
+   ""
+  ],
+  "562": [
+   "Kéziszerszámok és erdészeti eszközök",
+   0.9,
+   ""
+  ],
+  "563": [
+   "Kéziszerszámok és erdészeti eszközök",
+   0.9,
+   ""
+  ],
+  "567": [
+   "Kéziszerszámok és erdészeti eszközök",
+   0.9,
+   ""
+  ],
+  "566": [
+   "Kéziszerszámok és erdészeti eszközök",
+   0.9,
+   ""
+  ],
+  "565": [
+   "Kéziszerszámok és erdészeti eszközök",
+   0.9,
+   ""
+  ]
+ }
+}

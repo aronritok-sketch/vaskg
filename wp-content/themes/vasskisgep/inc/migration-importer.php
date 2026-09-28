@@ -93,7 +93,7 @@ class MigrationImporter {
         $product->set_description($description);
         if (!$product_id || $product->get_short_description() === '') $product->set_short_description(self::short_description($description));
 
-        [$attributes, $terms] = self::attributes((array)($data['fields'] ?? []));
+        [$attributes, $terms] = self::attributes(self::spec_fields($data));
         $product->set_attributes($attributes);
 
         $product->update_meta_data('_vk_old_id', (int)$data['id']);
@@ -162,6 +162,32 @@ class MigrationImporter {
     }
 
     /** Műszaki adatok: a szűrhető tulajdonságok (pa_*) és a többi helyi tulajdonságként. */
+    /**
+     * A régi termék műszaki adatai, kiegészítve a leírásból kinyert szűrőértékekkel ott, ahol a régi
+     * bolt külön mezőben nem adta meg (pl. „Súly 18 kg”, „Munkaszélesség: 90 cm”, „Teljesítmény 1 kW”).
+     * Csak mértékegységgel együtt szereplő értéket vesz át; a teljesítményfelvételt nem, a kW-ot LE-re váltja.
+     */
+    static function spec_fields(array $data){
+        $fields = (array)($data['fields'] ?? []);
+        $text = html_entity_decode(wp_strip_all_tags(str_replace('<', ' <', (string)($data['description'] ?? ''))), ENT_QUOTES, 'UTF-8');
+        $text = preg_replace('/\s+/u', ' ', str_replace("\xc2\xa0", ' ', $text));
+        if ($text === '') return $fields;
+        $n = '(\d+(?:[.,]\d+)?)';
+        $number = function($value){ return (float)str_replace(',', '.', $value); };
+        $format = function($value){ return str_replace('.', ',', (string)round($value, 1)); };
+        $patterns = [
+            'Lökettérfogat cm3' => [ '/(?<!\w)(?:lökettérfogat|hengerűrtartalom|hengertérfogat)\w*\s*[:\-–]?\s*(?:kb\.?\s*)?'.$n.'\s*(?:cm3|cm³|ccm|cc)(?!\w)/iu', function($m) use ($number, $format){ return $format($number($m[1])); } ],
+            'Teljesítmény LE' => [ '/(?<!\w)teljesítmény(?!felvétel)\w*\s*[:\-–]?\s*(?:kb\.?\s*|max\.?\s*)?'.$n.'\s*(LE|kW|HP)(?!\w)/iu', function($m) use ($number, $format){ return $format(strcasecmp($m[2], 'kW') === 0 ? $number($m[1]) * 1.36 : $number($m[1])); } ],
+            'Tömeg' => [ '/(?<!\w)(?:tömeg|súly)\w*\s*(?:\([^)]{0,30}\))?\s*[:\-–]?\s*(?:kb\.?\s*|körülbelül\s*|max\.?\s*)?'.$n.'\s*kg(?!\w)/iu', function($m) use ($number, $format){ return $format($number($m[1])); } ],
+            'Vágásszélesség' => [ '/(?<!\w)(?:vágásszélesség|vágási szélesség|munkaszélesség)\w*\s*[:\-–]?\s*'.$n.'\s*(cm|mm)(?!\w)/iu', function($m) use ($number, $format){ return $format(strcasecmp($m[2], 'mm') === 0 ? $number($m[1]) / 10 : $number($m[1])); } ],
+        ];
+        foreach($patterns as $label => [$pattern, $value]){
+            if (isset($fields[$label]) && trim((string)$fields[$label]) !== '') continue;
+            if (preg_match($pattern, $text, $m)) $fields[$label] = $value($m);
+        }
+        return $fields;
+    }
+
     static function attributes(array $fields){
         $map = MigrationClassifier::map();
         $attributes = [];
