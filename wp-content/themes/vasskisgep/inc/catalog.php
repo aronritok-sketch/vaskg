@@ -60,7 +60,7 @@ class Catalog {
 
         // Termékkártya a design szerint: promóciós szöveg a cím alatt, Cofidis jelvény a képen.
         add_filter('render_block_iu-woocommerce/loop-product-title', [$this, 'card_promo'], 10, 2);
-        add_filter('render_block_iu-woocommerce/loop-product-image', [$this, 'card_cofidis'], 10, 2);
+        add_filter('render_block_iu/group', [$this, 'card_cofidis'], 10, 2);
 
         // Régi / hibás kategóriacímek átirányítása (pl. /termekkategoria/kerteszeti-gepek/funyirok/).
         add_action('template_redirect', [$this, 'redirect_legacy_category'], 5);
@@ -127,8 +127,10 @@ class Catalog {
         return '<'.$tag.' class="'.esc_attr($class).'">'.implode('<br>', array_map('esc_html', $lines)).'</'.$tag.'>';
     }
 
+    /** Cofidis jelvény: a „Cofidis expressz” logó (a design szerint; a lábléc logójából). */
     static function cofidis_badge(){
-        return '<span class="vk-cofidis-badge" title="Cofidis áruhitellel is megvásárolható"><svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></g></svg><span>Cofidis</span></span>';
+        $src = get_stylesheet_directory_uri().'/assets/cofidis-expressz.png';
+        return '<span class="vk-cofidis-badge" title="Cofidis áruhitellel is megvásárolható"><img src="'.esc_url($src).'" alt="Cofidis áruhitel" width="87" height="39" loading="lazy" decoding="async"></span>';
     }
 
     function card_promo($content, $block){
@@ -141,11 +143,13 @@ class Catalog {
         return $pos === false ? $content.$promo : substr_replace($content, $promo.'</h4>', $pos, 5);
     }
 
+    /** A kártya márka-sávjába (kedvezmény bal oldalt, márka jobb oldalt) kerül a Cofidis logó. */
     function card_cofidis($content, $block){
+        if (strpos((string)($block['attrs']['className'] ?? ''), 'brand') === false) return $content;
         $product = wc_get_product();
         if (!$product || !self::has_cofidis($product)) return $content;
         $pos = strrpos($content, '</div>');
-        return $pos === false ? $content.self::cofidis_badge() : substr_replace($content, self::cofidis_badge().'</div>', $pos, 6);
+        return $pos === false ? $content : substr_replace($content, self::cofidis_badge().'</div>', $pos, 6);
     }
 
     /** A szűrhető tulajdonságok: [slug => ['label' => …, 'unit' => …]] a megjelenítési sorrendben. */

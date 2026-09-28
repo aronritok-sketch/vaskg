@@ -185,7 +185,7 @@
 
 	// Cofidis kalkulátor.
 	const format = function(value){
-		return Math.round(value).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' Ft';
+		return Math.round(value).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' Ft';
 	};
 	const cofidis = function($box){
 		const config = $box.data('config');

@@ -133,12 +133,13 @@ li.product > .star-rating {
 }
 
 /* Termékkártya: promóciós szöveg (a címen belül) és Cofidis jelvény (a képen). */
+/* Promóciós szöveg a design szerint: ritkított, normál vastagságú, narancspiros. */
 .vk-promo {
-	color: var(--wp--preset--color--primary);
+	color: #f34a17;
 	text-transform: uppercase;
-	letter-spacing: .08em;
-	font-size: .72rem;
-	font-weight: 600;
+	letter-spacing: .16em;
+	font-size: .8rem;
+	font-weight: 400;
 	line-height: 1.5;
 }
 .vk-card-promo {
@@ -152,40 +153,52 @@ li.product > .star-rating {
 .iu-woocommerce-loop-gallery {
 	position: relative;
 }
+/* Készletállapot színei a design szerint. */
+p.stock.in-stock {
+	color: #237a43;
+}
+p.stock.available-on-backorder {
+	color: #c63c2f;
+}
+/* Cofidis jelvény: a „Cofidis expressz” logó. */
 .vk-cofidis-badge {
-	position: absolute;
-	right: -1.5rem;
-	bottom: .6rem;
-	z-index: 2;
-	display: inline-flex;
-	align-items: center;
-	gap: .3rem;
-	padding: .35rem .6rem;
-	background: #e30613;
-	color: #fff;
-	font-size: .78rem;
-	font-weight: 700;
-	letter-spacing: .02em;
-	border-radius: .3rem 0 0 .3rem;
+	display: inline-block;
+	line-height: 0;
 	pointer-events: none;
 }
-/* A márkajelölés a Cofidis jelvény fölé kerül (a design szerint). */
-ul.products:not(.columns-1) li.product .iu-woocommerce-loop-product:has(.vk-cofidis-badge) .iu-group.brand {
-	transform: translateY(-2.2rem);
+.vk-cofidis-badge img {
+	display: block;
+	width: auto;
+	height: 2.17rem;
+	border-radius: .3rem;
 }
-/* Lista nézet: a jelvények a kép sarkaiban (kedvezmény bal alul, Cofidis jobb alul). */
+/* Kártya (rács): a logó a márka-sáv jobb szélén, a kártya széléig, a kedvezménnyel egy
+   vonalban; a márkajelölés fölötte. */
+li.product .iu-group.brand .vk-cofidis-badge {
+	position: absolute;
+	right: -.6rem;
+	bottom: 0;
+	z-index: 2;
+}
+li.product .iu-group.brand .vk-cofidis-badge img {
+	border-radius: .3rem 0 0 .3rem;
+}
+ul.products:not(.columns-1) li.product .iu-group.brand:has(.vk-cofidis-badge) .iu-woocommerce-product-brand {
+	margin-bottom: calc(2.17rem + .45rem);
+}
+/* Lista nézet: a kedvezmény a kép bal alsó sarkában, a márka és alatta a Cofidis logó jobb felül. */
 .woocommerce > .products.columns-1 > .product .iu-woocommerce-loop-gallery {
 	position: relative;
-}
-.woocommerce > .products.columns-1 > .product .vk-cofidis-badge {
-	right: 0;
-	bottom: 1rem;
-	border-radius: .3rem 0 0 .3rem;
 }
 .woocommerce > .products.columns-1 > .product .iu-group.brand .iu-woocommerce-badges {
 	bottom: 2.5rem;
 	left: 1.5rem;
 	z-index: 3;
+}
+.woocommerce > .products.columns-1 > .product .iu-group.brand .vk-cofidis-badge {
+	right: 0;
+	bottom: auto;
+	top: calc(1.8rem + 2.2rem);
 }
 .vk-product-gallery .vk-cofidis-badge,
 .vk-summary .vk-cofidis-badge {
@@ -944,8 +957,8 @@ ul.products:not(.columns-1) li.product .iu-woocommerce-loop-product:has(.vk-cofi
 	background: #f9fafb;
 }
 .vk-ship-pay h4 {
-	margin: 0 0 .6rem;
-	font-size: 1.05rem;
+	margin: 0 0 .5rem;
+	font-size: 1.2rem;
 }
 .vk-ship-pay ul {
 	margin: 0;
@@ -961,9 +974,9 @@ ul.products:not(.columns-1) li.product .iu-woocommerce-loop-product:has(.vk-cofi
 	display: flex;
 	align-items: center;
 	gap: .5rem;
-	padding: .3rem 0;
-	color: #4b5563;
-	font-size: .9rem;
+	padding: .42rem 0;
+	color: #374151;
+	font-size: .95rem;
 }
 .vk-ship-pay li svg {
 	flex: 0 0 auto;
@@ -971,7 +984,7 @@ ul.products:not(.columns-1) li.product .iu-woocommerce-loop-product:has(.vk-cofi
 .vk-ship-pay li strong {
 	margin-left: auto;
 	color: var(--iu-text-color);
-	font-weight: 500;
+	font-weight: 400;
 	white-space: nowrap;
 }
 .vk-ship-pay-more {
@@ -1820,12 +1833,12 @@ ul.products:not(.columns-1) li.product .iu-woocommerce-loop-product:has(.vk-cofi
 	display: inline-flex;
 	align-items: baseline;
 	gap: .35rem;
-	padding: .5rem 1.2rem;
+	padding: .6rem 1.2rem;
 	border: 1px solid #b9bdc4;
 	border-radius: 2rem;
 	font-family: var(--iu-heading-font-family);
 	font-size: .95rem;
-	font-weight: 600;
+	font-weight: 500;
 	transition: border-color .15s, box-shadow .15s;
 }
 .vk-pill small {
@@ -3148,7 +3161,8 @@ footer .iu-form-submit .iu-button-text:after {
 .vk-listing-section .iu-breadcrumbs span.iu-breadcrumbs-separator,
 .vk-product-top .iu-breadcrumbs span.iu-breadcrumbs-separator {
 	font-size: 0;
-	margin: 0 .55rem;
+	/* A keretrendszer elemei körüli szóközök már adnak térközt. */
+	margin: 0;
 }
 
 /* ---------- Termékoldal a design szerint (Termékoldal-tab-1: tartalom 1640 px) ---------- */
@@ -3163,6 +3177,12 @@ footer .iu-form-submit .iu-button-text:after {
 	}
 	.vk-product > .iu-row {
 		gap: .9rem;
+	}
+	/* Hasonló termékek: 3 kártya (~400 px) középen, mint a design (1226 px). */
+	.vk-related {
+		max-width: 68.2rem;
+		margin-left: auto;
+		margin-right: auto;
 	}
 	.vk-product > .iu-row > .iu-column-1-2 {
 		width: calc(50% - .45rem);
@@ -3291,4 +3311,12 @@ footer .iu-form-submit .iu-button-text:after {
 }
 .vk-cofidis-notice p + p {
 	margin-top: .9rem;
+}
+
+/* Szűrő legördülő gombjai: nyíl és × a felirat után (design: Alkategóriák-termékek-dropdown). */
+.vk-dd-apply .iu-button-text,
+.vk-dd-clear .iu-button-text {
+	display: inline-flex;
+	align-items: center;
+	gap: .5rem;
 }

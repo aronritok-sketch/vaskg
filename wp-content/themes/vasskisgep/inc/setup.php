@@ -38,6 +38,7 @@ class Setup {
         19 => 'category_migration',
         20 => 'managed_placeholders',
         21 => 'pages_refresh',
+        22 => 'price_format',
     ];
 
     /**
@@ -295,7 +296,7 @@ class Setup {
             'woocommerce_default_customer_address' => 'base',
             'woocommerce_currency' => 'HUF',
             'woocommerce_currency_pos' => 'right_space',
-            'woocommerce_price_thousand_sep' => ' ',
+            'woocommerce_price_thousand_sep' => '.',
             'woocommerce_price_decimal_sep' => ',',
             'woocommerce_price_num_decimals' => '0',
             'woocommerce_weight_unit' => 'kg',
@@ -798,6 +799,16 @@ class Setup {
         }
         // Rólunk: saját fejléc és hero fotó a Figma szerint.
         $this->about_design();
+    }
+
+    /** Árformátum a design szerint: ezres elválasztó pont (249.900 Ft). */
+    function price_format(){
+        update_option('woocommerce_price_thousand_sep', '.');
+        update_option('woocommerce_price_decimal_sep', ',');
+        update_option('woocommerce_price_num_decimals', '0');
+        wc_delete_product_transients();
+        MegaMenu::flush();
+        $this->log[] = 'Árformátum: 249.900 Ft (a design szerint)';
     }
 
     /** Főmenü: valós célok, a Termékek alatt a főkategóriák. */

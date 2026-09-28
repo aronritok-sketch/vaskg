@@ -142,7 +142,7 @@ class Shop {
     }
 
     function availability_text($text, $product){
-        if ($product->is_on_backorder()) return 'Rendelésre, 1-5 munkanap';
+        if ($product->is_on_backorder()) return '1-5 munkanap visszaigazolástól';
         if (!$product->is_in_stock()) return 'Jelenleg nem rendelhető';
         if ($product->managing_stock() && $product->get_stock_quantity() !== null && $product->get_stock_quantity() <= (int)get_option('woocommerce_notify_low_stock_amount', 2)){
             return 'Utolsó darabok';

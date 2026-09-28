@@ -26,7 +26,7 @@
 				$loan = $config['max'];
 			}
 			$monthly = \VasskisgepTheme\ProductPage::cofidis_installment($loan, $term, $config);
-			$format = function($value){ return number_format((float)$value, 0, ',', ' ').' Ft'; };
+			$format = function($value){ return number_format((float)$value, 0, ',', '.').' Ft'; };
 
 			$buttons = '';
 			foreach($terms as $months){

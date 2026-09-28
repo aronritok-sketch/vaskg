@@ -23,8 +23,8 @@
 			};
 
 			$foot = '<div class="vk-dd-foot">
-				<button type="button" class="vk-dd-apply iu-button iu-button-default"><span class="iu-button-text"><span>(<span class="vk-dd-total">'.esc_html($total).'</span>) termék megtekintése</span></span></button>
-				<button type="button" class="vk-dd-clear iu-button iu-button-outline"><span class="iu-button-text"><span>Kijelölések törlése</span></span></button>
+				<button type="button" class="vk-dd-apply iu-button iu-button-default"><span class="iu-button-text"><span>(<span class="vk-dd-total">'.esc_html($total).'</span>) termék megtekintése</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></span></button>
+				<button type="button" class="vk-dd-clear iu-button iu-button-outline"><span class="iu-button-text"><span>Kijelölések törlése</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></span></button>
 			</div>';
 
 			$dropdown = function($key, $label, $options_html, $selected_count, $class = '') use ($chevron, $foot){
@@ -63,9 +63,9 @@
 			$price_min = $L::param('price-min');
 			$price_max = $L::param('price-max');
 			$price_html = '<div class="vk-price-fields">
-				<label><span>Minimum</span><input type="number" name="price-min" min="0" step="1000" placeholder="'.esc_attr(number_format($min, 0, ',', ' ')).'" value="'.esc_attr($price_min).'" /><em>Ft</em></label>
+				<label><span>Minimum</span><input type="number" name="price-min" min="0" step="1000" placeholder="'.esc_attr(number_format($min, 0, ',', '.')).'" value="'.esc_attr($price_min).'" /><em>Ft</em></label>
 				<span class="vk-price-sep">–</span>
-				<label><span>Maximum</span><input type="number" name="price-max" min="0" step="1000" placeholder="'.esc_attr(number_format($max, 0, ',', ' ')).'" value="'.esc_attr($price_max).'" /><em>Ft</em></label>
+				<label><span>Maximum</span><input type="number" name="price-max" min="0" step="1000" placeholder="'.esc_attr(number_format($max, 0, ',', '.')).'" value="'.esc_attr($price_max).'" /><em>Ft</em></label>
 			</div>';
 			$bar .= $dropdown('price', 'Ár', $price_html, ($price_min !== '' || $price_max !== '') ? 1 : 0, 'vk-dd-price');
 
