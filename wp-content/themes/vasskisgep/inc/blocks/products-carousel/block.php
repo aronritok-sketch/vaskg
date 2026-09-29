@@ -99,7 +99,7 @@
 
 			switch($attributes['source']){
 				case 'popular':
-					$products = $query([ 'orderby' => 'popularity' ]);
+					$products = $query([ 'vk_showcase' => 'popular' ]);
 					break;
 				case 'sale':
 					$ids = wc_get_product_ids_on_sale();
@@ -113,7 +113,7 @@
 					break;
 				case 'featured':
 				default:
-					$products = $query([ 'featured' => true ]);
+					$products = $query([ 'featured' => true, 'vk_showcase' => 'prepend' ]);
 					// Kiemelt termék hiányában ne maradjon üresen a kezdőlap.
 					if (empty($products)) $products = $query([]);
 			}

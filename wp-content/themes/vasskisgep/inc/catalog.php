@@ -64,6 +64,54 @@ class Catalog {
 
         // Régi / hibás kategóriacímek átirányítása (pl. /termekkategoria/kerteszeti-gepek/funyirok/).
         add_action('template_redirect', [$this, 'redirect_legacy_category'], 5);
+
+        // Kirakat-sorrend (vk_showcase lekérdezés-paraméter): kiemelt → gép (nem tartozék) → készleten.
+        add_filter('posts_clauses', [__CLASS__, 'showcase_clauses'], 20, 2);
+    }
+
+    /** A term_taxonomy_id-k: a megadott kategóriák és minden alkategóriájuk (név szerint, főkategóriák). */
+    private static function subtree_tt_ids($taxonomy, array $names){
+        $ids = [];
+        foreach($names as $name){
+            $root = get_term_by('name', $name, $taxonomy);
+            if (!$root) continue;
+            foreach(array_merge([ (int)$root->term_id ], array_map('intval', get_term_children($root->term_id, $taxonomy))) as $term_id){
+                $term = get_term($term_id, $taxonomy);
+                if ($term && !is_wp_error($term)) $ids[] = (int)$term->term_taxonomy_id;
+            }
+        }
+        return $ids;
+    }
+
+    /**
+     * Kirakat-sorrend: a Kiemelt termékek elöl, utána a gépek (a Tartozékok és az Alkatrészek hátrébb), azon belül a
+     * készleten lévők; a meglévő rendezés (pl. dátum) csak utána dönt. 'popular': előtte az eladások száma (a
+     * wc_get_products() „popularity” rendezést nem ismer), így eladás híján is gépek jelennek meg.
+     */
+    static function showcase_clauses($clauses, $query){
+        $mode = $query->get('vk_showcase');
+        if (!$mode) return $clauses;
+        global $wpdb;
+        static $sets = null;
+        if ($sets === null){
+            $featured = get_term_by('slug', 'featured', 'product_visibility');
+            $sets = [
+                'featured' => $featured ? [ (int)$featured->term_taxonomy_id ] : [],
+                'accessory' => self::subtree_tt_ids('product_cat', [ 'Tartozékok', 'Alkatrészek és karbantartás' ]),
+            ];
+        }
+        $has = function($ids, $alias) use ($wpdb){
+            return "EXISTS (SELECT 1 FROM {$wpdb->term_relationships} {$alias} WHERE {$alias}.object_id = {$wpdb->posts}.ID AND {$alias}.term_taxonomy_id IN (".implode(',', array_map('intval', $ids))."))";
+        };
+        $order = [];
+        if ($mode === 'popular') $order[] = "(SELECT vk_sp.total_sales FROM {$wpdb->prefix}wc_product_meta_lookup vk_sp WHERE vk_sp.product_id = {$wpdb->posts}.ID) DESC";
+        if ($sets['featured']) $order[] = $has($sets['featured'], 'vk_sf').' DESC';
+        if ($sets['accessory']) $order[] = $has($sets['accessory'], 'vk_sa').' ASC';
+        $order[] = "EXISTS (SELECT 1 FROM {$wpdb->prefix}wc_product_meta_lookup vk_sl WHERE vk_sl.product_id = {$wpdb->posts}.ID AND vk_sl.stock_status = 'instock') DESC";
+        $order = implode(', ', $order);
+        $current = trim((string)$clauses['orderby']);
+        $clauses['orderby'] = $current === '' ? $order : $order.', '.$current;
+        return $clauses;
     }
 
     /** Kategória útvonal (név szerint, „Szülő/Gyerek”) → kategória. */

@@ -90,6 +90,7 @@ A `wp-content/plugins`, `uploads` és `languages` mappák nincsenek verzióköve
 - **Megamenü** (`inc/megamenu.php`): a főmenü Termékek pontja alatt fülek (főkategóriák + Gyártók), 4 szintű kategóriafa; mobilon a menü saját almenüje.
 - **Rólunk** oldal a Figma szerint (saját fejléc: Oldal szerkesztése → „Oldal megjelenése” → Saját oldalfejléc).
 - **Kereső** (`inc/search.php`): gépelés közben teljes szélességű találati panel a fejléc alatt (termékek képpel/árral, kategóriák, Tudástár); Enter → találati oldal.
+- **Kirakat-sorrend** (`Catalog::showcase_clauses`, `vk_showcase` lekérdezés-paraméter): a terméklista alapértelmezett rendezése és a kezdőlapi Kiemelt karusszel: Kiemelt → gép (a Tartozékok és az Alkatrészek és karbantartás ág hátrébb) → készleten → legújabb. A Népszerű karusszel előtte az eladások szerint rendez (a `wc_get_products()` a „popularity” rendezést nem ismeri, ezért korábban dátum szerint rendezett).
 - **Kedvencek tárolása**: vendégnél sütiben (1 év, a böngésző törölheti); belépett vásárlónál az adatbázisban is, és ha a süti elveszett, onnan áll vissza.
 - **Képek a setup tartalmakban**: `{{media:fajl.jpg}}`, `{{media-thumb:…}}`, `{{media-id:…}}` helyőrzők a `setup/media/` fájlaira; a telepítő tölti fel őket a médiatárba.
 - **Keresés**: termékek (név, leírás, cikkszám) és Tudástár cikkek.

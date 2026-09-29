@@ -95,6 +95,9 @@ class Listing {
             $query_args['tax_query'][] = [ 'taxonomy' => wc_attribute_taxonomy_name($slug), 'field' => 'slug', 'terms' => $terms ];
         }
 
+        // Alapértelmezett rendezésnél kirakat-sorrend (Catalog::showcase_clauses).
+        if (self::param('orderby') === '') $query_args['vk_showcase'] = 'prepend';
+
         $stock = self::list_param('stock');
         if (!empty($stock)){
             $statuses = array_intersect($stock, ['instock', 'onbackorder']);
