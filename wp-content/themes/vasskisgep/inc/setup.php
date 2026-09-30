@@ -43,6 +43,7 @@ class Setup {
         24 => 'catalog_extension',
         25 => 'migration_rescore',
         26 => 'migration_redirects',
+        27 => 'sale_menu',
     ];
 
     /**
@@ -847,6 +848,33 @@ class Setup {
         do { $result = MigrationClassifier::apply_map(); } while (!$result['done']);
         $counts = Migration::counts();
         $this->log[] = sprintf('Régi termékek újrabesorolva: %d; jóváhagyva %d, ellenőrizendő %d.', $reset, $counts['ready'], $counts['review'] + $counts['check']);
+    }
+
+    /** 27. Főmenü: „Akciók” menüpont a Termékek után (a terméklista akciós szűrővel, „Akciós termékek” címmel). */
+    function sale_menu(){
+        $menu = wp_get_nav_menu_object('fomenu');
+        if (!$menu) return;
+        $items = wp_get_nav_menu_items($menu->term_id, [ 'post_status' => 'any' ]);
+        $products = null;
+        foreach($items as $item){
+            if (in_array('vk-menu-sale', (array)$item->classes, true)) return;
+            if ($item->object === 'page' && (int)$item->object_id === (int)wc_get_page_id('shop') && !$item->menu_item_parent) $products = $item;
+        }
+        if (!$products) return;
+        // Közvetlenül a Termékek után; a későbbi menüpontok eggyel hátrébb csúsznak.
+        $last = (int)$products->menu_order;
+        foreach($items as $item){
+            if ((int)$item->menu_order > $last) wp_update_post([ 'ID' => $item->ID, 'menu_order' => (int)$item->menu_order + 1 ]);
+        }
+        wp_update_nav_menu_item($menu->term_id, 0, [
+            'menu-item-title' => 'Akciók',
+            'menu-item-url' => add_query_arg('onsale', 'yes', get_permalink(wc_get_page_id('shop'))),
+            'menu-item-type' => 'custom',
+            'menu-item-classes' => 'vk-menu-sale',
+            'menu-item-position' => $last + 1,
+            'menu-item-status' => 'publish'
+        ]);
+        $this->log[] = 'Főmenü: „Akciók” menüpont a Termékek után (akciós termékek listája).';
     }
 
     /** 26. Átköltöztetés: a régi kategóriacímek átirányításának újraszámolása (pontosabb közös kategória). */

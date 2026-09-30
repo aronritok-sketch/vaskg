@@ -3391,3 +3391,18 @@ footer .iu-form-submit .iu-button-text:after {
 	align-items: center;
 	gap: .5rem;
 }
+
+/* ---------- Főmenü: „Akciók” kiemelve ---------- */
+
+.menu-item.vk-menu-sale > a {
+	color: #f34a17 !important;
+	font-weight: 600;
+}
+/* A 8. főmenüpont miatt se zsugorodjon a logó: a menüpontok szűkülnek (legfeljebb a szövegük szélességéig). */
+.header-menu .iu-image,
+.header-menu .iu-image-wrap {
+	flex-shrink: 0;
+}
+.header-menu .iu-menu-block > li {
+	flex-shrink: 1;
+}

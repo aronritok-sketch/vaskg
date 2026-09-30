@@ -36,6 +36,10 @@ class Shop {
         add_action('wp', [$this, 'setup_single_product']);
 
         add_filter('iu_title', [$this, 'archive_titles']);
+        add_filter('document_title_parts', function($parts){
+            if (self::is_sale_listing()) $parts['title'] = 'Akciós termékek';
+            return $parts;
+        });
         add_filter('render_block_iu/breadcrumbs', [$this, 'escape_search_breadcrumb']);
         add_filter('woocommerce_get_breadcrumb', '__return_empty_array');
 
@@ -115,7 +119,13 @@ class Shop {
         $product = wc_get_product(get_queried_object_id());
     }
 
+    /** A terméklista akciós szűrővel (?onsale=yes, pl. a főmenü „Akciók” pontja). */
+    static function is_sale_listing(){
+        return function_exists('is_shop') && is_shop() && isset($_GET['onsale']) && $_GET['onsale'] === 'yes';
+    }
+
     function archive_titles($title){
+        if (self::is_sale_listing()) return 'Akciós termékek';
         if (is_tax(['product_cat', 'product_brand', 'product_tag'])){
             return single_term_title('', false);
         }
