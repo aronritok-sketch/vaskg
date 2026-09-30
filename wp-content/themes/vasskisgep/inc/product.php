@@ -38,6 +38,56 @@ class ProductPage {
 
         add_action('woocommerce_product_options_general_product_data', [$this, 'notice_field'], 20);
         add_action('woocommerce_admin_process_product_object', [$this, 'save_notice_field']);
+
+        // Lebegő vásárlási sáv a képernyő alján, ha a termék neve, ára és a Kosárba gomb már kigördült.
+        add_action('wp_footer', [$this, 'sticky_buy']);
+    }
+
+    /* ---------- Lebegő vásárlási sáv ---------- */
+
+    function sticky_buy(){
+        if (!is_product()) return;
+        $product = wc_get_product(get_queried_object_id());
+        if (!$product) return;
+
+        $image = $product->get_image_id() ? wp_get_attachment_image($product->get_image_id(), 'thumbnail', false, [ 'class' => 'vk-sticky-img', 'alt' => '' ]) : '';
+        $availability = $product->get_availability();
+        $stock_class = $product->is_on_backorder() ? 'available-on-backorder' : ($product->is_in_stock() ? 'in-stock' : 'out-of-stock');
+        $stock = !empty($availability['availability']) ? '<span class="vk-sticky-stock stock '.esc_attr($stock_class).'">'.esc_html($availability['availability']).'</span>' : '';
+
+        // Ár: régi ár áthúzva, akciós ár, kedvezmény százalékban (egyszerű terméknél).
+        $price = '';
+        if ($product->get_price() === ''){
+            $price = '<span class="vk-sticky-current">Ár egyeztetés alapján</span>';
+        } elseif ($product->is_type('simple') && $product->is_on_sale()){
+            $regular = (float)wc_get_price_to_display($product, [ 'price' => $product->get_regular_price() ]);
+            $current = (float)wc_get_price_to_display($product);
+            $percent = $regular > 0 ? (int)round(($regular - $current) / $regular * 100) : 0;
+            $price = '<del class="vk-sticky-regular">'.wc_price($regular).'</del><span class="vk-sticky-current">'.wc_price($current).'</span>'
+                .($percent > 0 ? '<span class="vk-sticky-badge">−'.$percent.'%</span>' : '');
+        } else {
+            $price = '<span class="vk-sticky-current">'.$product->get_price_html().'</span>';
+        }
+
+        $cart = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/><path d="M2 3h3l2.6 12.2a1.5 1.5 0 0 0 1.5 1.2h8.6a1.5 1.5 0 0 0 1.5-1.1L21 8H6.2"/></svg>';
+        if ($product->is_type('simple') && $product->is_purchasable() && $product->is_in_stock()){
+            // A fő űrlap mennyiségét veszi át (shop.js), a WooCommerce AJAX kosárba rakásával.
+            $button = '<a href="'.esc_url($product->add_to_cart_url()).'" rel="nofollow" class="iu-button iu-button-default vk-sticky-button add_to_cart_button ajax_add_to_cart" data-product_id="'.esc_attr($product->get_id()).'" data-product_sku="'.esc_attr($product->get_sku()).'" data-quantity="1"><span class="iu-button-text"><span>Kosárba</span>'.$cart.'</span></a>';
+        } elseif (!$product->is_type('simple')){
+            $button = '<a href="#" class="iu-button iu-button-default vk-sticky-button vk-sticky-scroll"><span class="iu-button-text"><span>Kiválasztom</span></span></a>';
+        } else {
+            $quote = get_page_by_path('ajanlatkeres');
+            $button = '<a class="iu-button iu-button-outline vk-sticky-button" href="'.esc_url(add_query_arg('termek', rawurlencode($product->get_name()), $quote ? get_permalink($quote) : home_url('/'))).'"><span class="iu-button-text"><span>Ajánlatot kérek</span></span></a>';
+        }
+
+        echo '<div class="vk-sticky-buy" aria-hidden="true" inert>'
+            .'<div class="vk-sticky-inner">'
+                .($image ? '<span class="vk-sticky-thumb">'.$image.'</span>' : '')
+                .'<div class="vk-sticky-info"><span class="vk-sticky-name">'.esc_html($product->get_name()).'</span>'.$stock.'</div>'
+                .'<div class="vk-sticky-price">'.$price.'</div>'
+                .$button
+            .'</div>'
+        .'</div>';
     }
 
     /* ---------- Értékelések ---------- */

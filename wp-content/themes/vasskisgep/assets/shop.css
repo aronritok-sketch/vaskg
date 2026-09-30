@@ -3406,3 +3406,143 @@ footer .iu-form-submit .iu-button-text:after {
 .header-menu .iu-menu-block > li {
 	flex-shrink: 1;
 }
+
+/* ---------- Termékoldal: lebegő vásárlási sáv (alul, ha a vásárlási doboz kigördült) ---------- */
+
+.vk-sticky-buy {
+	position: fixed;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 990;
+	background: var(--wp--preset--color--white, #fff);
+	border-top: 1px solid var(--vk-border);
+	box-shadow: 0 -6px 24px rgba(0, 0, 0, .08);
+	transform: translateY(105%);
+	transition: transform .25s ease;
+}
+.vk-sticky-buy.vk-visible {
+	transform: none;
+}
+.vk-sticky-inner {
+	display: flex;
+	align-items: center;
+	gap: 1.2rem;
+	width: var(--iu-row-width, 92%);
+	max-width: 100%;
+	margin: 0 auto;
+	padding: .65rem 0;
+}
+.vk-sticky-thumb {
+	flex: 0 0 auto;
+	width: 3.4rem;
+	height: 3.4rem;
+	border: 1px solid var(--vk-border);
+	border-radius: var(--vk-radius);
+	overflow: hidden;
+	background: #fff;
+}
+.vk-sticky-thumb img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+}
+.vk-sticky-info {
+	display: flex;
+	flex-direction: column;
+	gap: .15rem;
+	flex: 1 1 auto;
+	min-width: 0;
+}
+.vk-sticky-name {
+	font-family: var(--iu-heading-font-family);
+	font-size: 1.15rem;
+	font-weight: 600;
+	line-height: 1.2;
+	text-transform: uppercase;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.vk-sticky-stock {
+	margin: 0;
+	font-size: .85rem;
+}
+.vk-sticky-stock.in-stock {
+	color: #237a43;
+}
+.vk-sticky-stock.available-on-backorder,
+.vk-sticky-stock.out-of-stock {
+	color: #c63c2f;
+}
+.vk-sticky-price {
+	display: flex;
+	align-items: baseline;
+	gap: .6rem;
+	flex: 0 0 auto;
+	white-space: nowrap;
+}
+.vk-sticky-regular {
+	color: var(--wp--preset--color--primary);
+	font-size: .95rem;
+}
+.vk-sticky-current {
+	font-family: var(--iu-heading-font-family);
+	font-size: 1.7rem;
+	font-weight: 600;
+	line-height: 1;
+}
+.vk-sticky-current del {
+	font-size: .95rem;
+}
+.vk-sticky-badge {
+	align-self: center;
+	padding: .15rem .45rem;
+	border-radius: var(--vk-radius);
+	background: #f34a17;
+	color: #fff;
+	font-size: .85rem;
+	font-weight: 600;
+}
+.vk-sticky-button {
+	flex: 0 0 auto;
+}
+.vk-sticky-buy .added_to_cart {
+	display: none;
+}
+body.vk-has-sticky-buy {
+	padding-bottom: 4.8rem;
+}
+@media (max-width: 767px) {
+	.vk-sticky-inner {
+		gap: .7rem;
+		width: 100%;
+		padding: .55rem .9rem;
+	}
+	.vk-sticky-thumb,
+	.vk-sticky-stock {
+		display: none;
+	}
+	.vk-sticky-name {
+		font-size: .95rem;
+	}
+	.vk-sticky-price {
+		flex-direction: column;
+		align-items: flex-end;
+		gap: .1rem;
+	}
+	.vk-sticky-current {
+		font-size: 1.25rem;
+	}
+	.vk-sticky-regular,
+	.vk-sticky-badge {
+		font-size: .75rem;
+	}
+	.vk-sticky-badge {
+		display: none;
+	}
+	body.vk-has-sticky-buy {
+		padding-bottom: 4rem;
+	}
+}

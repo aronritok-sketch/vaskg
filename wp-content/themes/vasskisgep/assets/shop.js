@@ -145,6 +145,8 @@
 		if (value > max) value = max;
 		$input.val(value);
 		$form.find('.vk-buy-button').attr('data-quantity', value).data('quantity', value);
+		// A lebegő sáv Kosárba gombja ugyanennyit tesz a kosárba.
+		$('.vk-sticky-button.ajax_add_to_cart').attr('data-quantity', value).data('quantity', value);
 	};
 	$(document).on('click', '.vk-qty-btn', function(){
 		const $form = $(this).closest('.vk-buy');
@@ -265,5 +267,32 @@
 	};
 	$(window).on('load', function(){ setTimeout(thumbsNav, 300); });
 	$(document).on('wc-product-gallery-after-init', function(){ setTimeout(thumbsNav, 100); });
+
+})(jQuery);
+
+(function($){
+
+	/* ---------- Termékoldal: lebegő vásárlási sáv ---------- */
+
+	const bar = document.querySelector('.vk-sticky-buy');
+	const anchor = document.querySelector('.vk-buy');
+	if (!bar || !anchor || !('IntersectionObserver' in window)) return;
+
+	const show = function(on){
+		bar.classList.toggle('vk-visible', on);
+		bar.setAttribute('aria-hidden', on ? 'false' : 'true');
+		if (on) bar.removeAttribute('inert'); else bar.setAttribute('inert', '');
+		document.body.classList.toggle('vk-has-sticky-buy', on);
+	};
+	// Akkor jelenik meg, ha a vásárlási doboz (ár, Kosárba) felfelé kigördült a képből.
+	new IntersectionObserver(function(entries){
+		const entry = entries[0];
+		show(!entry.isIntersecting && entry.boundingClientRect.top < 0);
+	}).observe(anchor);
+
+	$(bar).on('click', '.vk-sticky-scroll', function(e){
+		e.preventDefault();
+		anchor.scrollIntoView({ behavior: 'smooth', block: 'center' });
+	});
 
 })(jQuery);
