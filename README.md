@@ -90,6 +90,9 @@ A `wp-content/plugins`, `uploads` és `languages` mappák nincsenek verzióköve
 - **Megamenü** (`inc/megamenu.php`): a főmenü Termékek pontja alatt fülek (főkategóriák + Gyártók), 4 szintű kategóriafa; mobilon a menü saját almenüje.
 - **Rólunk** oldal a Figma szerint (saját fejléc: Oldal szerkesztése → „Oldal megjelenése” → Saját oldalfejléc).
 - **Kereső** (`inc/search.php`): gépelés közben teljes szélességű találati panel a fejléc alatt (termékek képpel/árral, kategóriák, Tudástár); Enter → találati oldal.
+- **Akciók** menüpont (27. lépés): a főmenüben a Termékek után, a terméklista akciós szűrővel (`/termekek/?onsale=yes`), „Akciós termékek” címmel; narancs kiemelés (`.vk-menu-sale`).
+- **Lebegő vásárlási sáv** (`ProductPage::sticky_buy`, shop.js): a termékoldalon alul megjelenik, ha a vásárlási doboz felfelé kigördült: kép, név, elérhetőség, régi és akciós ár, kedvezmény %, Kosárba (a fő űrlap mennyiségével, AJAX-szal); változatos terméknél „Kiválasztom”, nem vásárolhatónál „Ajánlatot kérek”.
+- **Admin rendeléslista** (`inc/orders.php`): „Termékek” oszlop a tételekkel (kép, mennyiség, név, cikkszám), sok tételnél görgethető dobozban; HPOS és régi tárolás.
 - **Kirakat-sorrend** (`Catalog::showcase_clauses`, `vk_showcase` lekérdezés-paraméter): a terméklista alapértelmezett rendezése és a kezdőlapi Kiemelt karusszel: Kiemelt → gép (a Tartozékok és az Alkatrészek és karbantartás ág hátrébb) → készleten → legújabb. A Népszerű karusszel előtte az eladások szerint rendez (a `wc_get_products()` a „popularity” rendezést nem ismeri, ezért korábban dátum szerint rendezett).
 - **Kedvencek tárolása**: vendégnél sütiben (1 év, a böngésző törölheti); belépett vásárlónál az adatbázisban is, és ha a süti elveszett, onnan áll vissza.
 - **Képek a setup tartalmakban**: `{{media:fajl.jpg}}`, `{{media-thumb:…}}`, `{{media-id:…}}` helyőrzők a `setup/media/` fájlaira; a telepítő tölti fel őket a médiatárba.
