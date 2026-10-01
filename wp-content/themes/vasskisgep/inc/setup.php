@@ -44,6 +44,7 @@ class Setup {
         25 => 'migration_rescore',
         26 => 'migration_redirects',
         27 => 'sale_menu',
+        28 => 'brand_slider',
     ];
 
     /**
@@ -848,6 +849,50 @@ class Setup {
         do { $result = MigrationClassifier::apply_map(); } while (!$result['done']);
         $counts = Migration::counts();
         $this->log[] = sprintf('Régi termékek újrabesorolva: %d; jóváhagyva %d, ellenőrizendő %d.', $reset, $counts['ready'], $counts['review'] + $counts['check']);
+    }
+
+    /**
+     * 28. Kezdőlap márkasáv: a Kasei helyett a Berrin (főprofil: kapálógép), a Rato fő profilja áramfejlesztő és kapa
+     * (ügyfélkérés, 2026-10). A diák képe, logója, szövege és linkje cserélődik; a többi diához nem nyúl.
+     */
+    function brand_slider(){
+        $page_id = (int)get_option('page_on_front');
+        $post = $page_id ? get_post($page_id) : null;
+        if (!$post || strpos($post->post_content, 'pager-hero-slide') === false) return;
+        $home = untrailingslashit(home_url());
+        $button = function($slug) use ($home){ return '<a href="'.$home.'/gyarto/'.$slug.'/" class="iu-button iu-button-default" >Termékek megtekintése</a>'; };
+        $berrin_logo = wp_get_attachment_url(self::media('berrin-logo.png'));
+        $slides = [
+            'kasei-logo' => [
+                'bg' => self::media('berrin-kapalogep.jpg'),
+                'closed' => '<img src="'.$berrin_logo.'" alt="Berrin Logo" />',
+                'open' => '<img src="'.$berrin_logo.'" alt="Berrin Logo" />'."\n"
+                    .'<p class="iu-text">A BERRIN rotációs kapái erős motorral és nagy gumikerekekkel készülnek, ekével, töltögetővel és utánfutóval bővíthetők: a kerti talajmunka megbízható gépei.</p>'."\n"
+                    .$button('berrin'),
+            ],
+            'rato-logo' => [
+                'bg' => self::media('rato-kapa-aramfejleszto.jpg'),
+                'open_text' => 'A RATO áramfejlesztői és kapálógépei saját motorokra épülnek: tartós energiaforrás a ház körül és az építkezésen, megbízható erő a kertben.',
+            ],
+        ];
+        $changed = [];
+        $content = preg_replace_callback('#<!-- wp:vasskisgep/pager-hero-slide (\{.*?\}) /-->#s', function($m) use ($slides, &$changed){
+            $attrs = json_decode($m[1], true);
+            if (!is_array($attrs)) return $m[0];
+            foreach($slides as $key => $new){
+                if (strpos((string)($attrs['closed'] ?? ''), $key) === false) continue;
+                if (!empty($new['bg'])) $attrs['bg'] = (int)$new['bg'];
+                if (isset($new['closed'])) $attrs['closed'] = $new['closed'];
+                if (isset($new['open'])) $attrs['open'] = $new['open'];
+                if (isset($new['open_text'])) $attrs['open'] = preg_replace('#<p class="iu-text">.*?</p>#s', '<p class="iu-text">'.$new['open_text'].'</p>', (string)$attrs['open']);
+                $changed[] = $key;
+                return '<!-- wp:vasskisgep/pager-hero-slide '.serialize_block_attributes($attrs).' /-->';
+            }
+            return $m[0];
+        }, $post->post_content);
+        if (!$changed) return;
+        wp_update_post([ 'ID' => $post->ID, 'post_content' => wp_slash($content) ]);
+        $this->log[] = 'Kezdőlap márkasáv: Kasei → Berrin (kapálógép), Rato: áramfejlesztő + kapa ('.implode(', ', $changed).').';
     }
 
     /** 27. Főmenü: „Akciók” menüpont a Termékek után (a terméklista akciós szűrővel, „Akciós termékek” címmel). */
