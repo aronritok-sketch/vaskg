@@ -183,8 +183,9 @@ class Shop {
         if (!is_tax(['product_brand', 'product_tag']) || empty($out['category'])) return $out;
 
         $queried = get_queried_object();
-        if ($queried && $out['category'] === $queried->slug && empty($_GET['product-categories'])){
-            $out['category'] = '';
+        if ($queried && $out['category'] === $queried->slug){
+            // A keretrendszer a márka/címke slugját kategóriaként adná át; a választott kategória (ha van) a helyes.
+            $out['category'] = empty($_GET['product-categories']) ? '' : implode(',', array_map('sanitize_title', explode(',', wp_unslash($_GET['product-categories']))));
         }
         if (is_tax('product_tag') && !wp_doing_ajax()) $out['tag'] = $queried->slug;
         return $out;

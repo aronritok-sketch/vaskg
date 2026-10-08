@@ -19,6 +19,10 @@
 				if (!empty($term->description)){
 					$html .= '<div class="vk-term-description iu-text">'.wpautop(wp_kses_post($term->description)).'</div>';
 				}
+				// Márkaoldal: a márka termékeinek kategóriái (mint a régi boltban), kattintásra szűrnek.
+				if ($term->taxonomy === 'product_brand'){
+					$html .= \VasskisgepTheme\Catalog::brand_categories_html($term);
+				}
 			}
 
 			return $html === '' ? '' : '<div class="vk-term-header">'.$html.'</div>';

@@ -3616,3 +3616,31 @@ body.vk-has-sticky-buy {
 		min-width: 8rem;
 	}
 }
+
+/* Márkaoldal: a márka kategóriái. */
+.vk-brand-cats {
+	display: flex;
+	flex-direction: column;
+	gap: .6rem;
+}
+.vk-brand-cats-label {
+	font-family: var(--iu-heading-font-family);
+	font-size: .8rem;
+	font-weight: 600;
+	letter-spacing: .12em;
+	text-transform: uppercase;
+	color: var(--vk-muted);
+}
+.vk-subcategories small {
+	margin-left: .2rem;
+	color: var(--vk-muted);
+}
+.vk-subcategories a.vk-active {
+	border-color: var(--wp--preset--color--dark);
+	background: var(--wp--preset--color--dark);
+	color: var(--wp--preset--color--white);
+}
+.vk-subcategories a.vk-active small {
+	color: inherit;
+	opacity: .75;
+}
