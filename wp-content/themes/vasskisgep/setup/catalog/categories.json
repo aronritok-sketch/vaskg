@@ -412,6 +412,36 @@
    "slug": "garancia",
    "label": "Garancia",
    "unit": "hó"
+  },
+  {
+   "slug": "max-teljesitmeny",
+   "label": "Max. teljesítmény",
+   "unit": "kW",
+   "contextual": true
+  },
+  {
+   "slug": "hasitoero",
+   "label": "Hasítóerő",
+   "unit": "t",
+   "contextual": true
+  },
+  {
+   "slug": "max-agatmero",
+   "label": "Max. ágátmérő",
+   "unit": "mm",
+   "contextual": true
+  },
+  {
+   "slug": "vizatereszto-kepesseg",
+   "label": "Vízáteresztő képesség",
+   "unit": "l/h",
+   "contextual": true
+  },
+  {
+   "slug": "max-munkanyomas",
+   "label": "Max. munkanyomás",
+   "unit": "bar",
+   "contextual": true
   }
  ]
 }

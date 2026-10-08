@@ -47,6 +47,7 @@ class Setup {
         28 => 'brand_slider',
         29 => 'brand_slider_order',
         30 => 'second_phone',
+        31 => 'spec_tiles',
     ];
 
     /**
@@ -501,19 +502,7 @@ class Setup {
         $this->category_tree();
         $this->log[] = 'Termékkategóriák létrehozva (megamenü szerinti fa)';
 
-        foreach($catalog['attributes'] as $attribute){
-            if (!wc_attribute_taxonomy_id_by_name($attribute['slug'])){
-                wc_create_attribute([
-                    'name' => $attribute['label'],
-                    'slug' => $attribute['slug'],
-                    'type' => 'select',
-                    'order_by' => 'name_num',
-                    'has_archives' => false
-                ]);
-                $this->log[] = 'Tulajdonság: '.$attribute['label'].' ('.$attribute['unit'].')';
-            }
-        }
-        delete_transient('wc_attribute_taxonomies');
+        $this->catalog_attributes($catalog);
 
         $other = get_term_by('slug', 'egyeb', 'product_cat');
 
@@ -851,6 +840,71 @@ class Setup {
         do { $result = MigrationClassifier::apply_map(); } while (!$result['done']);
         $counts = Migration::counts();
         $this->log[] = sprintf('Régi termékek újrabesorolva: %d; jóváhagyva %d, ellenőrizendő %d.', $reset, $counts['ready'], $counts['review'] + $counts['check']);
+    }
+
+    /** A categories.json tulajdonságai globális WooCommerce attribútumként (a hiányzók létrehozva, a kérésben regisztrálva). */
+    private function catalog_attributes($catalog = null){
+        if ($catalog === null) $catalog = json_decode(self::content_file('catalog/categories.json'), true);
+        foreach($catalog['attributes'] as $attribute){
+            if (!wc_attribute_taxonomy_id_by_name($attribute['slug'])){
+                wc_create_attribute([
+                    'name' => $attribute['label'],
+                    'slug' => $attribute['slug'],
+                    'type' => 'select',
+                    'order_by' => 'name_num',
+                    'has_archives' => false
+                ]);
+                $this->log[] = 'Tulajdonság: '.$attribute['label'].' ('.$attribute['unit'].')';
+            }
+            $taxonomy = wc_attribute_taxonomy_name($attribute['slug']);
+            if (!taxonomy_exists($taxonomy)) register_taxonomy($taxonomy, 'product', [ 'hierarchical' => false, 'public' => false ]);
+        }
+        delete_transient('wc_attribute_taxonomies');
+    }
+
+    /**
+     * 31. Új termékoldali csempék (ügyfélkérés, 2026-10): max. teljesítmény, hasítóerő, max. ágátmérő,
+     * vízáteresztő képesség, max. munkanyomás. Létrehozza a tulajdonságokat, és a régi webshopból átvett
+     * termékeknél a régi mezőkből / leírásból kitölti őket (MigrationImporter::spec_fields). Csak hiányzó
+     * értéket ad hozzá; a régi azonos nevű helyi tulajdonság (pl. „Munkanyomás: 8 bar”) helyére kerül.
+     */
+    function spec_tiles(){
+        $this->catalog_attributes();
+        if (!class_exists(__NAMESPACE__.'\\Migration') || !class_exists(__NAMESPACE__.'\\MigrationImporter')) return;
+        $map = MigrationClassifier::map();
+        $new = [ 'max-teljesitmeny', 'hasitoero', 'max-agatmero', 'vizatereszto-kepesseg', 'max-munkanyomas' ];
+        $labels = array_keys(array_filter((array)$map['fields'], function($slug) use ($new){ return in_array($slug, $new, true); }));
+        $counts = [];
+        foreach(Migration::ids('imported') as $record){
+            $product = wc_get_product((int)get_post_meta($record, '_vk_mig_product', true));
+            if (!$product) continue;
+            $fields = array_intersect_key(MigrationImporter::spec_fields(Migration::data($record)), array_flip($labels));
+            if (empty($fields)) continue;
+            $attributes = $product->get_attributes();
+            $changed = false;
+            foreach($fields as $label => $value){
+                $taxonomy = wc_attribute_taxonomy_name($map['fields'][$label]);
+                if (isset($attributes[$taxonomy])) continue;
+                [$created, $terms] = MigrationImporter::attributes([ $label => $value ]);
+                if (empty($created) || empty($terms[$taxonomy])) continue;
+                foreach($attributes as $key => $attribute){
+                    if (!$attribute->is_taxonomy() && mb_strtolower($attribute->get_name()) === mb_strtolower($label)) unset($attributes[$key]);
+                }
+                $created[0]->set_position(count($attributes));
+                $attributes[$taxonomy] = $created[0];
+                wp_set_object_terms($product->get_id(), [ $terms[$taxonomy] ], $taxonomy);
+                $counts[$label] = ($counts[$label] ?? 0) + 1;
+                $changed = true;
+            }
+            if ($changed){
+                $product->set_attributes($attributes);
+                $product->save();
+            }
+        }
+        wc_delete_product_transients();
+        delete_transient('wc_term_counts');
+        foreach($counts as $label => $count) $this->log[] = 'Új csempe adat a régi webshopból – '.$label.': '.$count.' termék';
+        if (empty($counts)) $this->log[] = 'Új csempék: tulajdonságok létrehozva (régi webshopból átvett érték nem volt).';
     }
 
     /** A második ügyfélszolgálati telefonszám (ügyfélkérés, 2026-10). */

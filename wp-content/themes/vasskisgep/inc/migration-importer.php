@@ -168,24 +168,76 @@ class MigrationImporter {
      * A régi termék műszaki adatai, kiegészítve a leírásból kinyert szűrőértékekkel ott, ahol a régi
      * bolt külön mezőben nem adta meg (pl. „Súly 18 kg”, „Munkaszélesség: 90 cm”, „Teljesítmény 1 kW”).
      * Csak mértékegységgel együtt szereplő értéket vesz át; a teljesítményfelvételt nem, a kW-ot LE-re váltja.
+     * A maximális teljesítmény (áramfejlesztők) külön mező kW-ban; hasítóerő, ágátmérő, vízáteresztés és
+     * munkanyomás is a leírásból (táblázatból) jön, ha a régi bolt külön mezőben nem adta meg.
      */
     static function spec_fields(array $data){
         $fields = (array)($data['fields'] ?? []);
         $text = html_entity_decode(wp_strip_all_tags(str_replace('<', ' <', (string)($data['description'] ?? ''))), ENT_QUOTES, 'UTF-8');
         $text = preg_replace('/\s+/u', ' ', str_replace("\xc2\xa0", ' ', $text));
-        if ($text === '') return $fields;
         $n = '(\d+(?:[.,]\d+)?)';
         $number = function($value){ return (float)str_replace(',', '.', $value); };
         $format = function($value){ return str_replace('.', ',', (string)round($value, 1)); };
         $patterns = [
             'Lökettérfogat cm3' => [ '/(?<!\w)(?:lökettérfogat|hengerűrtartalom|hengertérfogat)\w*\s*[:\-–]?\s*(?:kb\.?\s*)?'.$n.'\s*(?:cm3|cm³|ccm|cc)(?!\w)/iu', function($m) use ($number, $format){ return $format($number($m[1])); } ],
-            'Teljesítmény LE' => [ '/(?<!\w)teljesítmény(?!felvétel)\w*\s*[:\-–]?\s*(?:kb\.?\s*|max\.?\s*)?'.$n.'\s*(LE|kW|HP)(?!\w)/iu', function($m) use ($number, $format){ return $format(strcasecmp($m[2], 'kW') === 0 ? $number($m[1]) * 1.36 : $number($m[1])); } ],
+            'Teljesítmény LE' => [ '/(?<!\w)(?<!max\. )(?<!max )(?<!maximális )(?<!maximum )teljesítmény(?!felvétel)\w*\s*[:\-–]?\s*(?:kb\.?\s*|max\.?\s*)?'.$n.'\s*(LE|kW|HP)(?!\w)/iu', function($m) use ($number, $format){ return $format(strcasecmp($m[2], 'kW') === 0 ? $number($m[1]) * 1.36 : $number($m[1])); } ],
             'Tömeg' => [ '/(?<!\w)(?:tömeg|súly)\w*\s*(?:\([^)]{0,30}\))?\s*[:\-–]?\s*(?:kb\.?\s*|körülbelül\s*|max\.?\s*)?'.$n.'\s*kg(?!\w)/iu', function($m) use ($number, $format){ return $format($number($m[1])); } ],
             'Vágásszélesség' => [ '/(?<!\w)(?:vágásszélesség|vágási szélesség|munkaszélesség)\w*\s*[:\-–]?\s*'.$n.'\s*(cm|mm)(?!\w)/iu', function($m) use ($number, $format){ return $format(strcasecmp($m[2], 'mm') === 0 ? $number($m[1]) / 10 : $number($m[1])); } ],
         ];
-        foreach($patterns as $label => [$pattern, $value]){
+        // A termékoldali csempék további adatai (ügyfélkérés, 2026-10): több minta, az első egyező számít.
+        $precise = function($value){ return str_replace('.', ',', (string)round($value, 2)); };
+        $more = [
+            'Hasítóerő' => [
+                [ '/(?<!\w)hasítóer(?:ő|ej)\w*\s*\(\s*(?:t|tonna)\s*\)\s*[:\-–]?\s*'.$n.'(?![\d,.])/iu', 1 ],
+                [ '/(?<!\w)hasítóer(?:ő|ej)\w*[^0-9.;]{0,30}?'.$n.'\s*(?:tonn\w*|t(?!\w))/iu', 1 ],
+                [ '/(?<!\w)'.$n.'\s*tonn\w*\s+(?:hasító|nyomó)er\w*/iu', 1 ],
+            ],
+            'Max. ágátmérő' => [
+                // Táblázat: „Ágátmérő kapacitása Max. (mm) 45”, „Max. ágvastagság mm 35”, „Gallyvastagság ASA (max.) 25 mm”, „Vágási kapacitás (mm): 23”.
+                [ '/(?<!\w)(?:max\w*\.?\s*)?(?:ág\s*átmérő|ágátmérő|ágvastagság|gallyvastagság|gallyátmérő|vágási\s*átmérő|vágási\s*kapacitás|vágható\s*ág\w*(?:\s*átmérő\w*)?)\w*(?:\s+kapacitás\w*)?(?:\s+(?!(?:mm|cm)\b)[A-Z]{2,5}(?=\s))?\s*(?:\((?:max|min)\.?\)\s*)?(?:max\w*\.?\s*)?(?:\(?(mm|cm)\)?\s*)?[:\-–]?\s*(?:kb\.?\s*|körülbelül\s*|max\w*\.?\s*)?'.$n.'(?![\d,.]\d|\s*-\s*\d)(?:\s*(mm|cm)(?!\w))?/iu', function($m) use ($number, $format){
+                    $unit = ($m[1] ?? '') !== '' ? $m[1] : ($m[3] ?? '');
+                    if ($unit === '') return null;
+                    return $format(strcasecmp($unit, 'cm') === 0 ? $number($m[2]) * 10 : $number($m[2]));
+                } ],
+                // Szöveg: „akár 45 mm átmérőjű ágak”, „25 mm-es gallyátmérőig”.
+                [ '/(?<![\w,.])'.$n.'\s*(mm|cm)(?:-es)?\s*(?:átmérőjű\s*ág|gallyátm[eé]r|ágátmérő)/iu', function($m) use ($number, $format){ return $format(strcasecmp($m[2], 'cm') === 0 ? $number($m[1]) * 10 : $number($m[1])); } ],
+            ],
+            'Vízáteresztő képesség' => [
+                [ '/(?<!\w)vízáteresztő\w*\s*képes+ég\w*\s*(?:\([^)]{0,20}\))?\s*[:\-–]?\s*(?:max\w*\.?\s*|kb\.?\s*)?'.$n.'\s*(l\/h|l\/óra|l\/perc|l\/min)(?!\w)/iu', function($m) use ($number, $format){ return $format(preg_match('/perc|min/i', $m[2]) ? $number($m[1]) * 60 : $number($m[1])); } ],
+            ],
+            'Munkanyomás' => [
+                [ '/(?<!\w)(?:max\w*\.?\s*)?(?:munka)?nyomás(?!\w)\s*\(\s*mpa\s*\)\s*[:\-–]?\s*'.$n.'/iu', function($m) use ($number, $format){ return $format($number($m[1]) * 10); } ],
+                [ '/(?<!\w)(?:max\w*\.?\s*)?(?:munka)?nyomás(?!\w)\s*(?:\([^)]{0,30}\))?\s*[:\-–]?\s*(?:max\w*\.?\s*)?'.$n.'\s*bar(?!\w)/iu', 1 ],
+            ],
+        ];
+        // Max. teljesítmény (kW) a leírásból csak ott, ahol nincs „Teljesítmény LE” (pl. áramfejlesztők).
+        $more['Max Teljesítmény'] = [
+            [ '/(?<!\w)max\w*\.?\s*(?:kimenő\s*)?teljesítmény(?!felvétel)\w*\s*(?:\([^)]{0,30}\))?\s*[:\-–]?\s*(?:kb\.?\s*)?'.$n.'\s*(kW|W|LE|HP)(?!\w)/iu', function($m) use ($number, $precise){
+                $value = $number($m[1]);
+                if (strcasecmp($m[2], 'W') === 0) $value /= 1000;
+                elseif (strcasecmp($m[2], 'kW') !== 0) $value /= 1.36;
+                return $precise($value);
+            } ],
+        ];
+        $all = [];
+        foreach($patterns as $label => $pattern) $all[$label] = [ $pattern ];
+        $all += $more;
+
+        $name = (string)($data['name'] ?? '');
+        foreach($all as $label => $candidates){
             if (isset($fields[$label]) && trim((string)$fields[$label]) !== '') continue;
-            if (preg_match($pattern, $text, $m)) $fields[$label] = $value($m);
+            if ($label === 'Max Teljesítmény' && !empty($fields['Teljesítmény LE'])) continue;
+            foreach($candidates as [$pattern, $value]){
+                if (!preg_match($pattern, $text, $m)) continue;
+                $found = is_int($value) ? $format($number($m[$value])) : $value($m);
+                if ($found === null || $found === '' || $found === '0') continue;
+                $fields[$label] = $found;
+                break;
+            }
+        }
+        // Rönkhasítóknál a névben szereplő tonnaszám („LS09V 14T”).
+        if (empty($fields['Hasítóerő']) && preg_match('/rönkhasító/iu', $name) && preg_match('/(?<![\w,.])(\d+(?:[.,]\d+)?)\s*T(?!\w)/u', $name, $m)){
+            $fields['Hasítóerő'] = $format($number($m[1]));
         }
         return $fields;
     }

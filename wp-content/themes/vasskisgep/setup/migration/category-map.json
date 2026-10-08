@@ -1040,7 +1040,12 @@
   "Teljesítmény LE": "teljesitmeny",
   "Tömeg": "tomeg",
   "Vágásszélesség": "vagasszelesseg",
-  "Garancia": "garancia"
+  "Garancia": "garancia",
+  "Max Teljesítmény": "max-teljesitmeny",
+  "Hasítóerő": "hasitoero",
+  "Max. ágátmérő": "max-agatmero",
+  "Vízáteresztő képesség": "vizatereszto-kepesseg",
+  "Munkanyomás": "max-munkanyomas"
  },
  "local_fields": {
   "Vágáshossz": "cm",
@@ -1048,7 +1053,9 @@
   "Max Teljesítmény": "kW",
   "Munkanyomás": "bar",
   "Légszállítás": "",
-  "Vízáteresztő képesség": "",
-  "Vízszállítás": "m³/h"
+  "Vízáteresztő képesség": "l/h",
+  "Vízszállítás": "m³/h",
+  "Hasítóerő": "t",
+  "Max. ágátmérő": "mm"
  }
 }

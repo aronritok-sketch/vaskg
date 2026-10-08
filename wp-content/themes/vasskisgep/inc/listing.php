@@ -44,13 +44,14 @@ class Listing {
 
     /**
      * Szűrhető tulajdonságok: minden globális WooCommerce attribútum. Elöl a
-     * setup/catalog/categories.json tulajdonságai a megadott sorrendben, mértékegységgel.
-     * @return array [slug => ['label' => …, 'unit' => …]]
+     * setup/catalog/categories.json tulajdonságai a megadott sorrendben, mértékegységgel. A „contextual”
+     * tulajdonság (pl. hasítóerő) csak ott jelenik meg szűrőként, ahol a listában van ilyen termék.
+     * @return array [slug => ['label' => …, 'unit' => …, 'contextual' => bool]]
      */
     static function filter_attributes(){
         $out = [];
         foreach(Catalog::attributes() as $slug => $attribute){
-            if (taxonomy_exists(wc_attribute_taxonomy_name($slug))) $out[$slug] = [ 'label' => $attribute['label'], 'unit' => $attribute['unit'] ?? '' ];
+            if (taxonomy_exists(wc_attribute_taxonomy_name($slug))) $out[$slug] = [ 'label' => $attribute['label'], 'unit' => $attribute['unit'] ?? '', 'contextual' => !empty($attribute['contextual']) ];
         }
         foreach(wc_get_attribute_taxonomies() as $tax){
             if (isset($out[$tax->attribute_name])) continue;

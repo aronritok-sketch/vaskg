@@ -94,6 +94,7 @@
 			foreach($L::filter_attributes() as $slug => $attribute){
 				$terms = $L::context_terms(wc_attribute_taxonomy_name($slug), $ids);
 				$selected = $L::list_param('attr-'.$slug);
+				if (empty($terms) && empty($selected) && !empty($attribute['contextual'])) continue;
 				$unit = $attribute['unit'] !== '' ? ' '.$attribute['unit'] : '';
 				$html = '';
 				foreach($terms as $t) $html .= $pill('attr-'.$slug, $t['slug'], esc_html($t['name'].$unit).' <small>'.$t['count'].'</small>', in_array($t['slug'], $selected, true));

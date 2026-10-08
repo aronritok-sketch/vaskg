@@ -519,14 +519,14 @@ ul.products:not(.columns-1) li.product .iu-group.brand:has(.vk-cofidis-badge) .i
 	border-radius: .3rem;
 	background: #f9fafb;
 }
-.vk-tiles-5 .vk-tile:nth-child(n+4),
-.vk-tiles-4 .vk-tile:nth-child(n+4),
-.vk-tiles-2 .vk-tile,
-.vk-tiles-4 .vk-tile {
-	grid-column: span 3;
-}
-.vk-tiles-1 .vk-tile {
+/* Soronként 3 csempe; a nem teli utolsó sor kitöltve (1 → teljes szélesség, 2 → fele-fele), 4 csempe: 2×2. */
+.vk-tile:nth-child(3n+1):nth-last-child(1) {
 	grid-column: span 6;
+}
+.vk-tile:nth-child(3n+1):nth-last-child(2),
+.vk-tile:nth-child(3n+2):nth-last-child(1),
+.vk-tiles-4 .vk-tile:nth-child(n) {
+	grid-column: span 3;
 }
 .vk-tile-label {
 	display: flex;
@@ -537,6 +537,8 @@ ul.products:not(.columns-1) li.product .iu-group.brand:has(.vk-cofidis-badge) .i
 }
 .vk-tile-label svg {
 	flex: 0 0 auto;
+	width: 18px;
+	height: 18px;
 	color: var(--iu-text-color);
 }
 .vk-tile-value {
@@ -1295,6 +1297,9 @@ ul.products:not(.columns-1) li.product .iu-group.brand:has(.vk-cofidis-badge) .i
 	.vk-tile,
 	.vk-tiles .vk-tile:nth-child(n) {
 		grid-column: span 1;
+	}
+	.vk-tiles .vk-tile:nth-child(2n+1):last-child {
+		grid-column: span 2;
 	}
 	.vk-cof-grid {
 		grid-template-columns: minmax(0, 1fr);

@@ -5,7 +5,7 @@
 	 *   vasskisgep/product-sku     – „Cikkszám: …”
 	 *   vasskisgep/product-rating  – készlet + csillagos értékelés (a Vélemények fülre mutat)
 	 *   vasskisgep/price-box       – régi/új ár, „(Az ár az áfát tartalmazza)”, Cofidis jelvény
-	 *   vasskisgep/product-tiles   – a fő tulajdonságok csempékben, ikonnal
+	 *   vasskisgep/product-tiles   – a fő tulajdonságok csempékben, ikonnal (a régi webshop piktogramjai, ahol volt)
 	 */
 
 	$vk_current_product = function(){
@@ -83,7 +83,7 @@
 
 	iucb_add_block('vasskisgep/product-tiles', [
 		'title' => 'Fő tulajdonságok csempékben',
-		'description' => 'A szűrhető tulajdonságok (lökettérfogat, teljesítmény, tömeg, vágásszélesség, garancia) ikonos csempékben.',
+		'description' => 'A szűrhető tulajdonságok (lökettérfogat, teljesítmény, tömeg, vágásszélesség, garancia, max. teljesítmény, hasítóerő, ágátmérő, vízáteresztés, munkanyomás) ikonos csempékben.',
 		'category' => 'iu-woocommerce',
 		'attributes' => [],
 		'editJS' => 'return "Fő tulajdonságok csempékben";',
@@ -102,19 +102,26 @@
 				'teljesitmeny' => '<path d="M4 17a8 8 0 1 1 16 0"/><path d="M12 17l4-5"/><circle cx="12" cy="17" r="1.2"/>',
 				'tomeg' => '<path d="M6 9h12l2 11H4z"/><circle cx="12" cy="6" r="2.2"/>',
 				'vagasszelesseg' => '<path d="M3 12h18M3 8v8M21 8v8M7 10l-2 2 2 2M17 10l2 2-2 2"/>',
-				'garancia' => '<path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/>'
+				'garancia' => '<path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/>',
+				'hasitoero' => '<path d="M9 2.5h6L12 10z"/><path d="M12 10v2"/><rect x="4" y="12" width="16" height="9" rx="1.5"/><path d="M12 12l-1.2 4.5L12 21"/>',
+				'max-agatmero' => '<circle cx="12" cy="12" r="8.5"/><path d="M8 16l8-8M12.5 8H16v3.5M11.5 16H8v-3.5"/>'
 			];
+			// A régi webshop piktogramjai (lökettérfogat, max. teljesítmény, munkanyomás, vízáteresztés): assets/spec-icons/<slug>.svg
+			$icon_dir = get_stylesheet_directory().'/assets/spec-icons/';
 
 			$html = '<div class="vk-tiles vk-tiles-'.count($rows).'">';
 			foreach($rows as $row){
-				$icon = $icons[$row['slug']] ?? '<circle cx="12" cy="12" r="8"/>';
+				$file = $icon_dir.sanitize_file_name($row['slug']).'.svg';
+				$svg = file_exists($file)
+					? str_replace('<svg ', '<svg width="18" height="18" aria-hidden="true" ', trim(file_get_contents($file)))
+					: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'.($icons[$row['slug']] ?? '<circle cx="12" cy="12" r="8"/>').'</svg>';
 				$info = '';
 				if ($row['slug'] === 'garancia'){
 					$terms = get_permalink(get_page_by_path('aszf'));
 					$info = '<a class="vk-tile-info" href="'.esc_url($terms ?: home_url('/')).'" title="A jótállás feltételei az ÁSZF-ben" aria-label="A jótállás feltételei"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5" stroke-linecap="round"/></svg></a>';
 				}
 				$html .= '<div class="vk-tile vk-tile-'.esc_attr($row['slug']).'">'
-					.'<span class="vk-tile-label"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'.$icon.'</svg>'.esc_html($row['label']).'</span>'
+					.'<span class="vk-tile-label">'.$svg.esc_html($row['label']).'</span>'
 					.'<span class="vk-tile-value">'.wp_kses_post(\VasskisgepTheme\Catalog::format_unit($row['text'])).'</span>'
 					.$info
 				.'</div>';
