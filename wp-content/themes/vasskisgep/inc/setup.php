@@ -45,6 +45,7 @@ class Setup {
         26 => 'migration_redirects',
         27 => 'sale_menu',
         28 => 'brand_slider',
+        29 => 'brand_slider_order',
     ];
 
     /**
@@ -849,6 +850,42 @@ class Setup {
         do { $result = MigrationClassifier::apply_map(); } while (!$result['done']);
         $counts = Migration::counts();
         $this->log[] = sprintf('Régi termékek újrabesorolva: %d; jóváhagyva %d, ellenőrizendő %d.', $reset, $counts['ready'], $counts['review'] + $counts['check']);
+    }
+
+    /**
+     * 29. Kezdőlap márkasáv (ügyfélkérés, 2026-10): sorrend STIHL, STIGA, Cedrus, Rato, Berrin, Bluebird (a Rato a
+     * Bluebird helyére, a Bluebird a jobb szélre), és a Berrin dia az ügyféltől kapott, jobb minőségű képpel.
+     */
+    function brand_slider_order(){
+        $page_id = (int)get_option('page_on_front');
+        $post = $page_id ? get_post($page_id) : null;
+        if (!$post) return;
+        $pattern = '#<!-- wp:vasskisgep/pager-hero-slide (\{.*?\}) /-->#s';
+        if (!preg_match_all($pattern, $post->post_content, $m, PREG_OFFSET_CAPTURE) || count($m[0]) < 2) return;
+        $order = [ 'stihl-logo', 'stiga-logo', 'cedrus-logo', 'rato-logo', 'berrin-logo', 'bluebird-logo' ];
+        $berrin_bg = self::media('berrin-kapalogep-2.jpg');
+        $slides = [];
+        foreach($m[0] as $i => $match){
+            $attrs = json_decode($m[1][$i][0], true);
+            $key = '';
+            foreach($order as $k){ if (is_array($attrs) && strpos((string)($attrs['closed'] ?? ''), $k) !== false){ $key = $k; break; } }
+            $block = $match[0];
+            if ($key === 'berrin-logo' && $berrin_bg && is_array($attrs)){
+                $attrs['bg'] = (int)$berrin_bg;
+                $block = '<!-- wp:vasskisgep/pager-hero-slide '.serialize_block_attributes($attrs).' /-->';
+            }
+            $rank = $key !== '' ? array_search($key, $order, true) : 100 + $i;
+            $slides[] = [ 'rank' => $rank, 'i' => $i, 'block' => $block ];
+        }
+        usort($slides, function($a, $b){ return $a['rank'] <=> $b['rank'] ?: $a['i'] <=> $b['i']; });
+        // A blokkok a helyükön cserélődnek (a köztük lévő tartalom marad), hátulról előre.
+        $content = $post->post_content;
+        for ($i = count($m[0]) - 1; $i >= 0; $i--){
+            $content = substr_replace($content, $slides[$i]['block'], $m[0][$i][1], strlen($m[0][$i][0]));
+        }
+        if ($content === $post->post_content) return;
+        wp_update_post([ 'ID' => $post->ID, 'post_content' => wp_slash($content) ]);
+        $this->log[] = 'Kezdőlap márkasáv: sorrend STIHL, STIGA, Cedrus, Rato, Berrin, Bluebird; új Berrin kép.';
     }
 
     /**

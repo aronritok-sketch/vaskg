@@ -144,7 +144,12 @@ class ProductPage {
         $extras = Catalog::promo_html($product, 'vk-promo vk-gallery-promo');
         $brands = get_the_terms($product->get_id(), 'product_brand');
         if (!empty($brands) && !is_wp_error($brands)){
-            $extras .= '<a class="iu-woocommerce-product-brand vk-gallery-brand" href="'.esc_url(get_term_link($brands[0])).'">'.esc_html($brands[0]->name).'</a>';
+            // A márka eredeti logója (ha van feltöltve), különben a neve.
+            $logo = (int)get_term_meta($brands[0]->term_id, 'thumbnail_id', true);
+            $logo_html = $logo ? wp_get_attachment_image($logo, 'medium', false, [ 'alt' => $brands[0]->name, 'class' => 'vk-gallery-brand-logo', 'loading' => 'lazy' ]) : '';
+            $extras .= $logo_html !== ''
+                ? '<a class="vk-gallery-brand vk-gallery-brand-has-logo" href="'.esc_url(get_term_link($brands[0])).'" title="'.esc_attr($brands[0]->name).'">'.$logo_html.'</a>'
+                : '<a class="iu-woocommerce-product-brand vk-gallery-brand" href="'.esc_url(get_term_link($brands[0])).'">'.esc_html($brands[0]->name).'</a>';
         }
         if ($extras === '') return $content;
         return '<div class="vk-gallery-wrap">'.$content.'<div class="vk-gallery-extras">'.$extras.'</div></div>';

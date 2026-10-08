@@ -21,4 +21,17 @@ jQuery(document).ready(function($){
 		}, 66);
 	});
 
+	// Az egész kép kattintható: a nyitott sáv a márka termékeire visz; érintőképernyőn az első
+	// koppintás kinyitja a sávot, a második visz tovább.
+	$('.vasskisgep-pager-hero-slide').on('click', function(e){
+		if ($(e.target).closest('a').length) return;
+		const $slide = $(this);
+		if (!$slide.hasClass('open')){
+			$slide.addClass('open').siblings().removeClass('open');
+			return;
+		}
+		const href = $slide.find('.vasskisgep-pager-hero-slide-open a[href]').first().attr('href');
+		if (href) window.location.href = href;
+	});
+
 });

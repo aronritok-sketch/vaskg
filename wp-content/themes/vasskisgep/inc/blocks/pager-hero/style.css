@@ -94,3 +94,16 @@
 .vasskisgep-pager-hero-slide-closed img {
 	transform: rotate(-90deg);
 }
+/* A fehér alsó rész a sáv teljes szélességét takarja: a belső réteg tört pixeles eltolása miatt különben
+   a háttérkép egy vékony csíkja kilátszott a sávok bal szélén. */
+.vasskisgep-pager-hero-slide-closed {
+	left: -2px;
+	width: calc(100% + 4px);
+}
+.vasskisgep-pager-hero-slide-open {
+	margin-left: -2px;
+	margin-right: -2px;
+}
+.vasskisgep-pager-hero-slide {
+	cursor: pointer;
+}

@@ -3546,3 +3546,73 @@ body.vk-has-sticky-buy {
 		padding-bottom: 4rem;
 	}
 }
+
+/* ---------- Ügyfélkör 2 (2026-10) ---------- */
+
+/* Termékkártyák: a teljes gép látszik (nem vágjuk négyzetre). */
+.iu-woocommerce-loop-gallery a img,
+.vk-search-card-image img,
+.vk-compare img {
+	object-fit: contain;
+	background: var(--wp--preset--color--white, #fff);
+}
+
+/* Képnagyító (PhotoSwipe): a fejléc fölött, hogy a kép teteje és a bezárás gomb is látsszon. */
+.pswp {
+	z-index: 100000;
+}
+
+/* Termékoldal: a márka eredeti logója a galéria sarkában, nagyobban. */
+.vk-gallery-brand-has-logo {
+	display: block;
+	margin: 0 0 0 auto;
+	padding: .35rem .5rem;
+	background: var(--wp--preset--color--white, #fff);
+	border-radius: .3rem;
+	line-height: 0;
+}
+.vk-gallery-brand-logo {
+	display: block;
+	width: auto;
+	height: auto;
+	max-width: 9.5rem;
+	max-height: 3.8rem;
+	object-fit: contain;
+}
+@media (max-width: 767px) {
+	.vk-gallery-brand-logo {
+		max-width: 6.5rem;
+		max-height: 2.8rem;
+	}
+}
+
+/* Termékleírás (a régi boltból átvett szövegek): képek arányosan, táblázatok szegéllyel. */
+.vk-product-tabs .iu-tab img {
+	height: auto;
+	max-width: 100%;
+}
+.vk-product-tabs .iu-tab table:not(.vk-specs) {
+	width: 100%;
+	margin: 1rem 0;
+	border-collapse: collapse;
+	border: 1px solid #d9dcdf;
+}
+.vk-product-tabs .iu-tab table:not(.vk-specs) td,
+.vk-product-tabs .iu-tab table:not(.vk-specs) th {
+	padding: .5rem .75rem;
+	border: 1px solid #d9dcdf;
+	vertical-align: top;
+	text-align: left;
+}
+.vk-product-tabs .iu-tab table:not(.vk-specs) tr:nth-child(even) td {
+	background: #f7f8f9;
+}
+@media (max-width: 767px) {
+	.vk-product-tabs .iu-tab table:not(.vk-specs) {
+		display: block;
+		overflow-x: auto;
+	}
+	.vk-product-tabs .iu-tab table:not(.vk-specs) td {
+		min-width: 8rem;
+	}
+}

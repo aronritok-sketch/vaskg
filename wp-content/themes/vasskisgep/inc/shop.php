@@ -36,6 +36,9 @@ class Shop {
         add_action('wp', [$this, 'setup_single_product']);
 
         add_filter('iu_title', [$this, 'archive_titles']);
+        // A kártyák (lista, karusszel, kereső, összehasonlítás) képe: a WooCommerce négyzetre vágott
+        // bélyegképe helyett a vágatlan változat, így az álló vagy fekvő gép teljes egészében látszik.
+        add_filter('image_downsize', [$this, 'uncropped_thumbnail'], 10, 3);
         add_filter('document_title_parts', function($parts){
             if (self::is_sale_listing()) $parts['title'] = 'Akciós termékek';
             return $parts;
@@ -117,6 +120,15 @@ class Shop {
         if (!is_product()) return;
         global $product;
         $product = wc_get_product(get_queried_object_id());
+    }
+
+    function uncropped_thumbnail($out, $id, $size){
+        static $busy = false;
+        if ($out !== false || $busy || $size !== 'woocommerce_thumbnail' || (is_admin() && !wp_doing_ajax())) return $out;
+        $busy = true;
+        $single = image_downsize($id, 'woocommerce_single');
+        $busy = false;
+        return $single ?: $out;
     }
 
     /** A terméklista akciós szűrővel (?onsale=yes, pl. a főmenü „Akciók” pontja). */
