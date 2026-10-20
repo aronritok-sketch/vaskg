@@ -138,16 +138,47 @@ class MigrationImporter {
 
     /* ---------- Tartalom ---------- */
 
+    /** A régi leírás kis képeinek (ikonok, pl. YouTube gomb 25×18) eredeti mérete: [fájlnév tő => [szélesség, magasság]]. */
+    static function description_icon_sizes($html){
+        $sizes = [];
+        preg_match_all('/<img\s[^>]*>/i', (string)$html, $tags);
+        foreach($tags[0] as $tag){
+            if (!preg_match('/\ssrc="([^"]+)"/i', $tag, $src) || !preg_match('/\swidth="?(\d+)/i', $tag, $width)) continue;
+            if ((int)$width[1] > self::ICON_MAX_WIDTH) continue;
+            $height = preg_match('/\sheight="?(\d+)/i', $tag, $h) ? (int)$h[1] : 0;
+            $sizes[self::image_key($src[1])] = [ (int)$width[1], $height ];
+        }
+        return $sizes;
+    }
+
+    /** Fájlnév tő az összevetéshez (méret-utótag és kiterjesztés nélkül, a WordPress fájlnév-tisztításával). */
+    static function image_key($url){
+        $name = sanitize_file_name(basename(parse_url(html_entity_decode($url), PHP_URL_PATH) ?: ''));
+        return strtolower(preg_replace('/(-\d+x\d+)?(-scaled)?\.[a-z0-9]+$/i', '', $name));
+    }
+
+    /** Leírásbeli kép kis méretben (ikon): az eredeti szélesség/magasság, „vk-desc-icon” osztály. */
+    static function icon_image($attachment, $size){
+        $img = wp_get_attachment_image($attachment, 'medium', false, [ 'class' => 'vk-desc-icon', 'sizes' => $size[0].'px', 'alt' => '' ]);
+        $img = preg_replace('/\swidth="\d+"/', ' width="'.$size[0].'"', $img);
+        return $size[1] ? preg_replace('/\sheight="\d+"/', ' height="'.$size[1].'"', $img) : preg_replace('/\sheight="\d+"/', '', $img);
+    }
+
+    const ICON_MAX_WIDTH = 200;
+
     static function clean_description($html, $parent = false){
         if ($html === '') return '';
         $base = MigrationSource::base();
+        $icons = self::description_icon_sizes($html);
         $html = preg_replace('/\s(style|class|id|align|width|height|border|cellpadding|cellspacing)="[^"]*"/i', '', $html);
         $html = preg_replace_callback('/\s(src|href)="(\/[^"]*)"/i', function($m) use ($base){ return ' '.$m[1].'="'.$base.$m[2].'"'; }, $html);
         if ($parent !== false){
             // Beágyazott képek a médiatárba (a régi oldal megszűnése után is megmaradnak).
-            $html = preg_replace_callback('/<img\s[^>]*src="([^"]+)"[^>]*>/i', function($m) use ($parent){
+            $html = preg_replace_callback('/<img\s[^>]*src="([^"]+)"[^>]*>/i', function($m) use ($parent, $icons){
                 $attachment = self::sideload(html_entity_decode($m[1]), (int)$parent);
-                return $attachment ? wp_get_attachment_image($attachment, 'large') : $m[0];
+                if (!$attachment) return $m[0];
+                $icon = $icons[self::image_key($m[1])] ?? null;
+                return $icon ? self::icon_image($attachment, $icon) : wp_get_attachment_image($attachment, 'large');
             }, $html);
         }
         $html = preg_replace('/<p>(\s|&nbsp;)*<\/p>/u', '', $html);

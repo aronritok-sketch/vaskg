@@ -49,6 +49,7 @@ class Setup {
         30 => 'second_phone',
         31 => 'spec_tiles',
         32 => 'phone_sections',
+        33 => 'description_icons',
     ];
 
     /**
@@ -963,6 +964,35 @@ class Setup {
             wp_update_post([ 'ID' => $page->ID, 'post_content' => wp_slash($content) ]);
             $this->log[] = 'Ajánlatkérés oldal: „'.self::PHONE_2_TITLE.'” '.self::PHONE_2.', '.$first.'.';
         }
+    }
+
+    /**
+     * 33. A régi webshopból átvett leírások kis ikonjai (YouTube gomb 25×18, 34×34-es ikon) az átvételkor nagy képpé
+     * váltak; az eredeti méretük visszaállítása a régi leírás alapján (MigrationImporter::description_icon_sizes).
+     */
+    function description_icons(){
+        if (!class_exists(__NAMESPACE__.'\\Migration')) return;
+        $count = 0;
+        foreach(Migration::ids('imported') as $record){
+            $data = Migration::data($record);
+            $icons = MigrationImporter::description_icon_sizes((string)($data['description'] ?? ''));
+            if (empty($icons)) continue;
+            $product_id = (int)get_post_meta($record, '_vk_mig_product', true);
+            $post = $product_id ? get_post($product_id) : null;
+            if (!$post || strpos($post->post_content, '<img') === false) continue;
+            $content = preg_replace_callback('/<img\s[^>]*>/i', function($m) use ($icons){
+                if (strpos($m[0], 'vk-desc-icon') !== false || !preg_match('/\ssrc="([^"]+)"/i', $m[0], $src)) return $m[0];
+                $icon = $icons[MigrationImporter::image_key($src[1])] ?? null;
+                if (!$icon) return $m[0];
+                $attachment = preg_match('/wp-image-(\d+)/', $m[0], $id) ? (int)$id[1] : attachment_url_to_postid(preg_replace('/-\d+x\d+(?=\.[a-z]+$)/i', '', $src[1]));
+                return $attachment ? MigrationImporter::icon_image($attachment, $icon) : $m[0];
+            }, $post->post_content);
+            if ($content !== $post->post_content){
+                wp_update_post([ 'ID' => $post->ID, 'post_content' => wp_slash($content) ]);
+                $count++;
+            }
+        }
+        $this->log[] = 'Leírásbeli ikonok eredeti méretre: '.$count.' termék';
     }
 
     /**

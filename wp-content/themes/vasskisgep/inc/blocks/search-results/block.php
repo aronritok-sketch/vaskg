@@ -11,9 +11,7 @@
 			$s = get_search_query(false);
 			if ($s === '') return '';
 
-			$data_store = \WC_Data_Store::load('product');
-			$ids = $data_store->search_products(wc_clean($s), '', false, false, 48);
-			$ids = array_filter(array_map('absint', $ids));
+			$ids = \VasskisgepTheme\Search::product_ids(wc_clean($s), 48);
 			$products = array_values(array_filter(array_map('wc_get_product', $ids), function($p){
 				return $p && $p->is_visible() && $p->get_status() === 'publish' && !$p->get_parent_id();
 			}));

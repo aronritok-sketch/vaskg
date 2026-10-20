@@ -17,6 +17,7 @@ require_once(__DIR__.'/search.php');
 require_once(__DIR__.'/cofidis.php');
 require_once(__DIR__.'/migration.php');
 require_once(__DIR__.'/orders.php');
+require_once(__DIR__.'/checkout.php');
 
 class Theme {
     private static $instance;
@@ -39,6 +40,7 @@ class Theme {
         MegaMenu::get_instance();
         ProductPage::get_instance();
         Orders::get_instance();
+        Checkout::get_instance();
         Pages::get_instance();
         Search::get_instance();
         Cofidis::get_instance();

@@ -21,6 +21,15 @@ class Orders {
         add_filter('manage_edit-shop_order_columns', [$this, 'columns']);
         add_action('manage_shop_order_posts_custom_column', [$this, 'column'], 10, 2);
         add_action('admin_head', [$this, 'styles']);
+        // A „Feldolgozás alatt” rendelés tételei is szerkeszthetők (tétel hozzáadása, törlése, mennyiség);
+        // a WooCommerce alapból csak a függő és a visszatartott rendelést engedi.
+        add_filter('wc_order_is_editable', [$this, 'editable'], 10, 2);
+    }
+
+    const EDITABLE_STATUSES = [ 'pending', 'on-hold', 'processing', 'auto-draft', 'checkout-draft' ];
+
+    function editable($editable, $order){
+        return $editable || ($order instanceof \WC_Order && in_array($order->get_status(), self::EDITABLE_STATUSES, true));
     }
 
     function columns($columns){

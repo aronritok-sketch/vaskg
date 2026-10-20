@@ -3752,3 +3752,66 @@ body.vk-has-sticky-buy {
 		scroll-snap-align: start;
 	}
 }
+
+/* Leírásbeli kis ikonok (régi webshop: YouTube gomb stb.) eredeti méretben, a szöveg mellett. */
+.vk-product-tabs .iu-tab img.vk-desc-icon {
+	display: inline-block;
+	vertical-align: middle;
+	margin: 0 .2rem;
+}
+
+/* Termékkép: a márkalogó doboz nélkül, a fehér háttere (Cedrus, STIGA, Rato logó) a fotón átlátszó. A szülő
+   nem kap saját réteget (z-index), különben a keverés nem a fotóval történne. */
+.vk-gallery-extras {
+	z-index: auto;
+}
+.vk-gallery-brand-has-logo {
+	padding: 0;
+	background: none;
+	border-radius: 0;
+}
+.vk-gallery-brand-logo {
+	mix-blend-mode: multiply;
+}
+
+/* Pénztár: település választása irányítószám alapján, adószám-lekérdezés állapota. */
+.vk-city-pick {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: .35rem;
+	margin-top: .45rem;
+}
+.vk-city-pick-label {
+	flex: 1 0 100%;
+	color: var(--vk-muted);
+	font-size: .8rem;
+}
+.vk-city-pick-option {
+	padding: .3rem .7rem;
+	border: 1px solid var(--vk-border);
+	border-radius: 999px;
+	background: var(--wp--preset--color--white);
+	color: var(--iu-text-color);
+	font-size: .85rem;
+	cursor: pointer;
+}
+.vk-city-pick-option:hover,
+.vk-city-pick-option.vk-active {
+	border-color: var(--wp--preset--color--dark);
+}
+.vk-city-pick-option.vk-active {
+	background: var(--wp--preset--color--dark);
+	color: var(--wp--preset--color--white);
+}
+.vk-tax-status {
+	margin: .35rem 0 0;
+	font-size: .8rem;
+	color: var(--vk-muted);
+}
+.vk-tax-status[data-type="ok"] {
+	color: #1f7a3a;
+}
+.vk-tax-status[data-type="error"] {
+	color: #b42318;
+}
