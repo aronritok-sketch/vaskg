@@ -48,6 +48,7 @@ class Setup {
         29 => 'brand_slider_order',
         30 => 'second_phone',
         31 => 'spec_tiles',
+        32 => 'phone_sections',
     ];
 
     /**
@@ -58,7 +59,7 @@ class Setup {
      */
     const PAGE_HISTORY = [
         'adatkezelesi-tajekoztato.html' => [ '71930b8697ba9ed32f8ef9c6fc9f2193' ],
-        'ajanlatkeres.html' => [ 'ba30da8d047fba9e9c8344b62de9aa87', '9e813817fc61db2d4f7f1f1844b3364e', '51dee9e6c9bcfc605ebf94a6608903b5' ],
+        'ajanlatkeres.html' => [ 'ba30da8d047fba9e9c8344b62de9aa87', '9e813817fc61db2d4f7f1f1844b3364e', '51dee9e6c9bcfc605ebf94a6608903b5', 'c47ee5d3788c43d8960d34dc13a857e0' ],
         'aszf.html' => [ '50cca4ea2a93dbe44e988ea27414e81c' ],
         'elallas-es-visszakuldes.html' => [ '8a7133c4b6a14f9bc9280e0e91954bc5' ],
         'kapcsolat.html' => [ 'dd652189b88f647786cf5838e19d6707' ],
@@ -907,38 +908,60 @@ class Setup {
         if (empty($counts)) $this->log[] = 'Új csempék: tulajdonságok létrehozva (régi webshopból átvett érték nem volt).';
     }
 
-    /** A második ügyfélszolgálati telefonszám (ügyfélkérés, 2026-10). */
-    const PHONE_2 = '+36 30 304 15241';
+    /** Termékinformáció, árak és rendelésfelvétel telefonszáma (ügyfélkérés, 2026-10). */
+    const PHONE_2 = '+36 30 304 1524';
+    /** A 30. lépés tévesen megadott (egy számjeggyel hosszabb) változata; a 32. lépés eltávolítja. */
+    const PHONE_2_WRONG = '+36 30 304 15241';
+    const PHONE_2_TITLE = 'Termékinformáció, árak és rendelésfelvétel:';
+
+    /** 30. Második telefonszám – a 32. lépés váltotta fel (az ügyfél javított száma és saját címe). */
+    function second_phone(){
+        $this->log[] = 'Második telefonszám: a 32. lépés állítja be.';
+    }
 
     /**
-     * 30. A második telefonszám a lábléc „Központi ügyfélszolgálat” része alá és az Ajánlatkérés oldal elérhetőségei
-     * közé, az első szám mellé.
+     * 32. Elérhetőségek az ügyfél kérése szerint: „Központi ügyfélszolgálat” alatt +36 30 289 5977, külön
+     * „Termékinformáció, árak és rendelésfelvétel:” cím alatt +36 30 304 1524 és +36 30 289 5977 – a lábléc
+     * elérhetőségeinél és az Ajánlatkérés oldalon. A 30. lépés téves számát eltávolítja.
      */
-    function second_phone(){
+    function phone_sections(){
         $first = '+36 30 289 5977';
         $tel = 'tel:'.preg_replace('/[^0-9+]/', '', self::PHONE_2);
-        // Lábléc: az első szám ikonos blokkjának másolata az új számmal.
+        $icon_block = '#<!-- wp:iu/icon-text (?:(?!<!-- /wp:iu/icon-text -->).)*?%s.*?<!-- /wp:iu/icon-text -->#s';
+
+        // Lábléc.
         foreach(get_posts([ 'post_type' => 'iu_template', 'post_status' => 'any', 'numberposts' => -1 ]) as $template){
-            // Csak a lábléc „Központi ügyfélszolgálat” címe utáni első telefonszám (a fejlécé marad egy szám).
-            $start = strpos($template->post_content, 'Központi ügyfélszolgálat');
-            if ($start === false || strpos($template->post_content, self::PHONE_2) !== false) continue;
-            if (!preg_match('#<!-- wp:iu/icon-text (?:(?!<!-- /wp:iu/icon-text -->).)*?'.preg_quote($first, '#').'.*?<!-- /wp:iu/icon-text -->#s', $template->post_content, $m, 0, $start)) continue;
-            $copy = str_replace([ 'tel:'.$first, 'tel:+36302895977', $first ], [ $tel, $tel, self::PHONE_2 ], $m[0]);
-            $content = str_replace($m[0], $m[0]."\n\n".$copy, $template->post_content);
-            wp_update_post([ 'ID' => $template->ID, 'post_content' => wp_slash($content) ]);
-            $this->log[] = 'Lábléc: második telefonszám ('.self::PHONE_2.').';
+            $content = $template->post_content;
+            $start = strpos($content, 'Központi ügyfélszolgálat');
+            if ($start === false) continue;
+            $before = $content;
+            if (preg_match(sprintf($icon_block, preg_quote(self::PHONE_2_WRONG, '#')), $content, $wrong)){
+                $content = str_replace([ "\n\n".$wrong[0], $wrong[0] ], '', $content);
+            }
+            if (strpos($content, self::PHONE_2_TITLE) === false && preg_match(sprintf($icon_block, preg_quote($first, '#')), $content, $m, 0, $start)){
+                $second = str_replace([ 'tel:'.$first, 'tel:+36302895977', $first ], [ $tel, $tel, self::PHONE_2 ], $m[0]);
+                $title = "<!-- wp:paragraph {\"className\":\"\"} -->\n<p class=\"iu-text\"><strong>".self::PHONE_2_TITLE."</strong></p>\n<!-- /wp:paragraph -->";
+                $content = str_replace($m[0], $m[0]."\n\n".$title."\n\n".$second."\n\n".$m[0], $content);
+            }
+            if ($content !== $before){
+                wp_update_post([ 'ID' => $template->ID, 'post_content' => wp_slash($content) ]);
+                $this->log[] = 'Lábléc: „'.self::PHONE_2_TITLE.'” '.self::PHONE_2.', '.$first.'.';
+            }
         }
+
         // Ajánlatkérés oldal.
         $page = get_page_by_path('ajanlatkeres');
-        if ($page && strpos($page->post_content, self::PHONE_2) === false){
-            $line = '<a href="tel:+36302895977">'.$first.'</a><br>';
-            if (strpos($page->post_content, $line) !== false){
-                $content = str_replace($line, $line.'<a href="'.$tel.'">'.self::PHONE_2.'</a><br>', $page->post_content);
-                wp_update_post([ 'ID' => $page->ID, 'post_content' => wp_slash($content) ]);
-                $this->log[] = 'Ajánlatkérés oldal: második telefonszám.';
-            } else {
-                $this->log[] = 'FIGYELEM: az Ajánlatkérés oldalon nem találtam az első telefonszámot, a másodikat kézzel kell felvenni ('.self::PHONE_2.').';
-            }
+        if (!$page) return;
+        $content = str_replace('<br><a href="tel:+363030415241">'.self::PHONE_2_WRONG.'</a>', '', $page->post_content);
+        if (strpos($content, self::PHONE_2_TITLE) === false){
+            $central = '#<!-- wp:paragraph[^>]*-->\s*<p class="iu-text"><strong>Központi ügyfélszolgálat</strong>.*?</p>\s*<!-- /wp:paragraph -->#s';
+            $block = "<!-- wp:paragraph {\"className\":\"\"} -->\n<p class=\"iu-text\"><strong>".self::PHONE_2_TITLE.'</strong><br><a href="'.$tel.'">'.self::PHONE_2.'</a><br><a href="tel:+36302895977">'.$first."</a></p>\n<!-- /wp:paragraph -->";
+            if (preg_match($central, $content, $m)) $content = str_replace($m[0], $m[0]."\n\n".$block, $content);
+            else $this->log[] = 'FIGYELEM: az Ajánlatkérés oldalon nem találtam a „Központi ügyfélszolgálat” bekezdést; a '.self::PHONE_2.' számot kézzel kell felvenni.';
+        }
+        if ($content !== $page->post_content){
+            wp_update_post([ 'ID' => $page->ID, 'post_content' => wp_slash($content) ]);
+            $this->log[] = 'Ajánlatkérés oldal: „'.self::PHONE_2_TITLE.'” '.self::PHONE_2.', '.$first.'.';
         }
     }
 

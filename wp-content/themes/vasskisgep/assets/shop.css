@@ -357,6 +357,10 @@ ul.products:not(.columns-1) li.product .iu-group.brand:has(.vk-cofidis-badge) .i
 	content: none;
 }
 .vk-product-gallery .flex-control-thumbs img {
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+	background: var(--wp--preset--color--white);
 	border: 1px solid var(--vk-border);
 	border-radius: .3rem;
 	opacity: .6;
@@ -3563,8 +3567,9 @@ body.vk-has-sticky-buy {
 }
 
 /* Képnagyító (PhotoSwipe): a fejléc fölött, hogy a kép teteje és a bezárás gomb is látsszon. */
+/* A keretrendszer fejléce z-index: 999999999 – a képnagyító fölé kerüljön. */
 .pswp {
-	z-index: 100000;
+	z-index: 2147483000 !important;
 }
 
 /* Termékoldal: a márka eredeti logója a galéria sarkában, nagyobban. */
@@ -3648,4 +3653,102 @@ body.vk-has-sticky-buy {
 .vk-subcategories a.vk-active small {
 	color: inherit;
 	opacity: .75;
+}
+
+/* Márkaoldal: kategória-csempék képpel (a régi webshop márkaoldalai szerint). */
+.vk-brand-cats {
+	gap: .8rem;
+	margin-top: .4rem;
+}
+.vk-brand-cats-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: .5rem 1rem;
+}
+.vk-brand-cats-all {
+	font-size: .85rem;
+	font-weight: 600;
+	text-decoration: underline;
+	text-underline-offset: .2em;
+}
+.vk-brand-cats-all small {
+	margin-left: .2rem;
+	color: var(--vk-muted);
+	font-weight: 400;
+}
+.vk-brand-tiles {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+	gap: .6rem;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.vk-brand-tiles li {
+	margin: 0;
+	list-style: none;
+}
+.vk-brand-tile {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: .3rem;
+	height: 100%;
+	padding: .7rem .6rem .65rem;
+	border: 1px solid var(--vk-border);
+	border-radius: .3rem;
+	background: var(--wp--preset--color--white);
+	color: var(--iu-text-color);
+	text-align: center;
+	text-decoration: none;
+	transition: border-color .15s, box-shadow .15s;
+}
+.vk-brand-tile:hover {
+	border-color: var(--iu-text-color);
+}
+.vk-brand-tile.vk-active {
+	border-color: var(--wp--preset--color--dark);
+	box-shadow: inset 0 0 0 1px var(--wp--preset--color--dark);
+}
+.vk-brand-tile-image {
+	overflow: hidden;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	aspect-ratio: 4 / 3;
+}
+.vk-brand-tile-image img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	max-height: 100%;
+	object-fit: contain;
+}
+.vk-brand-tile-name {
+	font-size: .8rem;
+	font-weight: 600;
+	line-height: 1.25;
+}
+.vk-brand-tile small {
+	margin-top: auto;
+	color: var(--vk-muted);
+	font-size: .7rem;
+}
+@media (max-width: 575.8px) {
+	/* Mobilon két sorban, oldalra görgetve. */
+	.vk-brand-tiles {
+		grid-auto-flow: column;
+		grid-template-columns: none;
+		grid-template-rows: repeat(2, auto);
+		grid-auto-columns: 7.2rem;
+		overflow-x: auto;
+		padding-bottom: .4rem;
+		scroll-snap-type: x proximity;
+	}
+	.vk-brand-tiles li {
+		scroll-snap-align: start;
+	}
 }

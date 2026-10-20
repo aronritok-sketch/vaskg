@@ -118,49 +118,78 @@ class Catalog {
      * Egy márka termékeinek kategóriái a kategóriafa 3. szintjén (pl. Fűnyírók, Láncfűrészek és ágnyesők),
      * termékszámmal, csökkenő sorrendben. [term_id => count]; gyorsítótárazva, termék- vagy kategóriaváltozásig.
      */
+    /**
+     * Márkaoldali kategória-csempék szintje (a régi webshop márkaoldalai szerint: gépfajták). A fa 3. szintjén
+     * állnak meg azok a csoportok, amelyek alcsoportjai csak változatok (pl. benzines / akkus fűnyírók);
+     * a többi gyűjtőcsoport (pl. „További gépek”, „Gépi tisztítás”) a 4. szintre bomlik.
+     */
+    const BRAND_TILE_GROUPS = [ 'Fűnyírók', 'Fűnyíró traktorok', 'Láncfűrészek és ágnyesők', 'Permetezés', 'Kombi- és multirendszerek', 'Daraboló gépek', 'Tömörítő gépek' ];
+
+    /**
+     * A márka termékeinek kategória-csoportjai: [term_id => ['count' => n, 'image' => attachment_id]].
+     * Gépek elöl (darabszám szerint), utána az Alkatrészek és karbantartás ágai, végül a Tartozékok egyben.
+     * A csempe képe a márka egy terméke a csoportból (kiemelt, készleten lévő előnyben).
+     */
     static function brand_categories($brand){
-        $key = 'vk_brand_cats_'.$brand->term_id.'_'.md5(wp_cache_get_last_changed('posts').wp_cache_get_last_changed('terms'));
+        $key = 'vk_brand_tiles_'.$brand->term_id.'_'.md5(wp_cache_get_last_changed('posts').wp_cache_get_last_changed('terms'));
         $cached = get_transient($key);
         if (is_array($cached)) return $cached;
         $ids = get_posts([ 'post_type' => 'product', 'post_status' => 'publish', 'numberposts' => -1, 'fields' => 'ids',
             'tax_query' => [[ 'taxonomy' => 'product_brand', 'field' => 'term_id', 'terms' => $brand->term_id ]] ]);
-        $counts = [];
+        $groups = [];
         if ($ids){
-            $terms = wp_get_object_terms($ids, 'product_cat', [ 'fields' => 'all_with_object_id' ]);
+            update_meta_cache('post', $ids);
+            $featured = array_flip(get_posts([ 'post_type' => 'product', 'post__in' => $ids, 'numberposts' => -1, 'fields' => 'ids',
+                'tax_query' => [[ 'taxonomy' => 'product_visibility', 'field' => 'name', 'terms' => 'featured' ]] ]));
+            $names = [];
+            $name = function($id) use (&$names){
+                if (!isset($names[$id])){ $t = get_term($id, 'product_cat'); $names[$id] = $t && !is_wp_error($t) ? $t->name : ''; }
+                return $names[$id];
+            };
             $seen = [];
-            foreach($terms as $t){
+            foreach(wp_get_object_terms($ids, 'product_cat', [ 'fields' => 'all_with_object_id' ]) as $t){
                 $chain = array_reverse(array_map('intval', get_ancestors($t->term_id, 'product_cat')));
                 $chain[] = (int)$t->term_id;
-                // A tartozékok és az alkatrészek egy-egy csoportban, a gépek a fa 3. szintjén (pl. Fűnyírók).
-                $root = get_term($chain[0], 'product_cat');
-                $group = ($root && in_array($root->name, [ 'Tartozékok', 'Alkatrészek és karbantartás' ], true)) ? $chain[0] : ($chain[2] ?? end($chain));
-                if (isset($seen[$t->object_id][$group])) continue;
-                $seen[$t->object_id][$group] = true;
-                $counts[$group] = ($counts[$group] ?? 0) + 1;
+                $root = $name($chain[0]);
+                if ($root === 'Tartozékok') $group = $chain[0];
+                elseif ($root === 'Alkatrészek és karbantartás') $group = $chain[1] ?? $chain[0];
+                elseif (isset($chain[2]) && !in_array($name($chain[2]), self::BRAND_TILE_GROUPS, true)) $group = $chain[3] ?? $chain[2];
+                else $group = $chain[2] ?? end($chain);
+                $product = (int)$t->object_id;
+                if (isset($seen[$product][$group])) continue;
+                $seen[$product][$group] = true;
+                if (!isset($groups[$group])) $groups[$group] = [ 'count' => 0, 'image' => 0, 'score' => -1, 'kind' => $root === 'Tartozékok' ? 2 : ($root === 'Alkatrészek és karbantartás' ? 1 : 0) ];
+                $groups[$group]['count']++;
+                $image = (int)get_post_meta($product, '_thumbnail_id', true);
+                if (!$image) continue;
+                $score = (isset($featured[$product]) ? 2 : 0) + (get_post_meta($product, '_stock_status', true) === 'instock' ? 1 : 0);
+                if ($score > $groups[$group]['score']){ $groups[$group]['image'] = $image; $groups[$group]['score'] = $score; }
             }
-            arsort($counts);
-            $tail = [];
-            foreach($counts as $id => $n){
-                $t = get_term($id, 'product_cat');
-                if ($t && !$t->parent && in_array($t->name, [ 'Tartozékok', 'Alkatrészek és karbantartás' ], true)){ $tail[$id] = $n; unset($counts[$id]); }
-            }
-            $counts = $counts + $tail;
+            uasort($groups, function($a, $b){ return [ $a['kind'], -$a['count'] ] <=> [ $b['kind'], -$b['count'] ]; });
+            foreach($groups as &$g) $g = [ 'count' => $g['count'], 'image' => $g['image'] ];
+            unset($g);
         }
-        set_transient($key, $counts, DAY_IN_SECONDS);
-        return $counts;
+        set_transient($key, $groups, DAY_IN_SECONDS);
+        return $groups;
     }
 
     static function brand_categories_html($brand){
-        $counts = self::brand_categories($brand);
-        if (count($counts) < 2) return '';
+        $groups = self::brand_categories($brand);
+        if (count($groups) < 2) return '';
         $base = get_term_link($brand);
         $active = isset($_GET['product-categories']) ? sanitize_text_field(wp_unslash($_GET['product-categories'])) : '';
-        $html = '<nav class="vk-brand-cats" aria-label="'.esc_attr($brand->name.' kategóriák').'"><span class="vk-brand-cats-label">Kategóriák</span><ul class="vk-subcategories">';
-        $html .= '<li><a class="'.($active === '' ? 'vk-active' : '').'" href="'.esc_url($base).'">Összes <small>'.(int)$brand->count.'</small></a></li>';
-        foreach($counts as $term_id => $n){
+        $html = '<nav class="vk-brand-cats" aria-label="'.esc_attr($brand->name.' kategóriák').'"><div class="vk-brand-cats-head"><span class="vk-brand-cats-label">Kategóriák</span>';
+        if ($active !== '') $html .= '<a class="vk-brand-cats-all" href="'.esc_url($base).'">Összes '.esc_html($brand->name).' termék <small>'.(int)$brand->count.'</small></a>';
+        $html .= '</div><ul class="vk-brand-tiles">';
+        foreach($groups as $term_id => $group){
             $term = get_term($term_id, 'product_cat');
             if (!$term || is_wp_error($term)) continue;
-            $html .= '<li><a class="'.($active === $term->slug ? 'vk-active' : '').'" href="'.esc_url(add_query_arg('product-categories', $term->slug, $base)).'">'.esc_html($term->name).' <small>'.(int)$n.'</small></a></li>';
+            $image = $group['image'] ? wp_get_attachment_image($group['image'], 'medium', false, [ 'alt' => '', 'loading' => 'lazy' ]) : '';
+            if ($image === '') $image = wc_placeholder_img('medium', [ 'alt' => '' ]);
+            $html .= '<li><a class="vk-brand-tile'.($active === $term->slug ? ' vk-active' : '').'" href="'.esc_url(add_query_arg('product-categories', $term->slug, $base)).'">'
+                .'<span class="vk-brand-tile-image">'.$image.'</span>'
+                .'<span class="vk-brand-tile-name">'.esc_html($term->name).'</span>'
+                .'<small>'.(int)$group['count'].' termék</small></a></li>';
         }
         return $html.'</ul></nav>';
     }

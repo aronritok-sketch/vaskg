@@ -39,6 +39,8 @@ class Shop {
         // A kártyák (lista, karusszel, kereső, összehasonlítás) képe: a WooCommerce négyzetre vágott
         // bélyegképe helyett a vágatlan változat, így az álló vagy fekvő gép teljes egészében látszik.
         add_filter('image_downsize', [$this, 'uncropped_thumbnail'], 10, 3);
+        // A termékgaléria kis képei (data-thumb) se legyenek négyzetre vágva.
+        add_filter('woocommerce_gallery_thumbnail_size', function(){ return 'woocommerce_gallery_thumbnail'; });
         add_filter('document_title_parts', function($parts){
             if (self::is_sale_listing()) $parts['title'] = 'Akciós termékek';
             return $parts;
@@ -122,11 +124,13 @@ class Shop {
         $product = wc_get_product(get_queried_object_id());
     }
 
+    /** A vágott (négyzetes) WooCommerce méretek helyett vágatlan kép: kártya → single, galéria kis kép → medium. */
     function uncropped_thumbnail($out, $id, $size){
         static $busy = false;
-        if ($out !== false || $busy || $size !== 'woocommerce_thumbnail' || (is_admin() && !wp_doing_ajax())) return $out;
+        $map = [ 'woocommerce_thumbnail' => 'woocommerce_single', 'woocommerce_gallery_thumbnail' => 'medium' ];
+        if ($out !== false || $busy || !is_string($size) || !isset($map[$size]) || (is_admin() && !wp_doing_ajax())) return $out;
         $busy = true;
-        $single = image_downsize($id, 'woocommerce_single');
+        $single = image_downsize($id, $map[$size]);
         $busy = false;
         return $single ?: $out;
     }
