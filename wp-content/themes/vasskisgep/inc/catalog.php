@@ -179,14 +179,15 @@ class Catalog {
         $base = get_term_link($brand);
         $active = isset($_GET['product-categories']) ? sanitize_text_field(wp_unslash($_GET['product-categories'])) : '';
         $html = '<nav class="vk-brand-cats" aria-label="'.esc_attr($brand->name.' kategóriák').'"><div class="vk-brand-cats-head"><span class="vk-brand-cats-label">Kategóriák</span>';
-        if ($active !== '') $html .= '<a class="vk-brand-cats-all" href="'.esc_url($base).'">Összes '.esc_html($brand->name).' termék <small>'.(int)$brand->count.'</small></a>';
+        if ($active !== '') $html .= '<a class="vk-brand-cats-all" href="'.esc_url($base.'#termekek').'">Összes '.esc_html($brand->name).' termék <small>'.(int)$brand->count.'</small></a>';
         $html .= '</div><ul class="vk-brand-tiles">';
         foreach($groups as $term_id => $group){
             $term = get_term($term_id, 'product_cat');
             if (!$term || is_wp_error($term)) continue;
             $image = $group['image'] ? wp_get_attachment_image($group['image'], 'medium', false, [ 'alt' => '', 'loading' => 'lazy' ]) : '';
             if ($image === '') $image = wc_placeholder_img('medium', [ 'alt' => '' ]);
-            $html .= '<li><a class="vk-brand-tile'.($active === $term->slug ? ' vk-active' : '').'" href="'.esc_url(add_query_arg('product-categories', $term->slug, $base)).'">'
+            // A csempe a terméklistához visz (#termekek), nem kell görgetni.
+            $html .= '<li><a class="vk-brand-tile'.($active === $term->slug ? ' vk-active' : '').'" href="'.esc_url(add_query_arg('product-categories', $term->slug, $base).'#termekek').'">'
                 .'<span class="vk-brand-tile-image">'.$image.'</span>'
                 .'<span class="vk-brand-tile-name">'.esc_html($term->name).'</span>'
                 .'<small>'.(int)$group['count'].' termék</small></a></li>';

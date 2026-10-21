@@ -42,11 +42,20 @@
 			$bar = '';
 
 			$categories = $L::category_options($ids);
-			if (!empty($categories)){
-				$selected = $L::list_param('product-categories');
+			$selected = $L::list_param('product-categories');
+			// A kiválasztott, de a listában nem szereplő kategória (pl. márkaoldalon a csempéből választott „Motorok”)
+			// is bekerül bejelölve: így látszik, és a további szűrés (ár, készlet…) nem veszíti el.
+			$extra = [];
+			foreach(array_diff($selected, wp_list_pluck($categories, 'slug')) as $slug){
+				if (is_tax('product_cat') && get_queried_object()->slug === $slug) continue;
+				$term = get_term_by('slug', $slug, 'product_cat');
+				if ($term) $extra[] = $term;
+			}
+			if (!empty($categories) || !empty($extra)){
 				$html = '';
+				foreach($extra as $term) $html .= $pill('product-categories', $term->slug, esc_html($term->name), true);
 				foreach($categories as $c) $html .= $pill('product-categories', $c['slug'], esc_html($c['name']).' <small>'.$c['count'].'</small>', in_array($c['slug'], $selected, true));
-				$bar .= $dropdown('product-categories', 'Kategória', $html, count(array_intersect($selected, wp_list_pluck($categories, 'slug'))));
+				$bar .= $dropdown('product-categories', 'Kategória', $html, count(array_intersect($selected, wp_list_pluck($categories, 'slug'))) + count($extra));
 			}
 
 			if (!is_tax('product_brand')){
@@ -77,8 +86,10 @@
 			$bar .= $dropdown('stock', 'Készlet', $stock_html, count($stock) + ($onsale ? 1 : 0));
 
 			$view = isset($_COOKIE['iu-woocommerce-list-view']) && $_COOKIE['iu-woocommerce-list-view'] === 'list' ? 'list' : 'grid';
-			$orderby = $L::param('orderby');
+			$orderby = $L::param('orderby') ?: $L::default_orderby();
 			$sorts = [ '' => 'Alapértelmezett', 'popularity' => 'Népszerűség', 'date' => 'Legújabb', 'price' => 'Ár szerint növekvő', 'price-desc' => 'Ár szerint csökkenő' ];
+			// Kategóriában az ár szerint növekvő az alapértelmezett, a kirakat-sorrend ott nem választható.
+			if ($L::default_orderby() !== '') unset($sorts['']);
 			$sort_html = '';
 			foreach($sorts as $value => $label) $sort_html .= $pill('orderby', $value, $label, $orderby === $value, 'radio');
 
@@ -106,7 +117,7 @@
 
 			$shown = min($total, \VasskisgepTheme\Listing::PER_PAGE * max(1, (int)$L::param('product-page')));
 
-			return '<div class="vk-listing" data-total="'.esc_attr($total).'" data-per-page="'.\VasskisgepTheme\Listing::PER_PAGE.'">
+			return '<div class="vk-listing" id="termekek" data-total="'.esc_attr($total).'" data-per-page="'.\VasskisgepTheme\Listing::PER_PAGE.'">
 				<div class="vk-filter-bar">
 					<div class="vk-filter-bar-left">'.$bar.'</div>
 					<div class="vk-filter-bar-right">'.$bar_right.'</div>

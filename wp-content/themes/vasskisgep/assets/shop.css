@@ -3815,3 +3815,36 @@ body.vk-has-sticky-buy {
 .vk-tax-status[data-type="error"] {
 	color: #b42318;
 }
+
+/* Márkaoldal: a csempe a terméklistához ugrik – a ragadós fejléc ne takarja. */
+#termekek {
+	scroll-margin-top: 8.5rem;
+}
+
+/* Szállítás és fizetés oldal: súly szerinti díjtábla. */
+.vk-shipping-rates {
+	width: 100%;
+	max-width: 26rem;
+	margin: .6rem 0 .8rem;
+	border-collapse: collapse;
+	font-size: .9rem;
+}
+.vk-shipping-rates th,
+.vk-shipping-rates td {
+	padding: .4rem .7rem;
+	border: 1px solid var(--vk-border);
+	text-align: left;
+}
+.vk-shipping-rates th {
+	background: #f7f8f9;
+	font-weight: 600;
+}
+.vk-shipping-rates td:last-child {
+	text-align: right;
+	white-space: nowrap;
+}
+.vk-shipping-over small {
+	display: block;
+	color: var(--vk-muted);
+	line-height: 1.4;
+}

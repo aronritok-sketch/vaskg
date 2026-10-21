@@ -50,6 +50,8 @@ class Setup {
         31 => 'spec_tiles',
         32 => 'phone_sections',
         33 => 'description_icons',
+        34 => 'footer_social',
+        35 => 'weight_shipping',
     ];
 
     /**
@@ -66,7 +68,7 @@ class Setup {
         'kapcsolat.html' => [ 'dd652189b88f647786cf5838e19d6707' ],
         'osszehasonlitas.html' => [ '18b68a7bb657d063a9e5ef746e3703ac' ],
         'rolunk.html' => [ '9da10ceb55f530036a8337d9b6c436f4', 'c2ed85e14ed60101b676d3bcc9f975d4', '0b2e38cf5959735af55591eb1d813683' ],
-        'szallitas-es-fizetes.html' => [ '91632ae63430f8afdc3b978ce3e01b41', '193b6a94d1bd67053b36620f5ed18196' ],
+        'szallitas-es-fizetes.html' => [ '91632ae63430f8afdc3b978ce3e01b41', '193b6a94d1bd67053b36620f5ed18196', '926e2c1268d6ee2658c87bc2b3451bd0' ],
         'szerviz.html' => [ '24f48617e651a65c780605f4d3cd29f4', 'ce5c2c9617940dd4ad418e9d491146ad', 'e59c3e4d3fd3b65c485e6812a5c78bfc' ],
         'szolgaltatasok.html' => [ 'db0d0a451060f55c8b4d6c7285106006' ],
     ];
@@ -993,6 +995,72 @@ class Setup {
             }
         }
         $this->log[] = 'Leírásbeli ikonok eredeti méretre: '.$count.' termék';
+    }
+
+    /** 34. A lábléc Instagram és YouTube ikonja (# link) ki: nem használják (ügyfél, 2026-10). A Facebook marad. */
+    function footer_social(){
+        foreach(get_posts([ 'post_type' => 'iu_template', 'post_status' => 'any', 'numberposts' => -1 ]) as $template){
+            if (strpos($template->post_content, 'iu-icon-group') === false) continue;
+            $content = preg_replace('#\n*<!-- wp:iu/icon (?:(?!<!-- /wp:iu/icon -->).)*?href="\#".*?<!-- /wp:iu/icon -->#s', '', $template->post_content, -1, $count);
+            if ($count){
+                wp_update_post([ 'ID' => $template->ID, 'post_content' => wp_slash($content) ]);
+                $this->log[] = 'Lábléc: '.$count.' üres közösségi ikon (Instagram, YouTube) eltávolítva.';
+            }
+        }
+    }
+
+    /**
+     * 35. Súly szerinti házhozszállítás a régi webshop díjtáblája szerint (ügyfélkérés, 2026-10): a Magyarország
+     * zónába kerül, a régi egységes díjú „Házhozszállítás futárszolgálattal” (flat_rate) kikapcsolva marad (vissza-
+     * kapcsolható). A Szállítás és fizetés oldalra a díjtábla blokk kerül.
+     */
+    function weight_shipping(){
+        global $wpdb;
+        foreach(\WC_Shipping_Zones::get_zones() as $data){
+            $zone = new \WC_Shipping_Zone($data['id']);
+            $hu = false;
+            foreach($zone->get_zone_locations() as $location) if ($location->type === 'country' && $location->code === 'HU') $hu = true;
+            if (!$hu) continue;
+            $methods = $zone->get_shipping_methods();
+            $exists = false;
+            foreach($methods as $method) if ($method->id === Shipping::METHOD) $exists = true;
+            if ($exists) continue;
+            $instance_id = $zone->add_shipping_method(Shipping::METHOD);
+            update_option('woocommerce_'.Shipping::METHOD.'_'.$instance_id.'_settings', [
+                'title' => 'Házhozszállítás futárszolgálattal',
+                'rates' => Shipping::DEFAULT_RATES,
+                'free_total' => '30000',
+                'free_weight' => '10',
+                'tax_status' => 'taxable',
+            ]);
+            $table = $wpdb->prefix.'woocommerce_shipping_zone_methods';
+            $wpdb->update($table, [ 'method_order' => 0 ], [ 'instance_id' => $instance_id ]);
+            foreach($methods as $method){
+                if ($method->id === 'flat_rate'){
+                    $wpdb->update($table, [ 'is_enabled' => 0 ], [ 'instance_id' => $method->get_instance_id() ]);
+                    $this->log[] = 'Szállítás: az egységes díjú házhozszállítás kikapcsolva (WooCommerce → Szállítás, visszakapcsolható).';
+                } else {
+                    $wpdb->update($table, [ 'method_order' => (int)$method->method_order + 1 ], [ 'instance_id' => $method->get_instance_id() ]);
+                }
+            }
+            $this->log[] = 'Szállítás: súly szerinti házhozszállítás a régi díjtáblával (10 kg-ig 1 900 Ft … 500 kg-ig 17 790 Ft; 30 000 Ft felett 10 kg-ig ingyenes).';
+        }
+        \WC_Cache_Helper::invalidate_cache_group('shipping_zones');
+        delete_transient('wc_shipping_method_count');
+
+        // Szállítás és fizetés oldal: a díjtábla (ha az oldal még a korábbi változat).
+        $page = get_page_by_path('szallitas-es-fizetes');
+        if ($page && strpos($page->post_content, 'vasskisgep/shipping-rates') === false){
+            $old = '#<!-- wp:paragraph[^>]*-->\s*<p class="iu-text">Nagyobb méretű gépeknél[^<]*</p>\s*<!-- /wp:paragraph -->#u';
+            $new = "<!-- wp:heading {\"level\":4} -->\n<h4 class=\"wp-block-heading iu-heading\">Házhozszállítás díja a csomag súlya szerint</h4>\n<!-- /wp:heading -->\n\n<!-- wp:vasskisgep/shipping-rates /-->";
+            $content = preg_replace($old, str_replace('$', '\\$', $new), $page->post_content, 1, $count);
+            if ($count){
+                wp_update_post([ 'ID' => $page->ID, 'post_content' => wp_slash($content) ]);
+                $this->log[] = 'Szállítás és fizetés oldal: díjtábla.';
+            } else {
+                $this->log[] = 'FIGYELEM: a Szállítás és fizetés oldalon a díjtábla blokkot (Szállítási díjtábla) kézzel kell elhelyezni.';
+            }
+        }
     }
 
     /**

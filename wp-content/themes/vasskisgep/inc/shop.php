@@ -31,6 +31,11 @@ class Shop {
     }
 
     function __construct(){
+        // Szezon (évszak) választó a termékszerkesztőben és a tömeges szerkesztésben (a címkékkel szinkronban).
+        add_action('add_meta_boxes_product', [$this, 'season_meta_box']);
+        add_action('woocommerce_admin_process_product_object', [$this, 'season_save']);
+        add_action('woocommerce_product_bulk_edit_end', [$this, 'season_bulk_field']);
+        add_action('woocommerce_product_bulk_edit_save', [$this, 'season_bulk_save']);
         // A téma sablonmotorja nem futtatja a loopot, ezért a termékoldalon a
         // globális $product-ot nekünk kell beállítani a blokkok számára.
         add_action('wp', [$this, 'setup_single_product']);
@@ -116,6 +121,78 @@ class Shop {
             wp_enqueue_style('photoswipe-default-skin');
             add_action('wp_footer', 'woocommerce_photoswipe');
         }
+    }
+
+    /* ---------- Szezon (évszak) ---------- */
+
+    /** A termék évszakai (címke slugok). */
+    static function product_seasons($product_id){
+        $slugs = wp_get_object_terms($product_id, 'product_tag', [ 'fields' => 'slugs' ]);
+        return is_wp_error($slugs) ? [] : array_values(array_intersect(array_keys(self::SEASONS), $slugs));
+    }
+
+    /** Az évszak-címkék beállítása (a többi címke megmarad); hiányzó évszak-címkét létrehoz. */
+    static function set_product_seasons($product_id, array $seasons){
+        $seasons = array_values(array_intersect(array_keys(self::SEASONS), $seasons));
+        $current = wp_get_object_terms($product_id, 'product_tag', [ 'fields' => 'all' ]);
+        $keep = [];
+        foreach(is_wp_error($current) ? [] : $current as $term){
+            if (!isset(self::SEASONS[$term->slug])) $keep[] = (int)$term->term_id;
+        }
+        foreach($seasons as $slug){
+            $term = get_term_by('slug', $slug, 'product_tag');
+            if (!$term){
+                $created = wp_insert_term(self::SEASONS[$slug], 'product_tag', [ 'slug' => $slug ]);
+                if (is_wp_error($created)) continue;
+                $keep[] = (int)$created['term_id'];
+            } else {
+                $keep[] = (int)$term->term_id;
+            }
+        }
+        wp_set_object_terms($product_id, $keep, 'product_tag');
+    }
+
+    function season_meta_box(){
+        add_meta_box('vk-season', 'Szezon', function($post){
+            $active = self::product_seasons($post->ID);
+            echo '<p class="description" style="margin-top:0">Melyik évszakban szezonális? A kezdőlap „Szezonális termékek” fülein jelenik meg.</p>';
+            foreach([ 'tel', 'tavasz', 'nyar', 'osz' ] as $slug){
+                echo '<label style="display:block;margin:.3rem 0"><input type="checkbox" name="vk_seasons[]" value="'.esc_attr($slug).'" '.checked(in_array($slug, $active, true), true, false).'> '.esc_html(self::SEASONS[$slug]).'</label>';
+            }
+            echo '<input type="hidden" name="vk_seasons_present" value="1">';
+        }, 'product', 'side', 'default');
+    }
+
+    function season_save($product){
+        if (empty($_POST['vk_seasons_present'])) return;
+        $seasons = array_map('sanitize_key', (array)wp_unslash($_POST['vk_seasons'] ?? []));
+        // A mentés végén a WooCommerce a címkemezőt is menti: utána állítjuk be az évszakokat.
+        $id = $product->get_id();
+        add_action('woocommerce_process_product_meta', function($post_id) use ($id, $seasons){
+            if ((int)$post_id === (int)$id) self::set_product_seasons($id, $seasons);
+        }, 99);
+    }
+
+    function season_bulk_field(){
+        echo '<div class="inline-edit-group"><label class="alignleft"><span class="title">Szezon</span><span class="input-text-wrap"><select name="vk_season_bulk">'
+            .'<option value="">— Nincs változás —</option>';
+        foreach([ 'tel', 'tavasz', 'nyar', 'osz' ] as $slug){
+            echo '<option value="add:'.esc_attr($slug).'">+ '.esc_html(self::SEASONS[$slug]).' hozzáadása</option>';
+        }
+        foreach([ 'tel', 'tavasz', 'nyar', 'osz' ] as $slug){
+            echo '<option value="remove:'.esc_attr($slug).'">− '.esc_html(self::SEASONS[$slug]).' törlése</option>';
+        }
+        echo '<option value="clear">Minden évszak törlése</option></select></span></label></div>';
+    }
+
+    function season_bulk_save($product){
+        $value = sanitize_text_field(wp_unslash($_REQUEST['vk_season_bulk'] ?? ''));
+        if ($value === '') return;
+        $seasons = self::product_seasons($product->get_id());
+        if ($value === 'clear') $seasons = [];
+        elseif (strpos($value, 'add:') === 0) $seasons[] = substr($value, 4);
+        elseif (strpos($value, 'remove:') === 0) $seasons = array_diff($seasons, [ substr($value, 7) ]);
+        self::set_product_seasons($product->get_id(), $seasons);
     }
 
     function setup_single_product(){

@@ -18,6 +18,7 @@ require_once(__DIR__.'/cofidis.php');
 require_once(__DIR__.'/migration.php');
 require_once(__DIR__.'/orders.php');
 require_once(__DIR__.'/checkout.php');
+require_once(__DIR__.'/shipping.php');
 
 class Theme {
     private static $instance;
@@ -41,6 +42,7 @@ class Theme {
         ProductPage::get_instance();
         Orders::get_instance();
         Checkout::get_instance();
+        Shipping::get_instance();
         Pages::get_instance();
         Search::get_instance();
         Cofidis::get_instance();

@@ -34,6 +34,22 @@ class Listing {
         add_filter('woocommerce_shortcode_products_query', [$this, 'query_args'], 30, 2);
         add_filter('woocommerce_shortcode_products_query_results', [$this, 'capture_total'], 10, 2);
         add_action('wp_enqueue_scripts', [$this, 'enqueue'], 110);
+        add_filter('posts_clauses', [$this, 'price_last'], 30, 2);
+    }
+
+    /**
+     * Alapértelmezett rendezés: kategóriában (kategória oldal, vagy kiválasztott kategória a márkaoldalon / a Termékek
+     * oldalon) ár szerint növekvő (ügyfélkérés, 2026-10); máshol a kirakat-sorrend (Catalog::showcase_clauses).
+     */
+    static function default_orderby(){
+        return (is_tax('product_cat') || !empty(self::list_param('product-categories'))) ? 'price' : '';
+    }
+
+    /** Ár szerint növekvő rendezésnél az ár nélküli („Ár egyeztetés alapján”) termékek a lista végére. */
+    function price_last($clauses, $query){
+        if (!$query->get('vk_price_last') || strpos($clauses['join'], 'wc_product_meta_lookup') === false) return $clauses;
+        $clauses['orderby'] = '(wc_product_meta_lookup.min_price IS NULL OR wc_product_meta_lookup.min_price = 0) ASC, '.$clauses['orderby'];
+        return $clauses;
     }
 
     function enqueue(){
@@ -98,6 +114,7 @@ class Listing {
 
         // Alapértelmezett rendezésnél kirakat-sorrend (Catalog::showcase_clauses).
         if (self::param('orderby') === '') $query_args['vk_showcase'] = 'prepend';
+        if (self::param('orderby') === 'price') $query_args['vk_price_last'] = 1;
 
         $stock = self::list_param('stock');
         if (!empty($stock)){
@@ -137,6 +154,8 @@ class Listing {
         if (is_tax('product_cat') && self::param('product-categories') === ''){
             $_GET['product-categories'] = get_queried_object()->slug;
         }
+        // Kategóriában ár szerint növekvő az alapértelmezett (a WooCommerce a ?orderby paramétert olvassa).
+        if (self::param('orderby') === '' && self::default_orderby() !== '') $_GET['orderby'] = self::default_orderby();
 
         // Az eredményszám, a rendezés és a lapozó a saját szűrősávban/gombban van.
         remove_action('woocommerce_before_shop_loop', 'woocommerce_result_count', 20);

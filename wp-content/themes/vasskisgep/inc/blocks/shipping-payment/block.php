@@ -29,6 +29,14 @@
 				$cost = '';
 				if ($method->id === 'free_shipping' || $method->id === 'local_pickup' || $method->id === 'pickup_location'){
 					$cost = $method->id === 'free_shipping' || (float)$method->get_option('cost') == 0 ? '0 Ft' : wc_price((float)$method->get_option('cost'));
+				} elseif ($method->id === \VasskisgepTheme\Shipping::METHOD){
+					// Súly szerint: ennek a terméknek (1 db) a díja.
+					if ($product){
+						$gross = \VasskisgepTheme\Shipping::gross_cost($method, \VasskisgepTheme\Shipping::product_weight($product), (float)wc_get_price_including_tax($product));
+						$cost = $gross === null ? 'Egyedi egyeztetés' : ($gross > 0 ? wc_price($gross) : 'Ingyenes');
+					} else {
+						$cost = 'Súly szerint';
+					}
 				} elseif ($method->id === 'flat_rate'){
 					$raw = str_replace([' ', ','], ['', '.'], (string)$method->get_option('cost'));
 					if (is_numeric($raw)){
@@ -43,7 +51,7 @@
 						$cost = 'Súly szerint';
 					}
 				}
-				$shipping .= '<li>'.$icon($method->id === 'flat_rate' || $method->id === 'free_shipping' ? 'truck' : 'pin').'<span>'.esc_html($method->get_title()).'</span><strong>'.wp_kses_post($cost).'</strong></li>';
+				$shipping .= '<li>'.$icon(in_array($method->id, [ 'flat_rate', 'free_shipping', \VasskisgepTheme\Shipping::METHOD ], true) ? 'truck' : 'pin').'<span>'.esc_html($method->get_title()).'</span><strong>'.wp_kses_post($cost).'</strong></li>';
 			}
 
 			/* Fizetés: az engedélyezett fizetési módok. */
