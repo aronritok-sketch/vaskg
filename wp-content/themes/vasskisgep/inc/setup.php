@@ -52,6 +52,7 @@ class Setup {
         33 => 'description_icons',
         34 => 'footer_social',
         35 => 'weight_shipping',
+        36 => 'air_flow_unit',
     ];
 
     /**
@@ -1061,6 +1062,30 @@ class Setup {
                 $this->log[] = 'FIGYELEM: a Szállítás és fizetés oldalon a díjtábla blokkot (Szállítási díjtábla) kézzel kell elhelyezni.';
             }
         }
+    }
+
+    /** 36. A „Légszállítás” (lombfúvók) mértékegysége a régi webshop szerint: m³/h (az átvételkor üres maradt). */
+    function air_flow_unit(){
+        global $wpdb;
+        $ids = $wpdb->get_col($wpdb->prepare("SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = '_product_attributes' AND meta_value LIKE %s", '%'.$wpdb->esc_like('Légszállítás').'%'));
+        $count = 0;
+        foreach($ids as $id){
+            $product = wc_get_product($id);
+            if (!$product) continue;
+            // Másolatokkal: a helyben módosított attribútumot a WooCommerce nem érzékeli változásnak.
+            $attributes = [];
+            $changed = false;
+            foreach($product->get_attributes() as $key => $attribute){
+                $attribute = clone $attribute;
+                if (!$attribute->is_taxonomy() && $attribute->get_name() === 'Légszállítás'){
+                    $options = array_map(function($v){ return preg_match('/\d$/', trim($v)) ? trim($v).' m³/h' : $v; }, $attribute->get_options());
+                    if ($options !== $attribute->get_options()){ $attribute->set_options($options); $changed = true; }
+                }
+                $attributes[$key] = $attribute;
+            }
+            if ($changed){ $product->set_attributes($attributes); $product->save(); $count++; }
+        }
+        $this->log[] = 'Légszállítás mértékegysége (m³/h): '.$count.' termék';
     }
 
     /**

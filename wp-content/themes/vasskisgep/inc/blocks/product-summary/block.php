@@ -83,7 +83,7 @@
 
 	iucb_add_block('vasskisgep/product-tiles', [
 		'title' => 'Fő tulajdonságok csempékben',
-		'description' => 'A szűrhető tulajdonságok (lökettérfogat, teljesítmény, tömeg, vágásszélesség, garancia, max. teljesítmény, hasítóerő, ágátmérő, vízáteresztés, munkanyomás) ikonos csempékben.',
+		'description' => 'A termék összes tulajdonsága ikonos csempékben (elöl a szűrhetők: lökettérfogat, teljesítmény, tömeg, vágásszélesség, garancia stb., utána a többi, pl. vágáshossz).',
 		'category' => 'iu-woocommerce',
 		'attributes' => [],
 		'editJS' => 'return "Fő tulajdonságok csempékben";',
@@ -91,9 +91,10 @@
 			$product = $vk_current_product();
 			if (!$product) return '';
 
-			$known = \VasskisgepTheme\Catalog::attributes();
-			$rows = array_values(array_filter(\VasskisgepTheme\Catalog::product_attributes($product), function($row) use ($known){
-				return isset($known[$row['slug']]);
+			// Minden tulajdonság csempében, mint a régi webshopon (ügyfélkérés, 2026-10): elöl a szűrhetők, utána a többi
+			// (pl. Vágáshossz, Kapasor szélesség). A hosszú szöveges érték csak a Műszaki adatok táblában marad.
+			$rows = array_values(array_filter(\VasskisgepTheme\Catalog::product_attributes($product), function($row){
+				return mb_strlen(wp_strip_all_tags($row['text'])) <= 40;
 			}));
 			if (empty($rows)) return '';
 
@@ -114,7 +115,7 @@
 				$file = $icon_dir.sanitize_file_name($row['slug']).'.svg';
 				$svg = file_exists($file)
 					? str_replace('<svg ', '<svg width="18" height="18" aria-hidden="true" ', trim(file_get_contents($file)))
-					: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'.($icons[$row['slug']] ?? '<circle cx="12" cy="12" r="8"/>').'</svg>';
+					: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'.($icons[$row['slug']] ?? '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h8M8 17h5"/>').'</svg>';
 				$info = '';
 				if ($row['slug'] === 'garancia'){
 					$terms = get_permalink(get_page_by_path('aszf'));
