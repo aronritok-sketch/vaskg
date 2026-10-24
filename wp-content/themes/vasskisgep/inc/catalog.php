@@ -348,14 +348,19 @@ class Catalog {
         return array_values(array_filter($ids, function($id){ return get_post_type($id) === 'attachment'; }));
     }
 
+    const CARD_ATTRIBUTES = 6;
+
     function render_attributes($content, $block){
         global $product;
         $current = $product instanceof \WC_Product ? $product : wc_get_product();
         if (!$current) return $content;
 
-        $rows = self::product_attributes($current);
-        $limit = is_product() && !in_the_loop() ? 6 : 3;
-        $rows = array_slice($rows, 0, $limit);
+        // A kártyán is a termékoldali csempék adatai (ügyfélkérés, 2026-10): legfeljebb 6 sor, elöl a szűrhetők;
+        // a hosszú szöveges érték csak a termékoldalon. A kártyák egy magasak, az ár + gomb sor alul egy vonalban.
+        $rows = array_values(array_filter(self::product_attributes($current), function($row){
+            return mb_strlen(wp_strip_all_tags($row['text'])) <= 40;
+        }));
+        $rows = array_slice($rows, 0, self::CARD_ATTRIBUTES);
         if (empty($rows)) return '';
 
         $html = '<div class="iu-woocommerce-product-attributes">';
