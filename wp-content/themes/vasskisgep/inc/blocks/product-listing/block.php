@@ -63,7 +63,7 @@
 				if (!empty($brands)){
 					$selected = $L::list_param('product-brand');
 					$html = '';
-					foreach($brands as $b) $html .= $pill('product-brand', $b['slug'], esc_html(mb_strtoupper($b['name'])).' <small>'.$b['count'].'</small>', in_array($b['slug'], $selected, true));
+					foreach($brands as $b) $html .= $pill('product-brand', $b['slug'], esc_html(mb_strtoupper(wp_specialchars_decode($b['name'], ENT_QUOTES))).' <small>'.$b['count'].'</small>', in_array($b['slug'], $selected, true));
 					$bar .= $dropdown('product-brand', 'Gyártó', $html, count($selected));
 				}
 			}

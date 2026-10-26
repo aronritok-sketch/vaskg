@@ -16,7 +16,7 @@
 				$logo = (int)get_term_meta($brand->term_id, 'thumbnail_id', true);
 				$image = $logo ? wp_get_attachment_image($logo, 'medium', false, [ 'alt' => '', 'loading' => 'lazy' ]) : '';
 				$html .= '<li><a class="vk-brand-card" href="'.esc_url(get_term_link($brand)).'">'
-					.'<span class="vk-brand-card-logo">'.($image !== '' ? $image : '<span>'.esc_html(mb_strtoupper($brand->name)).'</span>').'</span>'
+					.'<span class="vk-brand-card-logo">'.($image !== '' ? $image : '<span>'.esc_html(mb_strtoupper(wp_specialchars_decode($brand->name, ENT_QUOTES))).'</span>').'</span>'
 					.($image !== '' ? '<span class="vk-brand-card-name">'.esc_html($brand->name).'</span>' : '')
 					.'<span class="vk-brand-card-count">'.esc_html(sprintf('%d termék', $brand->count)).'</span>'
 				.'</a></li>';

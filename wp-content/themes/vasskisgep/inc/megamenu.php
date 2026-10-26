@@ -156,7 +156,7 @@ class MegaMenu {
         foreach($brands as $brand){
             $logo = (int)get_term_meta($brand->term_id, 'thumbnail_id', true);
             $inner = $logo ? wp_get_attachment_image($logo, 'medium', false, [ 'alt' => $brand->name, 'loading' => 'lazy' ]) : '';
-            $inner = $inner !== '' ? $inner : '<span>'.esc_html(mb_strtoupper($brand->name)).'</span>';
+            $inner = $inner !== '' ? $inner : '<span>'.esc_html(mb_strtoupper(wp_specialchars_decode($brand->name, ENT_QUOTES))).'</span>';
             $html .= '<a class="vk-mega-brand" href="'.esc_url(get_term_link($brand)).'" title="'.esc_attr($brand->name).'">'.$inner.'</a>';
         }
         return '<div class="vk-mega-brands">'.$html.'</div>';
