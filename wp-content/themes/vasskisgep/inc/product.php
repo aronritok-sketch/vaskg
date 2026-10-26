@@ -32,6 +32,9 @@ class ProductPage {
         add_action('template_redirect', [$this, 'track_recently_viewed'], 20);
 
         add_filter('render_block_iu-woocommerce/images', [$this, 'gallery_extras'], 10, 2);
+        // A termékleírás (iu/content) lezárva és „vk-description” keretben: a régi webshopból jött leírások
+        // egy része lezáratlan <div>-ekkel végződik, ami a füleket és az oldalsávot is a Részletek fülbe húzta.
+        add_filter('render_block_iu/content', [$this, 'description'], 20, 2);
         add_filter('woocommerce_single_product_carousel_options', [$this, 'gallery_options']);
 
         add_filter('iu_theme_settings', [$this, 'settings']);
@@ -41,6 +44,22 @@ class ProductPage {
 
         // Lebegő vásárlási sáv a képernyő alján, ha a termék neve, ára és a Kosárba gomb már kigördült.
         add_action('wp_footer', [$this, 'sticky_buy']);
+    }
+
+    /* ---------- Termékleírás ---------- */
+
+    function description($block_content, $block){
+        if (is_admin() || wp_is_json_request() || get_post_type() !== 'product') return $block_content;
+        return '<div class="vk-description">'.self::tidy_description($block_content).'</div>';
+    }
+
+    /**
+     * Leírás rendbetétele: a régi webshop „kattints ide” kéz ikonja (5607.jpg) ki, mert a linkek végére a
+     * stíluslap tesz ikont (ügyfélkérés, 2026-10); a lezáratlan címkék lezárva.
+     */
+    static function tidy_description($html){
+        $html = preg_replace('~<img\b[^>]*/5607(?:-\d+x\d+)?\.(?:jpe?g|png|gif|webp)[^>]*>~i', '', (string)$html);
+        return force_balance_tags($html);
     }
 
     /* ---------- Lebegő vásárlási sáv ---------- */

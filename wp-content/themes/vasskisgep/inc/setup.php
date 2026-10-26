@@ -53,6 +53,10 @@ class Setup {
         34 => 'footer_social',
         35 => 'weight_shipping',
         36 => 'air_flow_unit',
+        37 => 'description_cleanup',
+        38 => 'brands_page',
+        39 => 'related_products',
+        40 => 'arukereso_feed',
     ];
 
     /**
@@ -693,6 +697,7 @@ class Setup {
             [ 'osszehasonlitas', 'Összehasonlítás', 'pages/osszehasonlitas.html' ],
             [ 'szallitas-es-fizetes', 'Szállítás és fizetés', 'pages/szallitas-es-fizetes.html' ],
             [ 'aszf', 'Általános Szerződési Feltételek', 'pages/aszf.html' ],
+            [ 'gyartok', 'Gyártók', 'pages/gyartok.html' ],
         ];
         foreach($pages as [$slug, $title, $file]){
             $this->upsert_page($slug, $title, $file);
@@ -1086,6 +1091,80 @@ class Setup {
             if ($changed){ $product->set_attributes($attributes); $product->save(); $count++; }
         }
         $this->log[] = 'Légszállítás mértékegysége (m³/h): '.$count.' termék';
+    }
+
+    /**
+     * 37. Termékleírások rendbetétele (ügyfélkérés, 2026-10): a régi webshopból jött lezáratlan címkék lezárva
+     * (ezek miatt nem lehetett a Dokumentumok, Vélemények fülre kattintani, és tűnt el a szállítás-fizetés doboz),
+     * a nagyra nőtt „kattints” kéz ikon ki (a linkek végére a stíluslap tesz ikont), a régi bolt termék- és
+     * kategórialinkjei az új oldalakra.
+     */
+    function description_cleanup(){
+        global $wpdb;
+        $redirects = class_exists(__NAMESPACE__.'\\Migration') ? Migration::redirects() : [ 'products' => [], 'categories' => [] ];
+        $by_slug = [];
+        foreach($redirects['products'] as $path => $id) $by_slug[basename($path)] = (int)$id;
+        $link = function($m) use ($redirects, $by_slug){
+            $path = Migration::normalize_path($m[2]);
+            $target = '';
+            $id = (int)($redirects['products'][$path] ?? ($by_slug[basename($path)] ?? 0));
+            if ($id && get_post_status($id) === 'publish') $target = get_permalink($id);
+            for ($try = $path; $target === '' && $try !== '' && $try !== '.' && $try !== 'termekek'; $try = dirname($try)){
+                if (empty($redirects['categories'][$try])) continue;
+                $term = get_term($redirects['categories'][$try]);
+                if ($term && !is_wp_error($term)) $target = get_term_link($term);
+                break;
+            }
+            return $target && !is_wp_error($target) ? $m[1].esc_url($target).'"' : $m[0];
+        };
+        $count = 0;
+        $links = 0;
+        foreach($wpdb->get_results("SELECT ID, post_content FROM {$wpdb->posts} WHERE post_type = 'product' AND post_status NOT IN ('trash', 'auto-draft') AND post_content <> ''") as $row){
+            $content = ProductPage::tidy_description($row->post_content);
+            $content = preg_replace_callback('~(href=")(?:https?://(?:www\.)?vasskisgep\.hu)?(/termekek/[^"?#]+)[^"]*"~i', function($m) use ($link, &$links){
+                $out = $link($m);
+                if ($out !== $m[0]) $links++;
+                return $out;
+            }, $content);
+            if ($content === $row->post_content) continue;
+            $wpdb->update($wpdb->posts, [ 'post_content' => $content ], [ 'ID' => $row->ID ]);
+            clean_post_cache($row->ID);
+            $count++;
+        }
+        $this->log[] = 'Termékleírások rendbe téve: '.$count.' termék ('.$links.' régi webshop-link az új oldalra).';
+    }
+
+    /** 38. Gyártók oldal (az összes márka logóval), a főmenüben a Tudástár helyén (ügyfélkérés, 2026-10). */
+    function brands_page(){
+        $page_id = $this->upsert_page('gyartok', 'Gyártók', 'pages/gyartok.html');
+        $menu = wp_get_nav_menu_object('fomenu');
+        if (!$page_id || !$menu) return;
+        $blog = (int)get_option('page_for_posts');
+        foreach(wp_get_nav_menu_items($menu->term_id, [ 'post_status' => 'any' ]) as $item){
+            if ((int)$item->object_id === (int)$page_id && $item->object === 'page') return;
+        }
+        foreach(wp_get_nav_menu_items($menu->term_id, [ 'post_status' => 'any' ]) as $item){
+            if ($item->menu_item_parent || !($item->object === 'page' && $blog && (int)$item->object_id === $blog) && $item->title !== 'Tudástár') continue;
+            $this->update_menu_item_to_page($menu->term_id, $item, $page_id, 'Gyártók');
+            $this->log[] = 'Főmenü: „Tudástár” helyett „Gyártók” (a Tudástár a láblécben marad).';
+            return;
+        }
+    }
+
+    /** 39. Kapcsolódó termékek a régi webshopból (a háttérben, MigrationRelated). */
+    function related_products(){
+        if (!class_exists(__NAMESPACE__.'\\MigrationRelated')) return;
+        global $wpdb;
+        if (!$wpdb->get_var("SELECT 1 FROM {$wpdb->postmeta} WHERE meta_key = '_vk_old_url' LIMIT 1")) return;
+        MigrationRelated::start();
+        $this->log[] = 'Kapcsolódó termékek átvétele a régi webshopból elindítva a háttérben (Termékek → Régi webshop átköltöztetés).';
+    }
+
+    /** 40. Árukereső termékfeed: /arukereso.xml (Feed); a cím a permalinkek frissítése után él. */
+    function arukereso_feed(){
+        Feed::rewrite();
+        flush_rewrite_rules(false);
+        $this->log[] = 'Árukereső termékfeed: '.Feed::url().' (élesítéskor az Árukereső Partner Portálon ezt kell megadni).';
     }
 
     /**

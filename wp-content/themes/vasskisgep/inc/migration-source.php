@@ -188,6 +188,20 @@ class MigrationSource {
             }
             $d['documents'] = array_values(array_unique($d['documents']));
         }
+        $d['related'] = self::related($html);
         return $d['name'] !== '' ? $d : null;
+    }
+
+    /** A „Kapcsolódó termékek” sáv tételei: [ [ 'sku' => …, 'path' => '/termekek/…' ], … ]. */
+    static function related($html){
+        $start = strpos((string)$html, 'related-products-cont');
+        if ($start === false) return [];
+        $items = [];
+        foreach(array_slice(explode('<div class="related-product">', substr($html, $start)), 1) as $chunk){
+            $path = preg_match('~href="(/termekek/[^"?#]+)"~', $chunk, $m) ? html_entity_decode($m[1], ENT_QUOTES, 'UTF-8') : '';
+            $sku = preg_match('~<meta itemprop="sku" content="([^"]*)"~', $chunk, $m) ? trim(html_entity_decode($m[1], ENT_QUOTES, 'UTF-8')) : '';
+            if ($path !== '' || $sku !== '') $items[] = [ 'sku' => $sku, 'path' => $path ];
+        }
+        return $items;
     }
 }

@@ -131,6 +131,9 @@ class MigrationImporter {
             if ($docs) update_post_meta($product_id, '_vk_documents', implode(',', $docs));
         }
 
+        // A régi „Kapcsolódó termékek” (a már importáltak; a többit a MigrationRelated pótolja).
+        if (!empty($data['related'])) MigrationRelated::apply($product_id, (array)$data['related']);
+
         update_post_meta($id, '_vk_mig_product', $product_id);
         update_post_meta($id, '_vk_mig_status', 'imported');
         return $product_id;
@@ -182,7 +185,7 @@ class MigrationImporter {
             }, $html);
         }
         $html = preg_replace('/<p>(\s|&nbsp;)*<\/p>/u', '', $html);
-        return trim(wp_kses_post($html));
+        return trim(wp_kses_post(ProductPage::tidy_description($html)));
     }
 
     static function short_description($html){
