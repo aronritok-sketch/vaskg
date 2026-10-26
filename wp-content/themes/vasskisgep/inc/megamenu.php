@@ -65,8 +65,10 @@ class MegaMenu {
     /** A panel HTML-je (gyorsítótárazva, a kategóriák/márkák módosításakor frissül). */
     static function panel(){
         $key = self::CACHE_KEY;
-        $html = get_transient($key);
-        if ($html !== false) return $html;
+        // A téma új változata (a fájl módosítása) is frissíti: a tárolt panel a régi kóddal készült.
+        $version = (string)filemtime(__FILE__);
+        $cached = get_transient($key);
+        if (is_array($cached) && ($cached['version'] ?? '') === $version) return $cached['html'];
 
         $tabs = [];
         foreach(self::children(0) as $top){
@@ -91,7 +93,7 @@ class MegaMenu {
             '.$panes.'
         </div>';
 
-        set_transient($key, $html, WEEK_IN_SECONDS);
+        set_transient($key, [ 'version' => $version, 'html' => $html ], WEEK_IN_SECONDS);
         return $html;
     }
 
