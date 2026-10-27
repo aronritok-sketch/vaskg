@@ -38,7 +38,7 @@
 
 			$cell = function($html){ return '<td>'.$html.'</td>'; };
 
-			$html = '<div class="vk-compare" data-list-page="compare"><div class="vk-compare-scroll"><table class="vk-compare-table">';
+			$html = '<div class="vk-compare" data-list-page="compare"><div class="vk-compare-scroll"><table class="vk-compare-table" style="--vk-compare-n:'.count($products).'">';
 
 			$html .= '<thead><tr><th></th>';
 			foreach($products as $product){

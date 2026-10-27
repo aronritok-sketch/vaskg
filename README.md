@@ -78,6 +78,7 @@ A `wp-content/plugins`, `uploads` és `languages` mappák nincsenek verzióköve
 - [ ] **Nyitvatartás**: a Rólunk oldalon a Figma szerinti „H–P: 7:30–16:30, Szo: 7:30–12:00” szerepel – ellenőrizni.
 - [ ] **Kapcsolódó termékek a régi boltból**: a domain átállítása **előtt** lefutott-e (Termékek → Régi webshop átköltöztetés → Kapcsolódó termékek: „Kész”). Utána a régi bolt már nem olvasható.
 - [ ] **Árukereső**: a Partner Portálon a feed címe `https://vasskisgep.hu/arukereso.xml` (a régi bolt feedje helyett); Megbízható Bolt programnál a WebAPI kulcs a rendelésküldéshez.
+- [ ] **Sebesség**: a dev szerver gyorsítótár nélkül ~2–3 mp alatt adja ki az oldalt (a régi bolt ~1,2 mp). Élesítés előtt oldal-gyorsítótár (a kedvencek / összehasonlítás / kosár számlálója sütiből jön: ezeket a gyorsítótár ne rögzítse) és mérés mobilon és gépen.
 - [ ] **Keresőmotorok**: élesítéskor Beállítások → Olvasás → „Keresőmotorok…” jelölés kivétele.
 - [ ] **Cofidis** (áruhitel):
     - *Fizetési mód* (`inc/cofidis.php`, `inc/cofidis-gateway.php`): WooCommerce → Beállítások → Fizetés → **Cofidis áruhitel** → Engedélyezés. Csak akkor jelenik meg a pénztárban, ha a kosár minden terméke „Cofidis áruhitel” jelölésű és a végösszeg a min./max. határon belül van. A rendelés „Függőben” állapotba kerül (a készlet lefoglalva), a vásárló tájékoztatást kap (köszönőoldal + e-mail, opcionálisan a Cofidis hitelkérelmi linkjével). Hitelbírálat után a rendelésnél a *Rendelés műveletek* közül: „Cofidis: hitel jóváhagyva” (→ Feldolgozás alatt) vagy „elutasítva” (→ Törölve, a készlet visszaáll).
@@ -119,6 +120,13 @@ A `wp-content/plugins`, `uploads` és `languages` mappák nincsenek verzióköve
   - **Dokumentumok**: új lapon, a böngészőben nyílnak meg (nincs `download`), a feltöltés dátuma nem látszik.
   - **Gyártók oldal** (`/gyartok/`, `vasskisgep/brand-list` blokk: márkák logóval, termékszámmal): a főmenüben a Tudástár helyén (38. lépés); a Tudástár a láblécben marad.
   - **Árukereső feed**: `/arukereso.xml` (`inc/feed.php`, 40. lépés). `Delivery_Time` 1 = Raktáron, utánrendelhető 5; `Delivery_Cost` a súly szerinti díjtáblából (díjmentesnél „ingyenes”, ismeretlen súlynál üres → a Partner Portál díjtáblája). Élesítéskor az Árukereső Partner Portálon ezt a címet kell megadni.
+- **Ügyfélkör 9** (2026-10):
+  - Termékoldal (asztali): milliós árnál, kapcsolódó termékek mellett az „(Az ár az áfát tartalmazza)” az ár alá kerül (nem lóg át az oldalsávba).
+  - Mobil fejléc: a telefonszám kiírva (+36 30 289 5977), egy érintéssel hívható.
+  - Mobil kezdőlap: a márka-hero csempéin (Stiga, Cedrus, Rato, Berrin, Bluebird) látszanak a logók; az asztali középre igazítás (57vw-s eltolás) a csempén kívülre tolta őket.
+  - Márkaoldal mobilon: a kategória-csempék két oszlopban, lefelé görgetve, nagyobb felirattal (korábban két sorban, oldalra görgetve).
+  - Összehasonlítás mobilon: a sor neve a sor fölött, alatta a termékek fél képernyő szélesen (kettő látszik, a többi oldalra görgetve); a táblázat `--vk-compare-n` változóban kapja a termékek számát.
+  - Megamenü: a tárolt panel a téma frissítésekor újraépül (`MegaMenu::panel`, a fájl módosítási ideje a gyorsítótárban).
 - **Kirakat-sorrend** (`Catalog::showcase_clauses`, `vk_showcase` lekérdezés-paraméter): a terméklista alapértelmezett rendezése és a kezdőlapi Kiemelt karusszel: Kiemelt → gép (a Tartozékok és az Alkatrészek és karbantartás ág hátrébb) → készleten → legújabb. A Népszerű karusszel előtte az eladások szerint rendez (a `wc_get_products()` a „popularity” rendezést nem ismeri, ezért korábban dátum szerint rendezett).
 - **Kedvencek tárolása**: vendégnél sütiben (1 év, a böngésző törölheti); belépett vásárlónál az adatbázisban is, és ha a süti elveszett, onnan áll vissza.
 - **Képek a setup tartalmakban**: `{{media:fajl.jpg}}`, `{{media-thumb:…}}`, `{{media-id:…}}` helyőrzők a `setup/media/` fájlaira; a telepítő tölti fel őket a médiatárba.

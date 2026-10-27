@@ -1469,6 +1469,66 @@ ul.products:not(.columns-1) li.product .iu-group.brand:has(.vk-cofidis-badge) .i
 	display: flex;
 }
 
+/* Mobilon (ügyfélkérés, 2026-10): a sor neve a sor fölött, alatta a termékek egymás mellett, fél képernyő
+   szélesen (kettő látszik, a többi oldalra görgetve); a címkeoszlop nem foglal helyet. */
+@media (max-width: 767.8px) {
+	.vk-compare-table {
+		display: block;
+		width: max(100%, calc(var(--vk-compare-n, 2) * 46vw));
+		min-width: 0;
+		font-size: .9rem;
+	}
+	.vk-compare-table thead,
+	.vk-compare-table tbody {
+		display: block;
+	}
+	.vk-compare-table tr {
+		display: grid;
+		grid-template-columns: repeat(var(--vk-compare-n, 2), minmax(0, 1fr));
+	}
+	.vk-compare-table th,
+	.vk-compare-table td {
+		display: block;
+		padding: .55rem .7rem;
+		border-bottom: 0;
+	}
+	.vk-compare-table tr {
+		border-bottom: 1px solid var(--vk-border);
+	}
+	.vk-compare-table thead th:first-child,
+	.vk-compare-actions th {
+		display: none;
+	}
+	.vk-compare-table tbody th {
+		grid-column: 1 / -1;
+		width: auto;
+		padding-bottom: 0;
+		color: var(--vk-muted);
+		font-size: .72rem;
+		letter-spacing: .08em;
+		text-transform: uppercase;
+	}
+	.vk-compare-table tbody th:empty {
+		display: none;
+	}
+	.vk-compare-product img {
+		max-width: 100%;
+	}
+	.vk-compare-title {
+		font-size: .98rem;
+		overflow-wrap: anywhere;
+	}
+	.vk-compare-table .price,
+	.vk-compare-table .price .amount {
+		font-size: 1.15rem;
+	}
+	.vk-compare-actions td .iu-woocommerce-add-to-cart,
+	.vk-compare-actions td .iu-button {
+		width: 100%;
+		justify-content: center;
+	}
+}
+
 /* ---------- Keresés ---------- */
 
 .vk-result-count {
@@ -1653,6 +1713,12 @@ ul.products:not(.columns-1) li.product .iu-group.brand:has(.vk-cofidis-badge) .i
 	.header-top .iu-icon-text-text {
 		display: none;
 	}
+	/* A telefonszám mobilon is kiírva (ügyfélkérés, 2026-10): egy érintéssel hívható. */
+	.header-top a[href^="tel:"] .iu-icon-text-text {
+		display: inline;
+		font-weight: 600;
+		white-space: nowrap;
+	}
 	.header-top .iu-column > .iu-group > .iu-group {
 		flex: 0 0 auto;
 		width: auto;
@@ -1742,8 +1808,11 @@ ul.products:not(.columns-1) li.product .iu-group.brand:has(.vk-cofidis-badge) .i
 	.vasskisgep-pager-hero-slide.open .vasskisgep-pager-hero-slide-bg {
 		height: 42vh;
 	}
-	.vasskisgep-pager-hero-slide-content {
+	/* Az asztali középre igazítás (57vw-hez mért eltolás) mobilon a logót a csempén kívülre tolta: üres csempék. */
+	.vasskisgep-pager-hero .vasskisgep-pager-hero-slide-content {
 		position: relative;
+		left: 0;
+		width: 100%;
 	}
 	.vasskisgep-pager-hero-slide-closed {
 		position: relative;
@@ -3420,9 +3489,7 @@ footer .iu-form-submit .iu-button-text:after {
 	.vk-product-summary .iu-title {
 		font-size: 2.62rem;
 	}
-	.vk-price-box-main {
-		flex-wrap: nowrap;
-	}
+	/* Hosszú (milliós) árnál, keskeny oszlopban (kapcsolódó termékek mellett) az áfa-szöveg az ár alá kerül. */
 	.vk-price-vat {
 		white-space: nowrap;
 	}
@@ -3804,18 +3871,20 @@ body.vk-has-sticky-buy {
 	font-size: .7rem;
 }
 @media (max-width: 575.8px) {
-	/* Mobilon két sorban, oldalra görgetve. */
+	/* Mobilon két oszlopban, lefelé görgetve, nagyobb felirattal, mint a Gyártók oldalon (ügyfélkérés, 2026-10). */
 	.vk-brand-tiles {
-		grid-auto-flow: column;
-		grid-template-columns: none;
-		grid-template-rows: repeat(2, auto);
-		grid-auto-columns: 7.2rem;
-		overflow-x: auto;
-		padding-bottom: .4rem;
-		scroll-snap-type: x proximity;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: .7rem;
 	}
-	.vk-brand-tiles li {
-		scroll-snap-align: start;
+	.vk-brand-tile {
+		padding: .8rem .7rem .75rem;
+		border-radius: .5rem;
+	}
+	.vk-brand-tile-name {
+		font-size: .95rem;
+	}
+	.vk-brand-tile small {
+		font-size: .8rem;
 	}
 }
 
