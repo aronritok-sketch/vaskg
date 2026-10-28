@@ -2605,12 +2605,16 @@ ul.products:not(.columns-1) li.product .iu-group.brand:has(.vk-cofidis-badge) .i
 	padding: 0;
 	list-style: none;
 }
+.vk-brand-list li {
+	display: flex;
+}
 .vk-brand-card {
 	display: flex;
+	flex: 1 1 auto;
 	flex-direction: column;
 	align-items: center;
 	gap: .35rem;
-	height: 100%;
+	width: 100%;
 	padding: 1.2rem 1rem 1rem;
 	border: 1px solid var(--vk-border);
 	border-radius: .5rem;
@@ -3936,8 +3940,8 @@ body.vk-has-sticky-buy {
 
 /* Márkaoldal: a márka kategóriái. */
 .vk-brand-cats {
-	display: flex;
-	flex-direction: column;
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
 	gap: .6rem;
 }
 .vk-brand-cats-label {
@@ -3965,8 +3969,8 @@ body.vk-has-sticky-buy {
 /* Márkaoldal: típusválasztó a kiválasztott kategória alatt (pl. Fűnyírók → akkumulátoros, benzinmotoros,
    elektromos), ugyanolyan képes csempékkel, mint a kategóriák; mobilon két oszlopban (ügyfélkérés, 2026-10). */
 .vk-brand-subcats {
-	display: flex;
-	flex-direction: column;
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
 	gap: .7rem;
 	margin-top: .8rem;
 	padding: 1rem;
@@ -4020,15 +4024,20 @@ body.vk-has-sticky-buy {
 	list-style: none;
 }
 .vk-brand-tiles li {
+	display: flex;
 	margin: 0;
 	list-style: none;
 }
+/* Egyforma magas csempék százalékos magasság nélkül: az iPhone (Safari) a „height: 100%”-ot a típusválasztó
+   dobozához mérte, a csempék megnyúltak és kilógtak a dobozból (ügyfél, 2026-10). */
 .vk-brand-tile {
 	display: flex;
+	flex: 1 1 auto;
 	flex-direction: column;
 	align-items: center;
 	gap: .3rem;
-	height: 100%;
+	width: 100%;
+	min-width: 0;
 	padding: .7rem .6rem .65rem;
 	border: 1px solid var(--vk-border);
 	border-radius: .3rem;
@@ -4046,18 +4055,19 @@ body.vk-has-sticky-buy {
 	box-shadow: inset 0 0 0 1px var(--wp--preset--color--dark);
 }
 .vk-brand-tile-image {
+	position: relative;
 	overflow: hidden;
-	display: flex;
-	align-items: center;
-	justify-content: center;
+	display: block;
 	width: 100%;
 	aspect-ratio: 4 / 3;
 }
 .vk-brand-tile-image img {
+	position: absolute;
+	inset: 0;
 	display: block;
 	width: 100%;
 	height: 100%;
-	max-height: 100%;
+	max-width: none;
 	object-fit: contain;
 }
 .vk-brand-tile-name {
