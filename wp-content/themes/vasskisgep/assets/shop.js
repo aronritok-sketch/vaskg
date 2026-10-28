@@ -249,6 +249,18 @@
 		});
 	};
 
+	// A kiválasztott változat (méret) cikkszáma a termék neve fölött; választás törlésekor az eredeti.
+	$(document).on('found_variation', '.vk-buy-native form.variations_form', function(e, variation){
+		const $sku = $('.vk-sku[data-sku]');
+		const value = (variation && variation.sku) || $sku.data('sku') || '';
+		$sku.find('span').text(value);
+		$sku.prop('hidden', !value);
+	}).on('reset_data', '.vk-buy-native form.variations_form', function(){
+		const $sku = $('.vk-sku[data-sku]');
+		$sku.find('span').text($sku.data('sku') || '');
+		$sku.prop('hidden', !$sku.data('sku'));
+	});
+
 	$(function(){
 		$('.vk-buy').each(function(){ syncQty($(this)); });
 		$('.vk-buy-native form.variations_form').each(function(){ sizePicker($(this)); });

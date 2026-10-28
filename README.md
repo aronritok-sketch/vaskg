@@ -139,6 +139,9 @@ A `wp-content/plugins`, `uploads` és `languages` mappák nincsenek verzióköve
   - Termékoldal: változatos terméknél méretgombok (`sizePicker` a `shop.js`-ben; a WooCommerce legördülője rejtve marad), „Válasszon méretet”; a választható tulajdonság nem csempe.
   - Árukereső feed: a változatos termék változatonként egy sor (`size`, közös `groupid`).
   - iPhone (Safari): a típusválasztó csempéi megnyúltak és kilógtak a dobozból (`height: 100%`); a csempék, a Gyártók kártyái és a képük százalékos magasság nélkül, flex-szel és abszolút képpel egyforma magasak.
+- **Ügyfélkör 13** (2026-10):
+  - Változatos terméknél (méretek) a cikkszám a kiválasztott méreté (`vasskisgep/product-sku` mindig kiírja a helyét, a `shop.js` a `found_variation` / `reset_data` eseményre frissíti).
+  - Megamenü: csak akkor nyílik, ha az egér ~0,3 mp-re megáll a Termékek menüponton (minden mozdulat újraindítja a várakozást), a véletlen átsuhanás nem nyitja ki (`megamenu.js`).
 - **Átadás** (`docs/atadas/`): ügyfél-kézikönyv (`kezikonyv.html` → `node pdf.js` → `VassKisgep_webshop_kezikonyv.pdf`, HelloProVision-arculat, tegező, képernyőképek a devről). Funkcióváltozásnál frissíteni.
 - **Kirakat-sorrend** (`Catalog::showcase_clauses`, `vk_showcase` lekérdezés-paraméter): a terméklista alapértelmezett rendezése és a kezdőlapi Kiemelt karusszel: Kiemelt → gép (a Tartozékok és az Alkatrészek és karbantartás ág hátrébb) → készleten → legújabb. A Népszerű karusszel előtte az eladások szerint rendez (a `wc_get_products()` a „popularity” rendezést nem ismeri, ezért korábban dátum szerint rendezett).
 - **Kedvencek tárolása**: vendégnél sütiben (1 év, a böngésző törölheti); belépett vásárlónál az adatbázisban is, és ha a süti elveszett, onnan áll vissza.

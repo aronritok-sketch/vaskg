@@ -23,7 +23,12 @@
 		'editJS' => 'return "Cikkszám: …";',
 		'template' => function() use ($vk_current_product){
 			$product = $vk_current_product();
-			if (!$product || !$product->get_sku()) return '';
+			if (!$product) return '';
+			// Változatos terméknél (méretek) a kiválasztott változat cikkszáma jelenik meg (shop.js), ezért mindig ott van.
+			if ($product->is_type('variable')){
+				return '<p class="vk-sku" data-sku="'.esc_attr($product->get_sku()).'"'.($product->get_sku() ? '' : ' hidden').'>Cikkszám: <span>'.esc_html($product->get_sku()).'</span></p>';
+			}
+			if (!$product->get_sku()) return '';
 			return '<p class="vk-sku">Cikkszám: <span>'.esc_html($product->get_sku()).'</span></p>';
 		}
 	]);

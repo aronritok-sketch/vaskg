@@ -48,15 +48,17 @@
 			link.setAttribute('aria-expanded', 'false');
 		}
 
-		item.addEventListener('mouseenter', function(){
+		// Csak akkor nyílik, ha az egér megáll a menüponton (ügyfélkérés, 2026-10): minden mozdulat újraindítja a
+		// várakozást, így a véletlen átsuhanás nem nyitja ki. Nyitott panelen belül mozogva nincs teendő.
+		const INTENT = 300;
+		const wait = function(){
 			clearTimeout(closeTimer);
-			openTimer = setTimeout(open, 120);
-		});
-		// Az X-szel bezárt panel a menüpontra visszatérve újra nyíljon (a li-ből nem léptünk ki).
-		if (link) link.addEventListener('mouseenter', function(){
-			clearTimeout(closeTimer);
-			openTimer = setTimeout(open, 120);
-		});
+			if (item.classList.contains('vk-mega-open')) return;
+			clearTimeout(openTimer);
+			openTimer = setTimeout(open, INTENT);
+		};
+		item.addEventListener('mouseenter', wait);
+		item.addEventListener('mousemove', wait);
 		item.addEventListener('mouseleave', function(){
 			clearTimeout(openTimer);
 			closeTimer = setTimeout(function(){ close(false); }, 250);

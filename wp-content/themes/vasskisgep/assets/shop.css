@@ -4206,3 +4206,7 @@ body.vk-has-sticky-buy {
 	color: var(--vk-muted);
 	line-height: 1.4;
 }
+
+.vk-sku[hidden] {
+	display: none;
+}
