@@ -1775,16 +1775,12 @@ ul.products:not(.columns-1) li.product .iu-group.brand:has(.vk-cofidis-badge) .i
 	.vasskisgep-pager-hero {
 		flex-wrap: wrap;
 	}
-	.vasskisgep-pager-hero .vasskisgep-pager-hero-slide {
-		order: 2;
-		flex: 0 0 20% !important;
-		width: 20% !important;
-		min-width: 0;
-		height: 4.2rem;
-		border-left: 1px solid var(--vk-border);
-		border-top: 1px solid var(--vk-border);
-		cursor: pointer;
-		transition: none;
+	/* Mobilon lapozó (script.js): csak a nyitott márka látszik, két nyíllal; alatta a márkaválasztó csempék. */
+	.vasskisgep-pager-hero {
+		position: relative;
+	}
+	.vasskisgep-pager-hero .vasskisgep-pager-hero-slide:not(.open) {
+		display: none;
 	}
 	.vasskisgep-pager-hero .vasskisgep-pager-hero-slide.open {
 		order: 1;
@@ -1840,6 +1836,70 @@ ul.products:not(.columns-1) li.product .iu-group.brand:has(.vk-cofidis-badge) .i
 		flex-direction: column;
 		align-items: flex-start;
 		gap: 1.2rem;
+	}
+}
+
+/* Kezdőlapi márka-lapozó (mobil): nyilak és márkaválasztó csempék. Asztali nézetben a sávok maguk a választók. */
+.vk-hero-arrow,
+.vk-hero-nav {
+	display: none;
+}
+@media (max-width: 991.8px) {
+	.vk-hero-arrow {
+		position: absolute;
+		top: var(--vk-hero-arrow-top, 21vh);
+		z-index: 3;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 2.9rem;
+		height: 2.9rem;
+		margin-top: -1.45rem;
+		padding: 0;
+		border: 0;
+		border-radius: 50%;
+		background: rgba(255, 255, 255, .92);
+		box-shadow: 0 .15rem .6rem rgba(0, 0, 0, .25);
+		color: var(--wp--preset--color--dark, #1a1a1a);
+		cursor: pointer;
+	}
+	.vk-hero-prev {
+		left: .7rem;
+	}
+	.vk-hero-next {
+		right: .7rem;
+	}
+	.vk-hero-nav {
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		border-top: 1px solid var(--vk-border);
+	}
+	.vk-hero-nav-item {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		height: 3.6rem;
+		padding: .6rem;
+		border: 0;
+		border-right: 1px solid var(--vk-border);
+		border-bottom: 1px solid var(--vk-border);
+		background: var(--wp--preset--color--white, #fff);
+		cursor: pointer;
+	}
+	.vk-hero-nav-item:nth-child(3n) {
+		border-right: 0;
+	}
+	.vk-hero-nav-item img {
+		mix-blend-mode: multiply;
+		max-width: 100%;
+		max-height: 1.6rem;
+		width: auto;
+		height: auto;
+		transform: none;
+	}
+	.vk-hero-nav-item.vk-active {
+		box-shadow: inset 0 -3px 0 var(--wp--preset--color--primary);
+		background: var(--wp--preset--color--light, #f3f4f6);
 	}
 }
 
@@ -3786,6 +3846,74 @@ body.vk-has-sticky-buy {
 .vk-subcategories a.vk-active small {
 	color: inherit;
 	opacity: .75;
+}
+
+/* Márkaoldal: típusválasztó a kiválasztott kategória alatt (pl. Fűnyírók → akkumulátoros, benzinmotoros,
+   elektromos), nagy, egyértelmű gombokkal; mobilon két oszlopban. */
+.vk-brand-subcats {
+	display: flex;
+	flex-direction: column;
+	gap: .6rem;
+	margin-top: .8rem;
+	padding: 1rem;
+	border-radius: .5rem;
+	background: var(--wp--preset--color--light, #f3f4f6);
+	scroll-margin-top: 8.5rem;
+}
+.vk-brand-subcats ul {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+	gap: .6rem;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.vk-brand-subcats li {
+	margin: 0;
+}
+.vk-brand-subcat {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	gap: .15rem;
+	height: 100%;
+	min-height: 3.6rem;
+	padding: .65rem .9rem;
+	border: 1px solid var(--vk-border);
+	border-radius: .45rem;
+	background: var(--wp--preset--color--white, #fff);
+	color: var(--iu-text-color);
+	font-weight: 600;
+	line-height: 1.25;
+	text-decoration: none;
+}
+.vk-brand-subcat:hover {
+	border-color: var(--iu-text-color);
+}
+.vk-brand-subcat small {
+	color: var(--vk-muted);
+	font-size: .78rem;
+	font-weight: 400;
+}
+.vk-brand-subcat.vk-active {
+	border-color: var(--wp--preset--color--dark);
+	background: var(--wp--preset--color--dark);
+	color: var(--wp--preset--color--white);
+}
+.vk-brand-subcat.vk-active small {
+	color: inherit;
+	opacity: .8;
+}
+@media (max-width: 575.8px) {
+	.vk-brand-subcats {
+		padding: .8rem;
+	}
+	.vk-brand-subcats ul {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+	.vk-brand-subcat {
+		font-size: .95rem;
+	}
 }
 
 /* Márkaoldal: kategória-csempék képpel (a régi webshop márkaoldalai szerint). */

@@ -131,7 +131,7 @@ class Catalog {
      * A csempe képe a márka egy terméke a csoportból (kiemelt, készleten lévő előnyben).
      */
     static function brand_categories($brand){
-        $key = 'vk_brand_tiles_'.$brand->term_id.'_'.md5(wp_cache_get_last_changed('posts').wp_cache_get_last_changed('terms'));
+        $key = 'vk_brand_tiles2_'.$brand->term_id.'_'.md5(wp_cache_get_last_changed('posts').wp_cache_get_last_changed('terms'));
         $cached = get_transient($key);
         if (is_array($cached)) return $cached;
         $ids = get_posts([ 'post_type' => 'product', 'post_status' => 'publish', 'numberposts' => -1, 'fields' => 'ids',
@@ -156,9 +156,16 @@ class Catalog {
                 elseif (isset($chain[2]) && !in_array($name($chain[2]), self::BRAND_TILE_GROUPS, true)) $group = $chain[3] ?? $chain[2];
                 else $group = $chain[2] ?? end($chain);
                 $product = (int)$t->object_id;
+                // Alkategória (a csempe kategóriájának közvetlen gyereke): a márkaoldali típusválasztóhoz.
+                $position = array_search($group, $chain, true);
+                $child = $position !== false && isset($chain[$position + 1]) ? $chain[$position + 1] : 0;
+                if (!isset($groups[$group])) $groups[$group] = [ 'count' => 0, 'image' => 0, 'score' => -1, 'kind' => $root === 'Tartozékok' ? 2 : ($root === 'Alkatrészek és karbantartás' ? 1 : 0), 'children' => [] ];
+                if ($child && !isset($seen[$product]['c'.$child])){
+                    $seen[$product]['c'.$child] = true;
+                    $groups[$group]['children'][$child] = ($groups[$group]['children'][$child] ?? 0) + 1;
+                }
                 if (isset($seen[$product][$group])) continue;
                 $seen[$product][$group] = true;
-                if (!isset($groups[$group])) $groups[$group] = [ 'count' => 0, 'image' => 0, 'score' => -1, 'kind' => $root === 'Tartozékok' ? 2 : ($root === 'Alkatrészek és karbantartás' ? 1 : 0) ];
                 $groups[$group]['count']++;
                 $image = (int)get_post_meta($product, '_thumbnail_id', true);
                 if (!$image) continue;
@@ -166,7 +173,10 @@ class Catalog {
                 if ($score > $groups[$group]['score']){ $groups[$group]['image'] = $image; $groups[$group]['score'] = $score; }
             }
             uasort($groups, function($a, $b){ return [ $a['kind'], -$a['count'] ] <=> [ $b['kind'], -$b['count'] ]; });
-            foreach($groups as &$g) $g = [ 'count' => $g['count'], 'image' => $g['image'] ];
+            foreach($groups as &$g){
+                arsort($g['children']);
+                $g = [ 'count' => $g['count'], 'image' => $g['image'], 'children' => $g['children'] ];
+            }
             unset($g);
         }
         set_transient($key, $groups, DAY_IN_SECONDS);
@@ -178,6 +188,15 @@ class Catalog {
         if (count($groups) < 2) return '';
         $base = get_term_link($brand);
         $active = isset($_GET['product-categories']) ? sanitize_text_field(wp_unslash($_GET['product-categories'])) : '';
+        $active_term = $active !== '' ? get_term_by('slug', $active, 'product_cat') : null;
+        $active_id = $active_term ? (int)$active_term->term_id : 0;
+        // A kiválasztott csempe: maga a kategória, vagy az, amelyiknek az alkategóriája ki van választva.
+        $active_group = 0;
+        foreach($groups as $term_id => $group){
+            if ($term_id === $active_id || isset($group['children'][$active_id])){ $active_group = $term_id; break; }
+        }
+        $url = function($term, $anchor) use ($base){ return add_query_arg('product-categories', $term->slug, $base).'#'.$anchor; };
+
         $html = '<nav class="vk-brand-cats" aria-label="'.esc_attr($brand->name.' kategóriák').'"><div class="vk-brand-cats-head"><span class="vk-brand-cats-label">Kategóriák</span>';
         if ($active !== '') $html .= '<a class="vk-brand-cats-all" href="'.esc_url($base.'#termekek').'">Összes '.esc_html($brand->name).' termék <small>'.(int)$brand->count.'</small></a>';
         $html .= '</div><ul class="vk-brand-tiles">';
@@ -186,13 +205,29 @@ class Catalog {
             if (!$term || is_wp_error($term)) continue;
             $image = $group['image'] ? wp_get_attachment_image($group['image'], 'medium', false, [ 'alt' => '', 'loading' => 'lazy' ]) : '';
             if ($image === '') $image = wc_placeholder_img('medium', [ 'alt' => '' ]);
-            // A csempe a terméklistához visz (#termekek), nem kell görgetni.
-            $html .= '<li><a class="vk-brand-tile'.($active === $term->slug ? ' vk-active' : '').'" href="'.esc_url(add_query_arg('product-categories', $term->slug, $base).'#termekek').'">'
+            // A csempe a terméklistához visz (#termekek); ha vannak típusai (pl. akkus, benzines, elektromos), a típusválasztóhoz.
+            $anchor = count($group['children'] ?? []) > 1 ? 'tipusok' : 'termekek';
+            $html .= '<li><a class="vk-brand-tile'.($active_group === $term_id ? ' vk-active' : '').'" href="'.esc_url($url($term, $anchor)).'">'
                 .'<span class="vk-brand-tile-image">'.$image.'</span>'
                 .'<span class="vk-brand-tile-name">'.esc_html($term->name).'</span>'
                 .'<small>'.(int)$group['count'].' termék</small></a></li>';
         }
-        return $html.'</ul></nav>';
+        $html .= '</ul>';
+
+        // Típusválasztó (ügyfélkérés, 2026-10): a kiválasztott kategória alkategóriái ebben a márkában, mint a régi boltban.
+        $children = $active_group ? ($groups[$active_group]['children'] ?? []) : [];
+        if (count($children) > 1){
+            $group_term = get_term($active_group, 'product_cat');
+            $html .= '<div class="vk-brand-subcats" id="tipusok"><span class="vk-brand-cats-label">'.esc_html($group_term->name).' – válasszon típust</span><ul>';
+            $html .= '<li><a class="vk-brand-subcat'.($active_id === $active_group ? ' vk-active' : '').'" href="'.esc_url($url($group_term, 'tipusok')).'"><span>Összes</span><small>'.(int)$groups[$active_group]['count'].' termék</small></a></li>';
+            foreach($children as $child_id => $count){
+                $child = get_term($child_id, 'product_cat');
+                if (!$child || is_wp_error($child)) continue;
+                $html .= '<li><a class="vk-brand-subcat'.($active_id === (int)$child_id ? ' vk-active' : '').'" href="'.esc_url($url($child, 'tipusok')).'"><span>'.esc_html($child->name).'</span><small>'.(int)$count.' termék</small></a></li>';
+            }
+            $html .= '</ul></div>';
+        }
+        return $html.'</nav>';
     }
 
     /** Kategória útvonal (név szerint, „Szülő/Gyerek”) → kategória. */
