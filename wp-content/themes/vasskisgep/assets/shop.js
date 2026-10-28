@@ -261,7 +261,11 @@
 		miniCartTimers[key] = setTimeout(function(){
 			if (!settings.cart_qty_url) return;
 			$box.closest('.woocommerce-mini-cart-item').addClass('vk-mc-loading');
-			$.post(settings.cart_qty_url, { key: key, qty: qty }).done(function(response){
+			const data = { key: key, qty: qty };
+			// A tárhely tűzfala a POST-ot elutasíthatja (403): akkor ugyanez GET-tel.
+			$.post(settings.cart_qty_url, data).then(null, function(xhr){
+				return xhr.status === 403 ? $.get(settings.cart_qty_url, data) : $.Deferred().reject(xhr);
+			}).done(function(response){
 				if (!response || !response.fragments) return;
 				const $content = $(response.fragments['div.widget_shopping_cart_content']);
 				$('.iu-woocommerce-mini-cart__content .inner').html($content.html());

@@ -6,7 +6,8 @@ namespace VasskisgepTheme;
  * Kosár oldalpanel (iu_woocommerce mini-cart, „Kosár tartalma”) tételsora (ügyfélkérés, 2026-10): darabár,
  * mennyiség módosítása (−/+ és beírás) és a tétel végösszege. Az iu_woocommerce a nevet és a mennyiséget a
  * woocommerce_widget_cart_item_quantity szűrőben rakja össze (10); ez utána (20) a teljes sort adja.
- * A mennyiség a wc-ajax=vk_cart_qty végponton mentődik, a válasz a WooCommerce kosár-töredékei.
+ * A mennyiség a wc-ajax=vk_cart_qty végponton mentődik (POST; ha a tárhely tűzfala a POST-ot elutasítja – az ELIN
+ * a külföldi POST-okat 403-mal tiltja –, GET-tel, mint a WooCommerce tételtörlő linkje), a válasz a kosár-töredékek.
  */
 class MiniCart {
     private static $instance;
@@ -49,8 +50,8 @@ class MiniCart {
 
     /** Mennyiség módosítása (0: törlés), válaszul a frissített kosár-töredékek. */
     function set_quantity(){
-        $key = wc_clean(wp_unslash($_POST['key'] ?? ''));
-        $qty = max(0, (int)($_POST['qty'] ?? 0));
+        $key = wc_clean(wp_unslash($_REQUEST['key'] ?? ''));
+        $qty = max(0, (int)($_REQUEST['qty'] ?? 0));
         $cart = WC()->cart;
         if (!$cart || $key === '' || !$cart->get_cart_item($key)) wp_send_json_error([ 'message' => 'A tétel már nincs a kosárban.' ], 404);
         $item = $cart->get_cart_item($key);
