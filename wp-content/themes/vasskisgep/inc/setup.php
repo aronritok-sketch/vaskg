@@ -57,6 +57,7 @@ class Setup {
         38 => 'brands_page',
         39 => 'related_products',
         40 => 'arukereso_feed',
+        41 => 'size_variants',
     ];
 
     /**
@@ -1158,6 +1159,15 @@ class Setup {
         if (!$wpdb->get_var("SELECT 1 FROM {$wpdb->postmeta} WHERE meta_key = '_vk_old_url' LIMIT 1")) return;
         MigrationRelated::start();
         $this->log[] = 'Kapcsolódó termékek átvétele a régi webshopból elindítva a háttérben (Termékek → Régi webshop átköltöztetés).';
+    }
+
+    /** 41. Méretek a régi webshopból: a ruhák méretválasztósak lesznek (a háttérben, MigrationVariants). */
+    function size_variants(){
+        if (!class_exists(__NAMESPACE__.'\\MigrationVariants')) return;
+        global $wpdb;
+        if (!$wpdb->get_var("SELECT 1 FROM {$wpdb->postmeta} WHERE meta_key = '_vk_old_url' LIMIT 1")) return;
+        MigrationVariants::start();
+        $this->log[] = 'Méretek átvétele a régi webshopból elindítva a háttérben (Termékek → Régi webshop átköltöztetés).';
     }
 
     /** 40. Árukereső termékfeed: /arukereso.xml (Feed); a cím a permalinkek frissítése után él. */

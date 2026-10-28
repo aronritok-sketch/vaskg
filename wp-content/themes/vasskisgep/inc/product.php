@@ -35,6 +35,9 @@ class ProductPage {
         // A termékleírás (iu/content) lezárva és „vk-description” keretben: a régi webshopból jött leírások
         // egy része lezáratlan <div>-ekkel végződik, ami a füleket és az oldalsávot is a Részletek fülbe húzta.
         add_filter('render_block_iu/content', [$this, 'description'], 20, 2);
+        // Változatos termék (pl. ruha méretekkel): magyar felirat a választóban; a gombokat a shop.js teszi mellé.
+        add_filter('woocommerce_dropdown_variation_attribute_options_args', [$this, 'variation_select_args']);
+        add_filter('woocommerce_reset_variations_link', function(){ return '<a class="reset_variations" href="#">Választás törlése</a>'; });
         add_filter('woocommerce_single_product_carousel_options', [$this, 'gallery_options']);
 
         add_filter('iu_theme_settings', [$this, 'settings']);
@@ -44,6 +47,12 @@ class ProductPage {
 
         // Lebegő vásárlási sáv a képernyő alján, ha a termék neve, ára és a Kosárba gomb már kigördült.
         add_action('wp_footer', [$this, 'sticky_buy']);
+    }
+
+    function variation_select_args($args){
+        $label = wc_attribute_label($args['attribute'], $args['product']);
+        $args['show_option_none'] = mb_strtolower($label) === 'méret' ? 'Válasszon méretet' : 'Válasszon: '.mb_strtolower($label);
+        return $args;
     }
 
     /* ---------- Termékleírás ---------- */

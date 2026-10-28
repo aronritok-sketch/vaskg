@@ -6,7 +6,8 @@ namespace VasskisgepTheme;
  * Árukereső termékfeed (XML): /arukereso.xml (vagy /?vk_feed=arukereso). Ezt a címet kell az Árukereső
  * Partner Portálon megadni (a régi bolt feedje helyett, élesítéskor).
  *
- * Csak a látható, áras, rendelhető egyszerű termékek kerülnek bele. Készlet: Delivery_Time 1 = „Raktáron”,
+ * Csak a látható, áras, rendelhető termékek kerülnek bele; a változatos termék (pl. ruha méretekkel) változatonként
+ * egy sor, közös groupid-vel és a méret (size) mezővel. Készlet: Delivery_Time 1 = „Raktáron”,
  * a „visszaigazolástól 1-5 munkanap” (utánrendelhető) termék 5. Szállítási díj (Delivery_Cost): a súly
  * szerinti díjtábla alapján egy darabra, „ingyenes” a díjmentes határ felett; ismeretlen súlynál vagy a
  * táblán kívül (csak személyes átvétel) üresen marad, akkor a Partner Portál díjtáblája számít.
@@ -89,15 +90,18 @@ class Feed {
 
     /** Egy termék sora; null, ha nem kerül a feedbe. */
     static function item($product, $shipping = null){
-        if (!$product || !$product->is_type('simple') || $product->get_status() !== 'publish' || !$product->is_visible()) return null;
+        if (!$product || !$product->is_type([ 'simple', 'variation' ])) return null;
+        $parent = $product->is_type('variation') ? wc_get_product($product->get_parent_id()) : $product;
+        if (!$parent || $parent->get_status() !== 'publish' || !$parent->is_visible()) return null;
         if ($product->get_price() === '' || !$product->is_purchasable() || !$product->is_in_stock()) return null;
 
         $gross = (float)wc_get_price_including_tax($product);
         if ($gross <= 0) return null;
         $net = (float)wc_get_price_excluding_tax($product);
 
-        $brands = taxonomy_exists('product_brand') ? get_the_terms($product->get_id(), 'product_brand') : [];
-        $images = array_slice(array_filter(array_merge([ $product->get_image_id() ], $product->get_gallery_image_ids())), 0, self::IMAGES);
+        $brands = taxonomy_exists('product_brand') ? get_the_terms($parent->get_id(), 'product_brand') : [];
+        $images = array_slice(array_unique(array_filter(array_merge([ $product->get_image_id() ?: $parent->get_image_id() ], $parent->get_gallery_image_ids()))), 0, self::IMAGES);
+        $variant = $product->is_type('variation') ? implode(' ', array_filter(array_values($product->get_attributes()))) : '';
 
         $cost = '';
         if ($shipping){
@@ -110,8 +114,8 @@ class Feed {
         $out = '<product>'
             .self::tag('identifier', $product->get_sku() !== '' ? $product->get_sku() : 'vk-'.$product->get_id())
             .self::tag('manufacturer', !empty($brands) && !is_wp_error($brands) ? $brands[0]->name : '')
-            .self::tag('name', $product->get_name())
-            .self::tag('category', self::category($product))
+            .self::tag('name', trim($parent->get_name().' '.$variant))
+            .self::tag('category', self::category($parent))
             .self::tag('product_url', $product->get_permalink())
             .self::tag('price', round($gross))
             .self::tag('net_price', round($net))
@@ -119,11 +123,12 @@ class Feed {
         foreach(array_values($images) as $i => $image){
             $out .= self::tag($i ? 'image_url_'.($i + 1) : 'image_url', wp_get_attachment_image_url($image, 'full'));
         }
-        $out .= self::tag('description', self::text($product->get_short_description() ?: $product->get_description()), true)
+        $out .= self::tag('description', self::text($parent->get_short_description() ?: $parent->get_description()), true)
             .self::tag('Delivery_Time', $product->is_on_backorder() ? self::BACKORDER_DAYS : 1)
             .self::tag('Delivery_Cost', $cost)
             .self::tag('ProductNumber', $product->get_sku())
             .self::tag('EAN_code', $ean)
+            .($variant !== '' ? self::tag('size', $variant).self::tag('groupid', 'vk-'.$parent->get_id()) : '')
             .($product->get_weight() !== '' ? self::tag('ProductWeight', wc_format_decimal($product->get_weight()).' '.get_option('woocommerce_weight_unit', 'kg')) : '')
             .'</product>';
         return $out;
@@ -135,10 +140,13 @@ class Feed {
         $xml = '<?xml version="1.0" encoding="UTF-8"?>'."\n".'<products>'."\n";
         $page = 1;
         do {
-            $ids = wc_get_products([ 'status' => 'publish', 'type' => 'simple', 'limit' => 200, 'page' => $page, 'return' => 'ids', 'orderby' => 'ID', 'order' => 'ASC' ]);
+            $ids = wc_get_products([ 'status' => 'publish', 'type' => [ 'simple', 'variable' ], 'limit' => 200, 'page' => $page, 'return' => 'ids', 'orderby' => 'ID', 'order' => 'ASC' ]);
             foreach($ids as $id){
-                $item = self::item(wc_get_product($id), $shipping);
-                if ($item !== null) $xml .= $item."\n";
+                $product = wc_get_product($id);
+                foreach($product && $product->is_type('variable') ? $product->get_children() : [ $id ] as $child){
+                    $item = self::item($child === $id ? $product : wc_get_product($child), $shipping);
+                    if ($item !== null) $xml .= $item."\n";
+                }
             }
             $page++;
         } while (count($ids) === 200);

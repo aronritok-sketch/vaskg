@@ -385,7 +385,8 @@ class Catalog {
         $other = [];
 
         foreach($product->get_attributes() as $attribute){
-            if (!$attribute->get_visible()) continue;
+            // A választható tulajdonság (pl. méret) a kosárba sornál van, nem csempe.
+            if (!$attribute->get_visible() || $attribute->get_variation()) continue;
             if ($attribute->is_taxonomy()){
                 $slug = preg_replace('/^pa_/', '', $attribute->get_name());
                 $values = wc_get_product_terms($product->get_id(), $attribute->get_name(), [ 'fields' => 'names' ]);

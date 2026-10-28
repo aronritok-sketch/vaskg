@@ -7,6 +7,7 @@ require_once(__DIR__.'/migration-classifier.php');
 require_once(__DIR__.'/migration-importer.php');
 require_once(__DIR__.'/migration-stock.php');
 require_once(__DIR__.'/migration-related.php');
+require_once(__DIR__.'/migration-variants.php');
 
 /**
  * Ideiglenes átköltöztető a régi (Joomla + VirtueMart) webshopból: Termékek → Régi webshop átköltöztetés.
@@ -50,11 +51,12 @@ class Migration {
         add_action('init', [$this, 'register']);
         add_action('admin_menu', [$this, 'menu'], 60);
         add_action('admin_enqueue_scripts', [$this, 'assets']);
-        foreach([ 'crawl', 'map', 'ai', 'import', 'set', 'save', 'upload', 'stock', 'related', 'close' ] as $action){
+        foreach([ 'crawl', 'map', 'ai', 'import', 'set', 'save', 'upload', 'stock', 'related', 'variants', 'close' ] as $action){
             add_action('wp_ajax_vk_mig_'.$action, [$this, 'ajax_'.$action]);
         }
         add_action('admin_post_vk_mig_export', [$this, 'export']);
         MigrationRelated::init();
+        MigrationVariants::init();
         // A régi címek átirányítása (a lezárás után is).
         add_action('template_redirect', [$this, 'redirect'], 4);
 
@@ -257,6 +259,15 @@ class Migration {
         wp_send_json_success($result);
     }
 
+    /** Méretek (változatok) a régi boltból (MigrationVariants). */
+    function ajax_variants(){
+        $this->check();
+        if (!empty($_POST['reset'])) MigrationVariants::reset();
+        $result = MigrationVariants::step();
+        if (!empty($result['locked'])) sleep(5);
+        wp_send_json_success($result);
+    }
+
     /** Készlet CSV feltöltése (MigrationStock). */
     function ajax_stock(){
         $this->check();
@@ -419,6 +430,15 @@ class Migration {
         if (!empty($related['started']) && empty($related['finished'])) echo ' <button class="button vk-mig-run" data-action="related">Folytatás</button>';
         echo '</p><div class="vk-mig-progress"></div><div class="vk-mig-log" hidden></div></div>';
 
+        // Méretek
+        $variants = MigrationVariants::state();
+        echo '<div class="card"><h2>Méretek a régi boltból</h2>';
+        echo '<p>A régi boltban a ruhák minden mérete külön termék volt, a termékoldalon „Méret” választóval. Ez a lépés a régi oldalakról átveszi a méreteket (cikkszám, ár, készlet), és a terméket méretválasztóssá alakítja; a méretek régi címei a termékre irányítanak. A háttérben magától is lefut; a régi boltnak elérhetőnek kell lennie (a domain átállítása előtt).</p>';
+        if (!empty($variants['started'])) echo '<p>'.(!empty($variants['finished']) ? 'Kész ('.esc_html(wp_date('Y-m-d H:i', $variants['finished'])).'): ' : 'Folyamatban: ').esc_html(MigrationVariants::message($variants)).'</p>';
+        echo '<p><button class="button button-primary vk-mig-run" data-action="variants" data-reset="1">Átvétel indítása</button>';
+        if (!empty($variants['started']) && empty($variants['finished'])) echo ' <button class="button vk-mig-run" data-action="variants">Folytatás</button>';
+        echo '</p><div class="vk-mig-progress"></div><div class="vk-mig-log" hidden></div></div>';
+
         // 5. Lezárás
         echo '<div class="card"><h2>5. Lezárás</h2><p>Ha minden termék átkerült: az átmeneti adatok és az API-kulcs törlése. Az átirányítások megmaradnak.</p>';
         echo '<p><button class="button vk-mig-run" data-action="close" data-confirm="Biztosan lezárod? Az átmeneti adatok törlődnek.">Átköltöztetés lezárása</button></p><div class="vk-mig-progress"></div></div>';
@@ -470,13 +490,14 @@ class Migration {
         }
     }
 
-    /* ---------- WP-CLI: wp vasskisgep migrate <crawl [--reset]|map|ai|import [--refresh]|stock <fájl.csv>|related [--reset]|status> ---------- */
+    /* ---------- WP-CLI: wp vasskisgep migrate <crawl [--reset]|map|ai|import [--refresh]|stock <fájl.csv>|related [--reset]|variants [--reset]|status> ---------- */
 
     function cli($args, $assoc = []){
         $what = $args[0] ?? 'status';
-        $loops = [ 'related' => function(){ return MigrationRelated::step(); }, 'crawl' => function(){ return MigrationSource::step(); }, 'map' => function(){ return MigrationClassifier::apply_map(400); }, 'ai' => function(){ return MigrationClassifier::ai_step(); }, 'import' => function(){ return MigrationImporter::step(); } ];
+        $loops = [ 'variants' => function(){ return MigrationVariants::step(); }, 'related' => function(){ return MigrationRelated::step(); }, 'crawl' => function(){ return MigrationSource::step(); }, 'map' => function(){ return MigrationClassifier::apply_map(400); }, 'ai' => function(){ return MigrationClassifier::ai_step(); }, 'import' => function(){ return MigrationImporter::step(); } ];
         if ($what === 'crawl' && !empty($assoc['reset'])) MigrationSource::reset();
         if ($what === 'related' && !empty($assoc['reset'])) MigrationRelated::reset();
+        if ($what === 'variants' && !empty($assoc['reset'])) MigrationVariants::reset();
         // Újraimport a friss beolvasásból (a WooCommerce-ben azóta kézzel módosított adatokat felülírja).
         if ($what === 'import' && !empty($assoc['refresh'])){
             foreach(self::ids('imported') as $id) update_post_meta($id, '_vk_mig_status', 'ready');

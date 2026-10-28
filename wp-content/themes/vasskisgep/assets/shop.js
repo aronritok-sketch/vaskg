@@ -215,8 +215,43 @@
 		cofidis($(this).closest('.vk-cofidis'));
 	});
 
+	/*
+	 * Változatos termék (pl. ruha méretekkel): a WooCommerce legördülője mellé méretgombok (XS, S, M …); a
+	 * legördülő rejtve marad, a gomb azt állítja, így a WooCommerce ár- és készletfrissítése változatlanul fut.
+	 */
+	const sizePicker = function($form){
+		$form.find('.variations select').each(function(){
+			const $select = $(this);
+			if ($select.data('vkPicker')) return;
+			const $wrap = $('<div class="vk-size-picker" role="group"></div>').attr('aria-label', $select.closest('tr').find('label').text() || 'Méret');
+			$select.find('option').each(function(){
+				if (!this.value) return;
+				$('<button type="button" class="vk-size"></button>').text(this.text).attr('data-value', this.value).attr('aria-pressed', 'false').appendTo($wrap);
+			});
+			$select.after($wrap).addClass('vk-visually-hidden').data('vkPicker', $wrap);
+			const syncSizes = function(){
+				const value = $select.val() || '';
+				$wrap.children().each(function(){
+					const available = $select.find('option').filter((i, o) => o.value === this.dataset.value && !o.disabled).length > 0;
+					this.disabled = !available;
+					this.classList.toggle('vk-active', this.dataset.value === value);
+					this.setAttribute('aria-pressed', this.dataset.value === value ? 'true' : 'false');
+				});
+			};
+			$wrap.on('click', '.vk-size', function(){
+				if (this.disabled) return;
+				const value = String($(this).data('value'));
+				$select.val($select.val() === value ? '' : value).trigger('change');
+			});
+			$select.on('change', syncSizes);
+			$form.on('woocommerce_update_variation_values reset_data', function(){ setTimeout(syncSizes, 0); });
+			syncSizes();
+		});
+	};
+
 	$(function(){
 		$('.vk-buy').each(function(){ syncQty($(this)); });
+		$('.vk-buy-native form.variations_form').each(function(){ sizePicker($(this)); });
 		$('.vk-cross-sells').each(function(){ xsUpdate($(this)); });
 		$('.vk-cofidis').each(function(){ cofidis($(this)); });
 		if (window.location.hash === '#vk-reviews' || window.location.hash.indexOf('#comment') === 0 || window.location.hash === '#reviews') openTab('Vélemények');

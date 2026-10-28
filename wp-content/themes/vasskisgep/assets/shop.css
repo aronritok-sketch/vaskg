@@ -646,6 +646,120 @@ ul.products:not(.columns-1) li.product .iu-group.brand:has(.vk-cofidis-badge) .i
 .vk-buy-native form.cart {
 	margin: 0;
 }
+/* Változatos termék (méretek): méretgombok, mennyiség és Kosárba gomb a többi termék kosárba sorához igazítva. */
+.vk-buy-native {
+	flex-direction: column;
+	align-items: stretch;
+}
+.vk-buy-native form.variations_form {
+	display: flex;
+	flex-direction: column;
+	gap: .8rem;
+}
+.vk-buy-native table.variations {
+	width: 100%;
+	margin: 0;
+	border: 0;
+	border-collapse: collapse;
+}
+.vk-buy-native table.variations tr,
+.vk-buy-native table.variations th,
+.vk-buy-native table.variations td {
+	display: block;
+	padding: 0;
+	border: 0;
+	background: none;
+	text-align: left;
+}
+.vk-buy-native table.variations th.label {
+	margin-bottom: .45rem;
+	font-size: .78rem;
+	font-weight: 600;
+	letter-spacing: .1em;
+	text-transform: uppercase;
+	color: var(--vk-muted);
+}
+.vk-visually-hidden {
+	position: absolute !important;
+	width: 1px !important;
+	height: 1px !important;
+	overflow: hidden !important;
+	clip: rect(0 0 0 0) !important;
+	white-space: nowrap !important;
+}
+.vk-size-picker {
+	display: flex;
+	flex-wrap: wrap;
+	gap: .45rem;
+}
+.vk-size {
+	min-width: 3rem;
+	height: 2.7rem;
+	padding: 0 .9rem;
+	border: 1px solid var(--vk-border);
+	border-radius: .3rem;
+	background: var(--wp--preset--color--white, #fff);
+	color: var(--iu-text-color);
+	font: inherit;
+	font-weight: 600;
+	cursor: pointer;
+}
+.vk-size:hover {
+	border-color: var(--iu-text-color);
+}
+.vk-size.vk-active {
+	border-color: var(--wp--preset--color--dark);
+	background: var(--wp--preset--color--dark);
+	color: var(--wp--preset--color--white, #fff);
+}
+.vk-size:disabled {
+	opacity: .4;
+	text-decoration: line-through;
+	cursor: not-allowed;
+}
+.vk-buy-native .reset_variations {
+	display: inline-block;
+	margin-top: .45rem;
+	font-size: .82rem;
+	color: var(--vk-muted);
+}
+.vk-buy-native .woocommerce-variation-price .price {
+	font-size: 1.3rem;
+	font-weight: 600;
+}
+.vk-buy-native .woocommerce-variation-availability p {
+	margin: .2rem 0 0;
+}
+.vk-buy-native .woocommerce-variation-add-to-cart {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: .9rem;
+}
+.vk-buy-native .quantity input.qty {
+	width: 4.2rem;
+	height: 2.9rem;
+	border: 1px solid var(--vk-border);
+	border-radius: .3rem;
+	background: var(--wp--preset--color--white, #fff);
+	text-align: center;
+	font: inherit;
+}
+.vk-buy-native .single_add_to_cart_button {
+	min-height: 2.9rem;
+	padding: 0 1.4rem;
+	border: 0;
+	border-radius: .3rem;
+	background: var(--wp--preset--color--dark);
+	color: var(--wp--preset--color--white, #fff);
+	font: inherit;
+	font-weight: 600;
+	text-transform: uppercase;
+	cursor: pointer;
+}
+.vk-buy-native .single_add_to_cart_button.disabled {
+	opacity: .55;
+}
 
 .vk-cross-sells {
 	position: relative;
