@@ -111,6 +111,7 @@ class Shop {
             'compare_limit' => Lists::COMPARE_LIMIT,
             'cookie_path' => COOKIEPATH ?: '/',
             'lists_nonce' => is_user_logged_in() ? wp_create_nonce('vasskisgep-lists') : '',
+            'cart_qty_url' => class_exists('\\WC_AJAX') ? \WC_AJAX::get_endpoint('vk_cart_qty') : '',
         ]);
 
         // A termékgaléria (zoom, lightbox, slider) szkriptjei csak a termékoldalon kellenek.

@@ -249,6 +249,43 @@
 		});
 	};
 
+	/*
+	 * Kosár oldalpanel: mennyiség módosítása tételenként (inc/minicart.php). A −/+ és a beírt érték kis
+	 * késleltetéssel mentődik; a válasz a WooCommerce kosár-töredékei, ezekkel frissül a panel és a számláló.
+	 */
+	const miniCartTimers = {};
+	const miniCartSave = function($box){
+		const key = $box.data('key');
+		const qty = Math.max(0, parseInt($box.find('.vk-mc-input').val(), 10) || 0);
+		clearTimeout(miniCartTimers[key]);
+		miniCartTimers[key] = setTimeout(function(){
+			if (!settings.cart_qty_url) return;
+			$box.closest('.woocommerce-mini-cart-item').addClass('vk-mc-loading');
+			$.post(settings.cart_qty_url, { key: key, qty: qty }).done(function(response){
+				if (!response || !response.fragments) return;
+				const $content = $(response.fragments['div.widget_shopping_cart_content']);
+				$('.iu-woocommerce-mini-cart__content .inner').html($content.html());
+				$.each(response.fragments, function(selector, html){ if (selector !== 'div.widget_shopping_cart_content') $(selector).replaceWith(html); });
+				let count = 0;
+				$content.find('.quantity').each(function(){ count += parseInt($(this).text(), 10) || 0; });
+				$('.iu-woocommerce-mini-cart__badge').text(count > 0 ? count : '');
+				$(document.body).trigger('wc_fragments_refreshed');
+			}).fail(function(){
+				$box.closest('.woocommerce-mini-cart-item').removeClass('vk-mc-loading');
+				notify('A mennyiség nem módosult, kérjük, próbálja újra.');
+			});
+		}, 450);
+	};
+	$(document).on('click', '.vk-mc-step', function(e){
+		e.preventDefault();
+		const $box = $(this).closest('.vk-mc-qty');
+		const $input = $box.find('.vk-mc-input');
+		const max = parseInt($input.attr('max'), 10) || Infinity;
+		$input.val(Math.min(max, Math.max(0, (parseInt($input.val(), 10) || 0) + parseInt(this.dataset.step, 10))));
+		miniCartSave($box);
+	});
+	$(document).on('change', '.vk-mc-input', function(){ miniCartSave($(this).closest('.vk-mc-qty')); });
+
 	// A kiválasztott változat (méret) cikkszáma a termék neve fölött; választás törlésekor az eredeti.
 	$(document).on('found_variation', '.vk-buy-native form.variations_form', function(e, variation){
 		const $sku = $('.vk-sku[data-sku]');
