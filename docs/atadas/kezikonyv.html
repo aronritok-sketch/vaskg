@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vass Kisgép webshop – kézikönyv</title>
+<link rel="stylesheet" href="hpv.css">
+<style>
+	.shot img { max-height: 92mm; object-fit: contain; object-position: top center; background: #fff; }
+	.shot.tall img { max-height: 120mm; }
+	.grid2 figure img { max-height: 70mm; object-fit: contain; background: #fff; }
+	.status td:first-child { white-space: nowrap; }
+</style>
+</head>
+<body>
+
+<!-- ============ Borító ============ -->
+<section class="page cover">
+	<div class="brand"><img src="assets/mark.svg" alt=""><span>HelloProVision</span></div>
+	<h1>A Vass Kisgép<br>webshop <em>kézikönyve</em></h1>
+	<p class="lead">Ez a füzet végigvezet az új webshop mindennapi használatán: hol látod és hogyan kezeled a rendeléseket, hogyan veszel fel és módosítasz termékeket, árakat, készletet és akciókat, hol állítod a szállítást és a fizetést, és mire figyelj havonta. Technikai tudás nem kell hozzá.</p>
+	<div class="tag"><span>Design</span><span>Build</span><span>Grow</span></div>
+	<div class="meta">
+		<div>Webshop<b>vasskisgep.hu</b></div>
+		<div>Készült<b>a Vass Kisgép 2011 Kft. részére</b></div>
+		<div>Átadás<b>2026. október</b></div>
+	</div>
+</section>
+
+<!-- ============ Tartalom ============ -->
+<section class="page">
+	<span class="eyebrow">Tartalom</span>
+	<h2>Minden egy helyen</h2>
+	<ol class="toc">
+		<li><span>01</span>Belépés és az admin felület</li>
+		<li><span>02</span>A webshop a vásárló szemével</li>
+		<li><span>03</span>Rendelések kezelése</li>
+		<li><span>04</span>Új termék felvitele</li>
+		<li><span>05</span>Termékadatok: ár, készlet, súly, csempék</li>
+		<li><span>06</span>Kapcsolódó termékek, dokumentumok, szezon</li>
+		<li><span>07</span>Kategóriák, márkák, Gyártók oldal</li>
+		<li><span>08</span>Szállítás és fizetés</li>
+		<li><span>09</span>Akciók és kiemelt termékek</li>
+		<li><span>10</span>Oldalak, Tudástár, űrlapok, értékelések</li>
+		<li><span>11</span>Árukereső</li>
+		<li><span>12</span>Havi ötperces ellenőrzés és segítség</li>
+	</ol>
+
+	<h3>Egy pillantásra: mit hol találsz</h3>
+	<table>
+		<tr><th>Ezt szeretném</th><th>Itt találom</th></tr>
+		<tr><td>Megnézni az új rendeléseket</td><td><span class="path">WooCommerce → Rendelések</span></td></tr>
+		<tr><td>Rendelést lezárni (kiszállítva, átvéve)</td><td>a rendelés megnyitása → állapot: <b>Teljesítve</b> → Frissítés</td></tr>
+		<tr><td>Új terméket felvenni</td><td><span class="path">Termékek → Új hozzáadása</span></td></tr>
+		<tr><td>Árat, akciós árat, készletet módosítani</td><td><span class="path">Termékek</span> → a termék → <b>Termékadatok</b> doboz</td></tr>
+		<tr><td>Sok termék szezonját egyszerre beállítani</td><td><span class="path">Termékek</span> → kijelölés → <b>Tömeges műveletek: Szerkesztés</b></td></tr>
+		<tr><td>Márka logóját cserélni</td><td><span class="path">Termékek → Márkák</span></td></tr>
+		<tr><td>Kategóriát átnevezni, sorba rakni</td><td><span class="path">Termékek → Kategóriák</span></td></tr>
+		<tr><td>Szállítási díjat módosítani</td><td><span class="path">WooCommerce → Beállítások → Szállítás</span></td></tr>
+		<tr><td>Fizetési módot be- vagy kikapcsolni</td><td><span class="path">WooCommerce → Beállítások → Fizetés</span></td></tr>
+		<tr><td>Értékelést jóváhagyni</td><td><span class="path">Termékek → Értékelések</span></td></tr>
+		<tr><td>Tudástár cikket írni</td><td><span class="path">Bejegyzések → Új bejegyzés</span></td></tr>
+		<tr><td>Egy oldal szövegét átírni</td><td><span class="path">Oldalak</span> → az oldal → Szerkesztés</td></tr>
+	</table>
+	<div class="foot"><span><b>Vass Kisgép</b> · webshop kézikönyv</span><span>HelloProVision</span></div>
+</section>
+
+<!-- ============ 01 ============ -->
+<section class="page flow">
+	<span class="num flow-keep">01</span>
+	<h2 class="flow-keep">Belépés és az admin felület</h2>
+	<p class="lead">A webshopot a WordPress admin felületén kezeled. Ezt csak ti látjátok, a vásárlók nem férnek hozzá.</p>
+
+	<ol class="steps">
+		<li>Nyisd meg a böngészőben: <span class="path">vasskisgep.hu/wp-admin</span> (az élesítésig a tesztoldalon: <span class="path">dev.otletoldal.hu/vasskisgep-ai/wp-admin</span>).</li>
+		<li>Írd be a felhasználóneved (vagy e-mail címed) és a jelszavad, majd <b>Belépés</b>. A belépési adatokat Istvántól kapod meg.</li>
+		<li>Bal oldalon látod a menüt. A legfontosabbak: <b>WooCommerce</b> (rendelések, beállítások), <b>Termékek</b> (termékek, kategóriák, márkák, értékelések), <b>Oldalak</b>, <b>Bejegyzések</b> (Tudástár), <b>Média</b> (képek, PDF-ek).</li>
+	</ol>
+
+	<div class="box">
+		<span class="eyebrow">Elfelejtett jelszó</span>
+		<p>A belépő oldalon kattints az <b>Elfelejtetted a jelszavad?</b> linkre, add meg az e-mail címed, és a levélben kapott linkkel új jelszót állíthatsz be.</p>
+	</div>
+
+	<h3>Több munkatárs</h3>
+	<ul class="clean">
+		<li>Mindenki saját felhasználóval lépjen be, ne használjatok közös jelszót. Új munkatársat Istvánnál kérj, vagy a <span class="path">Felhasználók → Új hozzáadása</span> menüben vehetsz fel. A <b>Boltkezelő</b> szerepkör a rendelésekhez és termékekhez elég.</li>
+		<li>Használj hosszú, egyedi jelszót, amit máshol nem használsz. A böngésző jelszókezelője segít megjegyezni.</li>
+		<li>Jelszót, kulcsot ne küldj e-mailben vagy chatben. Ha nekünk kell hozzáférés, saját felhasználót kérünk.</li>
+	</ul>
+
+	<div class="box warn">
+		<span class="eyebrow">Óvatosan</span>
+		<p>A <b>Bővítmények</b>, <b>Megjelenés</b>, <b>Sablonok</b> és a <b>Beállítások</b> menük a webshop működését befolyásolják. Ezekhez csak akkor nyúlj, ha velünk egyeztettél. Kivétel: a Cofidis és a Google értékelések beállítása (08. és 10. fejezet).</p>
+	</div>
+	<div class="foot"><span><b>Vass Kisgép</b> · webshop kézikönyv</span><span></span></div>
+</section>
+
+<!-- ============ 02 ============ -->
+<section class="page flow">
+	<span class="num flow-keep">02</span>
+	<h2 class="flow-keep">A webshop a vásárló szemével</h2>
+	<p class="lead">Érdemes tudni, mit hol lát a vásárló, mert az admin mezői ezeket töltik ki.</p>
+
+	<figure class="shot"><img src="img/home.jpg" alt="Kezdőlap gépen"><figcaption><b>Kezdőlap gépen:</b> felül a márkák (egérrel rámutatva nyílnak), a menüben Termékek (kategóriák lenyitható menüvel), Akciók, Szolgáltatások, Ajánlatkérés, Szerviz, Gyártók, Kapcsolat.</figcaption></figure>
+
+	<figure class="shot"><img src="img/product.jpg" alt="Termékoldal"><figcaption><b>Termékoldal:</b> cikkszám, név, készlet, ár, alatta a <b>csempék</b> (a termék tulajdonságai ikonnal), jobb oldalt a <b>Kapcsolódó termékek</b> kosárba gombbal, lent a <b>Részletek / Dokumentumok / Vélemények</b> fül és a szállítási díj erre a termékre.</figcaption></figure>
+
+	<div class="grid2">
+		<figure class="phone"><img src="img/home-m.jpg" alt="Kezdőlap telefonon"><figcaption><b>Telefonon:</b> felül a telefonszám, a márkák között nyilakkal vagy ujjal húzva lehet lapozni.</figcaption></figure>
+		<figure class="phone"><img src="img/subcats-m.jpg" alt="Típusválasztó a márkaoldalon"><figcaption><b>Márkaoldal:</b> egy kategóriát választva (pl. STIHL → Fűnyírók) a vásárló típus szerint is szűkíthet. Ezek a gombok a kategóriafából jönnek maguktól.</figcaption></figure>
+	</div>
+	<div class="foot"><span><b>Vass Kisgép</b> · webshop kézikönyv</span><span></span></div>
+</section>
+
+<!-- ============ 03 ============ -->
+<section class="page flow">
+	<span class="num flow-keep">03</span>
+	<h2 class="flow-keep">Rendelések kezelése</h2>
+	<p class="lead">Minden rendelés a <span class="path">WooCommerce → Rendelések</span> listába érkezik, és az új rendelésről e-mail értesítést is kaptok.</p>
+
+	<h3 class="flow-keep">A rendelés állapotai</h3>
+	<table class="status">
+		<tr><th>Állapot</th><th>Mit jelent, mi a teendő</th></tr>
+		<tr><td>Függőben lévő fizetés</td><td>A vásárló online fizetést kezdett (Barion, Cofidis), de még nem fejezte be. Várj; ha pár nap után sem fizet, töröld vagy hívd fel.</td></tr>
+		<tr><td>Visszatartva</td><td>Előre utalásnál: a vásárló megkapta a számlaszámot, várjátok az utalást. Ha megjött, állítsd <b>Feldolgozás alatt</b>-ra.</td></tr>
+		<tr><td>Feldolgozás alatt</td><td>Fizetve (vagy utánvétes / személyes átvételes): csomagolni, szállítani kell. Ebben az állapotban a rendelés még szerkeszthető (tétel, mennyiség, cím).</td></tr>
+		<tr><td>Teljesítve</td><td>Kiszállítva vagy átvéve. A vásárló e-mailt kap róla.</td></tr>
+		<tr><td>Visszamondva / Visszatérítve</td><td>A rendelés elmaradt, illetve a pénzt visszautaltátok.</td></tr>
+	</table>
+
+	<h3 class="flow-keep">Egy rendelés lépései</h3>
+	<ol class="steps">
+		<li>Nyisd meg a rendelést. Látod a tételeket, a szállítási módot (futár vagy személyes átvétel Kisvárdán / Vásárosnaményban), a fizetési módot és a vásárló adatait. Céges vásárlónál ott a cégnév és az adószám is.</li>
+		<li>Ha kell, módosítsd (amíg <b>Feldolgozás alatt</b> van): tételt adhatsz hozzá vagy vehetsz el, utána <b>Újraszámolás</b>.</li>
+		<li>Ha átadtátok a futárnak vagy átvették: állapot <b>Teljesítve</b> → <b>Frissítés</b>.</li>
+		<li>Megjegyzést a jobb oldali <b>Rendelési jegyzetek</b> dobozba írhatsz: belső jegyzetet (csak ti látjátok), vagy a vásárlónak szólót (e-mailben megkapja).</li>
+	</ol>
+
+	<div class="box tip">
+		<span class="eyebrow">Számla</span>
+		<p>A Számlázz.hu beállítása után a számla a rendeléshez magától elkészül, és a NAV-nak is bejelentődik. A céges vásárló adószámát a pénztár a NAV-ból ellenőrzi, és kitölti a cégnevet és a címet.</p>
+	</div>
+	<div class="foot"><span><b>Vass Kisgép</b> · webshop kézikönyv</span><span></span></div>
+</section>
+
+<!-- ============ 04 ============ -->
+<section class="page flow">
+	<span class="num flow-keep">04</span>
+	<h2 class="flow-keep">Új termék felvitele</h2>
+	<p class="lead"><span class="path">Termékek → Új hozzáadása</span>. A legtöbb mező nem kötelező, de minél több van kitöltve, annál jobban talál meg a vásárló és a Google.</p>
+
+	<ol class="steps">
+		<li><b>Név</b> felül: ahogy a vásárló keresné (márka, típus, fajta), pl. „STIHL RMA 248 akkumulátoros fűnyíró”.</li>
+		<li><b>Leírás</b> (a nagy szövegmező): ez a Részletek fülön jelenik meg. Linket a lánc ikonnal szúrhatsz be; a link végére a webshop magától tesz egy kis „kattints” kéz ikont.</li>
+		<li><b>Termékadatok</b> doboz → <b>Általános</b>: normál ár, akciós ár (bruttó, áfával). → <b>Készlet</b>: cikkszám, készlet. → <b>Szállítás</b>: <b>súly kg-ban</b>. → <b>Tulajdonságok</b>: a csempék adatai (05. fejezet).</li>
+		<li><b>Rövid leírás</b> (a Termékadatok alatt): 1-2 mondat; a keresőben és a Google-ban ez jelenik meg.</li>
+		<li>Jobb oldalt: <b>Termékkategóriák</b> (a legpontosabbat jelöld, pl. Benzinmotoros fűnyírók), <b>Márkák</b>, <b>Szezon</b>, <b>Termékkép</b> (főkép) és <b>Termékgaléria</b> (további képek).</li>
+		<li><b>Közzététel</b>. Ha még nem kész, <b>Piszkozat mentése</b>: így a vásárlók nem látják.</li>
+	</ol>
+
+	<div class="box">
+		<span class="eyebrow">Képek</span>
+		<p>Fehér vagy világos hátterű, legalább 1000 px széles fotó a legjobb. A webshop a teljes gépet mutatja, nem vágja négyzetre.</p>
+	</div>
+	<div class="box tip">
+		<span class="eyebrow">Gyorsabban: másolás</span>
+		<p>Hasonló gépnél a terméklistában vidd az egeret a meglévő termék fölé → <b>Duplikálás</b>. Utána csak a nevet, árat, cikkszámot, képeket és az eltérő adatokat kell átírni, majd közzétenni.</p>
+	</div>
+	<div class="foot"><span><b>Vass Kisgép</b> · webshop kézikönyv</span><span></span></div>
+</section>
+
+<!-- ============ 05 ============ -->
+<section class="page flow">
+	<span class="num flow-keep">05</span>
+	<h2 class="flow-keep">Termékadatok: ár, készlet, súly, csempék</h2>
+
+	<h3 class="flow-keep">Ár és akció</h3>
+	<ul class="clean">
+		<li>Az árakat <b>bruttó</b> (áfás) összegben add meg, egész forintban.</li>
+		<li>Ha nincs ár, a termékoldalon „Ár egyeztetés alapján” jelenik meg, és nem tehető kosárba.</li>
+		<li>Akció: töltsd ki az <b>Akciós ár</b> mezőt. Az <b>Időzítés</b> linkkel kezdő- és záródátumot is adhatsz; a végén magától visszaáll a normál ár. Az akciós termékek maguktól bekerülnek a menü <b>Akciók</b> listájába.</li>
+	</ul>
+
+	<h3 class="flow-keep">Készlet</h3>
+	<table>
+		<tr><th>Beállítás</th><th>A vásárló ezt látja</th></tr>
+		<tr><td>Készleten (vagy darabszám &gt; 0)</td><td><b>Készleten</b>, zöld; az Árukeresőn „Raktáron”.</td></tr>
+		<tr><td>Rendelésre / 0 darab, utánrendelés engedélyezve</td><td><b>1-5 munkanap visszaigazolástól</b>; rendelhető marad, ahogy a régi webshopban.</td></tr>
+		<tr><td>Nincs készleten, utánrendelés nélkül</td><td>Nem rendelhető.</td></tr>
+	</table>
+
+	<h3 class="flow-keep">Súly – fontos!</h3>
+	<p>A <b>Szállítás → Súly (kg)</b> mezőből számolódik a házhozszállítás díja a termékoldalon, a pénztárban és az Árukeresőn is. Ha üres, a webshop a „Tömeg” tulajdonságot nézi. 500 kg felett csak személyes átvétel választható.</p>
+
+	<h3 class="flow-keep">Csempék és szűrők (Tulajdonságok)</h3>
+	<ul class="clean">
+		<li>A termékoldali csempék (Lökettérfogat, Teljesítmény, Tömeg, Vágásszélesség, Garancia …) a <b>Termékadatok → Tulajdonságok</b> fülről jönnek. A listák kártyáin ezekből legfeljebb 6 látszik.</li>
+		<li>A meglévő tulajdonságot a legördülőből válaszd (pl. <b>Teljesítmény</b>), és a meglévő értékek közül jelölj, vagy írj újat a mértékegységgel együtt (pl. „5,5 LE”). Így működik a szűrő is a kategóriaoldalon.</li>
+		<li>A régi webshopból jött termékeknél ezek az adatok már ki vannak töltve; újnál érdemes egy hasonló termékről másolni (Duplikálás).</li>
+	</ul>
+
+	<h3 class="flow-keep">További mezők az Általános fülön</h3>
+	<ul class="clean">
+		<li><b>Promóciós szöveg:</b> rövid kiemelés a termékkártyán és a képen (pl. „Ingyenes szállítás!”), soronként egy.</li>
+		<li><b>Cofidis áruhitel:</b> bejelölve a termékoldalon megjelenik a Cofidis jelvény és a törlesztőrészlet-kalkulátor.</li>
+		<li><b>Tájékoztató doboz:</b> kiemelt doboz a Részletek fül tetején (pl. „Személyes átvétel esetén az ár tartalmazza az összeszerelést és a beüzemelést.”).</li>
+	</ul>
+	<div class="foot"><span><b>Vass Kisgép</b> · webshop kézikönyv</span><span></span></div>
+</section>
+
+<!-- ============ 06 ============ -->
+<section class="page flow">
+	<span class="num flow-keep">06</span>
+	<h2 class="flow-keep">Kapcsolódó termékek, dokumentumok, szezon</h2>
+
+	<h3 class="flow-keep">Kapcsolódó termékek (jobb oldali lista)</h3>
+	<p><b>Termékadatok → Összekapcsolt termékek → Keresztértékesítés:</b> kezdd el beírni a termék nevét vagy cikkszámát, és válaszd ki (pl. a géphez való olajat, kereket, ekét). A termékoldalon jobb oldalt kosárba gombbal jelennek meg. A régi webshop kapcsolódó termékeit átvettük; ezeket itt bármikor módosíthatod.</p>
+
+	<h3 class="flow-keep">Dokumentumok (használati utasítás, robbantott ábra)</h3>
+	<ol class="steps">
+		<li><b>Termékadatok → Általános → Dokumentumok kiválasztása</b>.</li>
+		<li>Tölts fel PDF-et, vagy válassz a már feltöltöttek közül (több is kijelölhető), majd <b>Kiválasztás</b>.</li>
+		<li>A fájl címe lesz a dokumentum neve a termékoldalon: a Médiatárban átírhatod beszédesebbre (pl. „Használati utasítás”).</li>
+	</ol>
+	<figure class="shot"><img src="img/docs.jpg" alt="Dokumentumok fül"><figcaption>A Dokumentumok fül: a fájl új lapon, a böngészőben nyílik meg.</figcaption></figure>
+
+	<h3 class="flow-keep">Szezon</h3>
+	<p>A termékszerkesztő jobb oldalán a <b>Szezon</b> dobozban jelöld, melyik évszakban ajánlod (tavasz, nyár, ősz, tél; több is lehet). A kezdőlap „Szezonális termékek” sávja mindig az aktuális évszak termékeit mutatja. Sok termékhez egyszerre: a terméklistában jelöld ki őket → <b>Tömeges műveletek: Szerkesztés</b> → Szezon.</p>
+	<div class="foot"><span><b>Vass Kisgép</b> · webshop kézikönyv</span><span></span></div>
+</section>
+
+<!-- ============ 07 ============ -->
+<section class="page flow">
+	<span class="num flow-keep">07</span>
+	<h2 class="flow-keep">Kategóriák, márkák, Gyártók oldal</h2>
+
+	<h3 class="flow-keep">Kategóriák</h3>
+	<ul class="clean">
+		<li><span class="path">Termékek → Kategóriák</span>: a négy főág (Kerti és erdészeti gépek, Építőipari gépek, Alkatrészek és karbantartás, Tartozékok) és alattuk az alkategóriák. A menü és a fejléc lenyíló menüje ebből épül, magától frissül.</li>
+		<li>Egy terméket mindig a legpontosabb (legalsó) kategóriába tegyél: így jelenik meg a márkaoldali típusválasztóban és a szülő kategóriákban is.</li>
+		<li>Kategóriát ne törölj, ha van benne termék; átnevezni nyugodtan lehet.</li>
+	</ul>
+
+	<h3 class="flow-keep">Márkák és a Gyártók oldal</h3>
+	<ul class="clean">
+		<li><span class="path">Termékek → Márkák</span>: itt adhatsz meg új márkát, és itt cserélheted a logót (a márka szerkesztése → kép). A logó a termékoldalon, a fejléc Gyártók fülén és a <b>Gyártók</b> oldalon jelenik meg.</li>
+		<li>A Gyártók oldal (menü → Gyártók) minden márkát mutat, amelynek van terméke, a termékek számával; magától frissül.</li>
+		<li>Egy márka oldalán a kategóriák képes csempékben jelennek meg; egy csempét választva a vásárló típus szerint is szűkíthet (pl. akkumulátoros, benzinmotoros, elektromos).</li>
+	</ul>
+
+	<div class="box tip">
+		<span class="eyebrow">Kezdőlapi márkák</span>
+		<p>A kezdőlap felső részén hat fő márka van (STIHL, Stiga, Cedrus, Rato, Berrin, Bluebird) saját képpel és szöveggel. Ha képet vagy sorrendet cserélnétek, szólj nekünk, és megcsináljuk.</p>
+	</div>
+	<div class="foot"><span><b>Vass Kisgép</b> · webshop kézikönyv</span><span></span></div>
+</section>
+
+<!-- ============ 08 ============ -->
+<section class="page flow">
+	<span class="num flow-keep">08</span>
+	<h2 class="flow-keep">Szállítás és fizetés</h2>
+
+	<h3 class="flow-keep">Házhozszállítás súly szerint</h3>
+	<div class="grid2">
+		<figure style="margin:0"><img src="img/rates.jpg" alt="Szállítási díjtábla"><figcaption>A díjtábla a Szállítás és fizetés oldalon; mindig a beállított díjakat mutatja.</figcaption></figure>
+		<div>
+			<ul class="clean">
+				<li>A díj a kosár teljes súlya szerint jár, a régi webshop díjtáblája alapján.</li>
+				<li><b>30 000 Ft felett 10 kg-ig ingyenes.</b></li>
+				<li>500 kg felett nincs házhozszállítás: a pénztár csak a személyes átvételt kínálja, és ezt meg is írja a vásárlónak.</li>
+				<li>Személyes átvétel Kisvárdán és Vásárosnaményban: ingyenes.</li>
+			</ul>
+			<p><b>Módosítás:</b> <span class="path">WooCommerce → Beállítások → Szállítás → Magyarország</span> → a „Házhozszállítás futárszolgálattal” (Súly szerinti házhozszállítás) sor → <b>Szerkesztés</b>. A díjtáblában soronként: <code>kg-ig | bruttó Ft</code>. Itt állíthatod az ingyenes szállítás értékhatárát és súlyhatárát is (pl. kampányhoz).</p>
+		</div>
+	</div>
+
+	<h3 class="flow-keep">Fizetési módok</h3>
+	<table>
+		<tr><th>Fizetési mód</th><th>Tudnivaló</th></tr>
+		<tr><td>Bankkártya (Barion)</td><td>Online fizetés; sikeres fizetés után a rendelés <b>Feldolgozás alatt</b> lesz.</td></tr>
+		<tr><td>Előre utalás</td><td>A vásárló e-mailben megkapja a számlaszámot; a rendelés <b>Visszatartva</b>, amíg az utalás meg nem jön.</td></tr>
+		<tr><td>Fizetés átvételkor</td><td>Utánvét a futárnál, vagy fizetés személyes átvételkor.</td></tr>
+		<tr><td>Cofidis áruhitel</td><td>Csak a Cofidis-jelölt termékeknél. A kalkulátor adatai (THM, kamat, futamidők, min./max. összeg): <span class="path">Megjelenés → Beállítások → Cofidis áruhitel</span>, a Cofidistól kapott érvényes értékekkel.</td></tr>
+	</table>
+	<p>Fizetési módot a <span class="path">WooCommerce → Beállítások → Fizetés</span> oldalon kapcsolhatsz ki vagy be. A Barion és a Számlázz.hu kulcsait mi állítjuk be; ezekhez ne nyúlj.</p>
+	<div class="foot"><span><b>Vass Kisgép</b> · webshop kézikönyv</span><span></span></div>
+</section>
+
+<!-- ============ 09 ============ -->
+<section class="page flow">
+	<span class="num flow-keep">09</span>
+	<h2 class="flow-keep">Akciók és kiemelt termékek</h2>
+	<ul class="clean">
+		<li><b>Akció:</b> akciós ár a terméknél (05. fejezet), időzítéssel is. A termékoldalon áthúzva látszik a régi ár és a kedvezmény százaléka, a termék bekerül a menü <b>Akciók</b> listájába.</li>
+		<li><b>Kiemelt termék:</b> a terméklistában (<span class="path">Termékek</span>) a csillagra kattintva. A kiemeltek elöl jelennek meg a listákban és a kezdőlap Kiemelt termékek sávjában.</li>
+		<li><b>Szezonális ajánlat:</b> a Szezon jelölés (06. fejezet); a kezdőlap magától az aktuális évszakhoz váltja.</li>
+		<li><b>Sorrend a listákban:</b> kiemelt → gép (a tartozékok és alkatrészek hátrébb) → készleten → legújabb. Egy kategórián belül ár szerint növekvő az alapértelmezés, ezt a vásárló átállíthatja.</li>
+	</ul>
+
+	<h2 class="flow-keep" style="margin-top:9mm"><span class="num">10</span><br>Oldalak, Tudástár, űrlapok, értékelések</h2>
+	<ul class="clean">
+		<li><b>Oldalak</b> (Rólunk, Szolgáltatások, Szerviz, Kapcsolat, Szállítás és fizetés, ÁSZF, Adatkezelés): <span class="path">Oldalak</span> → az oldal → Szerkesztés. Szöveget, képet nyugodtan cserélj; a dobozok elrendezését inkább hagyd, vagy szólj nekünk.</li>
+		<li><b>Tudástár</b> (cikkek, tanácsok): <span class="path">Bejegyzések → Új bejegyzés</span>: cím, szöveg, kiemelt kép, közzététel. A webshop keresője a cikkeket is megtalálja.</li>
+		<li><b>Űrlapok</b> (visszahívás, ajánlatkérés, szervizbejelentés, kapcsolat, termékkérdés): a kitöltött űrlap e-mailben érkezik az info@vasskisgep.hu címre; válaszolni egyszerűen a levélre válaszolva tudsz.</li>
+		<li><b>Termékértékelések:</b> <span class="path">Termékek → Értékelések</span>: jóváhagyás, válasz, törlés.</li>
+		<li><b>Google értékelések</b> a kezdőlapon: <span class="path">Megjelenés → Beállítások → Google értékelések</span> (a beállítást mi végezzük).</li>
+	</ul>
+	<div class="foot"><span><b>Vass Kisgép</b> · webshop kézikönyv</span><span></span></div>
+</section>
+
+<!-- ============ 11 ============ -->
+<section class="page flow">
+	<span class="num flow-keep">11</span>
+	<h2 class="flow-keep">Árukereső</h2>
+	<p class="lead">Az új webshop magától készít terméklistát az Árukeresőnek: <span class="path">vasskisgep.hu/arukereso.xml</span>. Óránként és minden termékmentéskor frissül.</p>
+	<ul class="clean">
+		<li>Benne van minden látható, áras, rendelhető termék: név, márka, kategória, ár, képek, rövid leírás, cikkszám.</li>
+		<li><b>Készlet:</b> a készleten lévő termék az Árukeresőn „Raktáron”, a rendelésre kapható legfeljebb 5 munkanapos szállítással jelenik meg.</li>
+		<li><b>Szállítási díj:</b> a súly szerinti díjtáblából, egy darabra; 30 000 Ft felett 10 kg-ig „ingyenes”. Súly nélküli terméknél az Árukereső fiókban beállított díj számít, ezért érdemes a súlyt kitölteni.</li>
+		<li>Élesítéskor az Árukereső Partner Portálon a régi lista címét erre kell átírni; ebben segítünk.</li>
+	</ul>
+
+	<h2 class="flow-keep" style="margin-top:9mm"><span class="num">12</span><br>Havi ötperces ellenőrzés és segítség</h2>
+	<ul class="check">
+		<li>Teszt: tegyél kosárba egy terméket telefonon, és menj el a pénztárig.<span class="how">Megjelenik a szállítási díj és a fizetési módok? (Rendelést nem kell leadni.)</span></li>
+		<li>Nézd át a <b>Feldolgozás alatt</b> és <b>Visszatartva</b> rendeléseket.<span class="how">Nincs-e elfelejtett, régóta álló rendelés?</span></li>
+		<li>Jöttek-e űrlapok és értékelések, és mind kapott-e választ?</li>
+		<li>Akciók: lejárt-e valamelyik, és kell-e új (szezon)?</li>
+		<li>Új termékeknél: van ár, súly, kép, kategória, márka?</li>
+		<li>Ha a WordPress frissítést jelez: szólj nekünk, mi frissítjük (mentéssel együtt).</li>
+	</ul>
+
+	<h3 class="flow-keep">Ha valami nem úgy működik</h3>
+	<table>
+		<tr><th>Jelenség</th><th>Mit tegyél</th></tr>
+		<tr><td>Egy termék nem látszik a boltban</td><td>Közzétéve? Van ára? A <b>Katalógus láthatóság</b> (jobb oldalt, Közzététel doboz) „Bolt és keresési találatok”?</td></tr>
+		<tr><td>Nincs szállítási díj, csak átvétel</td><td>A kosár súlya 500 kg feletti, vagy a terméknél rossz a súly (pl. g-ban van kg helyett).</td></tr>
+		<tr><td>A módosítás nem látszik</td><td>Frissítsd az oldalt (Ctrl + F5), vagy nézd meg privát ablakban.</td></tr>
+		<tr><td>Bármi más</td><td>Írj nekünk a portálon, egy képernyőképpel; vagy hívd Áront.</td></tr>
+	</table>
+
+	<div class="box ok">
+		<span class="eyebrow">Segítség</span>
+		<p>HelloProVision ügyfélportál (üzenet a csapatnak) · Ritók-Filip Áron · aron.ritok@ideastyle.hu · +36 70 331 3268</p>
+	</div>
+	<div class="foot"><span><b>Vass Kisgép</b> · webshop kézikönyv</span><span></span></div>
+</section>
+
+</body>
+</html>
