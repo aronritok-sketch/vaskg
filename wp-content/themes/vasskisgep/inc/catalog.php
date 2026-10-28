@@ -131,7 +131,7 @@ class Catalog {
      * A csempe képe a márka egy terméke a csoportból (kiemelt, készleten lévő előnyben).
      */
     static function brand_categories($brand){
-        $key = 'vk_brand_tiles2_'.$brand->term_id.'_'.md5(wp_cache_get_last_changed('posts').wp_cache_get_last_changed('terms'));
+        $key = 'vk_brand_tiles3_'.$brand->term_id.'_'.md5(wp_cache_get_last_changed('posts').wp_cache_get_last_changed('terms'));
         $cached = get_transient($key);
         if (is_array($cached)) return $cached;
         $ids = get_posts([ 'post_type' => 'product', 'post_status' => 'publish', 'numberposts' => -1, 'fields' => 'ids',
@@ -159,23 +159,24 @@ class Catalog {
                 // Alkategória (a csempe kategóriájának közvetlen gyereke): a márkaoldali típusválasztóhoz.
                 $position = array_search($group, $chain, true);
                 $child = $position !== false && isset($chain[$position + 1]) ? $chain[$position + 1] : 0;
-                if (!isset($groups[$group])) $groups[$group] = [ 'count' => 0, 'image' => 0, 'score' => -1, 'kind' => $root === 'Tartozékok' ? 2 : ($root === 'Alkatrészek és karbantartás' ? 1 : 0), 'children' => [] ];
+                if (!isset($groups[$group])) $groups[$group] = [ 'count' => 0, 'image' => 0, 'score' => -1, 'kind' => $root === 'Tartozékok' ? 2 : ($root === 'Alkatrészek és karbantartás' ? 1 : 0), 'children' => [], 'child_images' => [] ];
+                $image = (int)get_post_meta($product, '_thumbnail_id', true);
+                $score = (isset($featured[$product]) ? 2 : 0) + (get_post_meta($product, '_stock_status', true) === 'instock' ? 1 : 0);
                 if ($child && !isset($seen[$product]['c'.$child])){
                     $seen[$product]['c'.$child] = true;
                     $groups[$group]['children'][$child] = ($groups[$group]['children'][$child] ?? 0) + 1;
+                    if ($image && $score > ($groups[$group]['child_images'][$child][1] ?? -1)) $groups[$group]['child_images'][$child] = [ $image, $score ];
                 }
                 if (isset($seen[$product][$group])) continue;
                 $seen[$product][$group] = true;
                 $groups[$group]['count']++;
-                $image = (int)get_post_meta($product, '_thumbnail_id', true);
                 if (!$image) continue;
-                $score = (isset($featured[$product]) ? 2 : 0) + (get_post_meta($product, '_stock_status', true) === 'instock' ? 1 : 0);
                 if ($score > $groups[$group]['score']){ $groups[$group]['image'] = $image; $groups[$group]['score'] = $score; }
             }
             uasort($groups, function($a, $b){ return [ $a['kind'], -$a['count'] ] <=> [ $b['kind'], -$b['count'] ]; });
             foreach($groups as &$g){
                 arsort($g['children']);
-                $g = [ 'count' => $g['count'], 'image' => $g['image'], 'children' => $g['children'] ];
+                $g = [ 'count' => $g['count'], 'image' => $g['image'], 'children' => $g['children'], 'child_images' => array_map(function($i){ return $i[0]; }, $g['child_images']) ];
             }
             unset($g);
         }
@@ -214,20 +215,66 @@ class Catalog {
         }
         $html .= '</ul>';
 
-        // Típusválasztó (ügyfélkérés, 2026-10): a kiválasztott kategória alkategóriái ebben a márkában, mint a régi boltban.
+        // Típusválasztó (ügyfélkérés, 2026-10): a kiválasztott kategória alkategóriái ebben a márkában, képes csempékben.
         $children = $active_group ? ($groups[$active_group]['children'] ?? []) : [];
         if (count($children) > 1){
             $group_term = get_term($active_group, 'product_cat');
-            $html .= '<div class="vk-brand-subcats" id="tipusok"><span class="vk-brand-cats-label">'.esc_html($group_term->name).' – válasszon típust</span><ul>';
-            $html .= '<li><a class="vk-brand-subcat'.($active_id === $active_group ? ' vk-active' : '').'" href="'.esc_url($url($group_term, 'tipusok')).'"><span>Összes</span><small>'.(int)$groups[$active_group]['count'].' termék</small></a></li>';
+            $tiles = [];
             foreach($children as $child_id => $count){
                 $child = get_term($child_id, 'product_cat');
                 if (!$child || is_wp_error($child)) continue;
-                $html .= '<li><a class="vk-brand-subcat'.($active_id === (int)$child_id ? ' vk-active' : '').'" href="'.esc_url($url($child, 'tipusok')).'"><span>'.esc_html($child->name).'</span><small>'.(int)$count.' termék</small></a></li>';
+                $tiles[] = [ 'url' => $url($child, 'tipusok'), 'image' => (int)($groups[$active_group]['child_images'][$child_id] ?? 0), 'name' => $child->name, 'count' => $count, 'active' => $active_id === (int)$child_id ];
             }
-            $html .= '</ul></div>';
+            $all = '<a class="vk-brand-cats-all'.($active_id === $active_group ? ' vk-active' : '').'" href="'.esc_url($url($group_term, 'tipusok')).'">Mind <small>'.(int)$groups[$active_group]['count'].'</small></a>';
+            $html .= '<div class="vk-brand-subcats" id="tipusok"><div class="vk-brand-cats-head"><span class="vk-brand-cats-label">'.esc_html($group_term->name).' – válasszon típust</span>'.$all.'</div>'.self::tiles_html($tiles).'</div>';
         }
         return $html.'</nav>';
+    }
+
+    /** Képes csempék (márkaoldal, típusválasztó, kategóriaoldal): [ url, image, name, count, active ] elemekből. */
+    static function tiles_html(array $tiles){
+        $html = '<ul class="vk-brand-tiles">';
+        foreach($tiles as $tile){
+            $image = !empty($tile['image']) ? wp_get_attachment_image($tile['image'], 'medium', false, [ 'alt' => '', 'loading' => 'lazy' ]) : '';
+            if ($image === '') $image = wc_placeholder_img('medium', [ 'alt' => '' ]);
+            $html .= '<li><a class="vk-brand-tile'.(!empty($tile['active']) ? ' vk-active' : '').'" href="'.esc_url($tile['url']).'">'
+                .'<span class="vk-brand-tile-image">'.$image.'</span>'
+                .'<span class="vk-brand-tile-name">'.esc_html($tile['name']).'</span>'
+                .'<small>'.(int)$tile['count'].' termék</small></a></li>';
+        }
+        return $html.'</ul>';
+    }
+
+    /**
+     * Kategóriaoldal: az alkategóriák képes csempékben a termékek fölött (ügyfélkérés, 2026-10), mint a márkaoldalon;
+     * mobilon két oszlopban. Kép: a kategória saját képe, különben egy kiemelt / készleten lévő termékéé.
+     */
+    static function category_children_html($term){
+        $children = get_terms([ 'taxonomy' => 'product_cat', 'parent' => $term->term_id, 'hide_empty' => true, 'orderby' => 'meta_value_num', 'meta_key' => 'order' ]);
+        if (is_wp_error($children) || count($children) < 2) return '';
+        $key = 'vk_cat_tiles_'.$term->term_id.'_'.md5(wp_cache_get_last_changed('posts').wp_cache_get_last_changed('terms'));
+        $tiles = get_transient($key);
+        if (!is_array($tiles)){
+            $tiles = [];
+            foreach($children as $child){
+                $count = (int)get_term_meta($child->term_id, 'product_count_product_cat', true) ?: (int)$child->count;
+                if (!$count) continue;
+                $image = (int)get_term_meta($child->term_id, 'thumbnail_id', true);
+                if (!$image){
+                    foreach([ [ 'featured' => true, 'stock_status' => 'instock' ], [ 'stock_status' => 'instock' ], [] ] as $extra){
+                        $ids = wc_get_products(array_merge([ 'status' => 'publish', 'limit' => 1, 'return' => 'ids', 'category' => [ $child->slug ], 'visibility' => 'catalog' ], $extra));
+                        $image = $ids ? (int)get_post_thumbnail_id($ids[0]) : 0;
+                        if ($image) break;
+                    }
+                }
+                $tiles[] = [ 'url' => get_term_link($child), 'image' => $image, 'name' => $child->name, 'count' => $count ];
+            }
+            set_transient($key, $tiles, DAY_IN_SECONDS);
+        }
+        if (count($tiles) < 2) return '';
+        return '<nav class="vk-brand-cats vk-cat-children" aria-label="'.esc_attr($term->name.' alkategóriák').'"><div class="vk-brand-cats-head"><span class="vk-brand-cats-label">Válasszon kategóriát</span>'
+            .'<a class="vk-brand-cats-all" href="#termekek">Összes termék <small>'.(int)(get_term_meta($term->term_id, 'product_count_product_cat', true) ?: $term->count).'</small></a></div>'
+            .self::tiles_html($tiles).'</nav>';
     }
 
     /** Kategória útvonal (név szerint, „Szülő/Gyerek”) → kategória. */

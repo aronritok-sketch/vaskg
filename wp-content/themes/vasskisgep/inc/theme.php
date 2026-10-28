@@ -51,12 +51,24 @@ class Theme {
         Migration::get_instance();
 
         add_action('after_setup_theme', [$this, 'editor_styles'], 999);
+
+        // A keretrendszer (iu_theme/inc/clean.php) minden CSS/JS címről leveszi a ?ver= részt, így a böngésző (főleg
+        // iPhone-on) frissítés után is a régi fájlt használhatta. A téma saját fájljai módosítási idővel kapnak verziót.
+        add_filter('script_loader_src', [$this, 'asset_version'], 20);
+        add_filter('style_loader_src', [$this, 'asset_version'], 20);
         add_action('wp_enqueue_scripts', [$this, 'enqueue'], 99);
 
         add_filter('pre_get_posts', [$this ,'limit_search_to_posts']);
         
         //add_action('woocommerce_before_shop_loop_item_title', 'woocommerce_template_loop_add_to_cart', 998);
         remove_action('woocommerce_after_shop_loop_item', 'woocommerce_template_loop_add_to_cart');
+    }
+
+    function asset_version($src){
+        $base = get_stylesheet_directory_uri().'/';
+        if (strpos($src, $base) !== 0 || strpos($src, '?') !== false) return $src;
+        $file = get_stylesheet_directory().'/'.substr($src, strlen($base));
+        return is_file($file) ? $src.'?v='.filemtime($file) : $src;
     }
 
     function editor_styles(){

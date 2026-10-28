@@ -3849,70 +3849,28 @@ body.vk-has-sticky-buy {
 }
 
 /* Márkaoldal: típusválasztó a kiválasztott kategória alatt (pl. Fűnyírók → akkumulátoros, benzinmotoros,
-   elektromos), nagy, egyértelmű gombokkal; mobilon két oszlopban. */
+   elektromos), ugyanolyan képes csempékkel, mint a kategóriák; mobilon két oszlopban (ügyfélkérés, 2026-10). */
 .vk-brand-subcats {
 	display: flex;
 	flex-direction: column;
-	gap: .6rem;
+	gap: .7rem;
 	margin-top: .8rem;
 	padding: 1rem;
 	border-radius: .5rem;
 	background: var(--wp--preset--color--light, #f3f4f6);
 	scroll-margin-top: 8.5rem;
 }
-.vk-brand-subcats ul {
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
-	gap: .6rem;
-	margin: 0;
-	padding: 0;
-	list-style: none;
-}
-.vk-brand-subcats li {
-	margin: 0;
-}
-.vk-brand-subcat {
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-	gap: .15rem;
-	height: 100%;
-	min-height: 3.6rem;
-	padding: .65rem .9rem;
-	border: 1px solid var(--vk-border);
-	border-radius: .45rem;
-	background: var(--wp--preset--color--white, #fff);
-	color: var(--iu-text-color);
-	font-weight: 600;
-	line-height: 1.25;
+.vk-brand-cats-all.vk-active {
 	text-decoration: none;
-}
-.vk-brand-subcat:hover {
-	border-color: var(--iu-text-color);
-}
-.vk-brand-subcat small {
 	color: var(--vk-muted);
-	font-size: .78rem;
-	font-weight: 400;
 }
-.vk-brand-subcat.vk-active {
-	border-color: var(--wp--preset--color--dark);
-	background: var(--wp--preset--color--dark);
-	color: var(--wp--preset--color--white);
-}
-.vk-brand-subcat.vk-active small {
-	color: inherit;
-	opacity: .8;
+/* Kategóriaoldal: alkategória-csempék a termékek fölött. */
+.vk-cat-children {
+	margin: .4rem 0 1.4rem;
 }
 @media (max-width: 575.8px) {
 	.vk-brand-subcats {
 		padding: .8rem;
-	}
-	.vk-brand-subcats ul {
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-	}
-	.vk-brand-subcat {
-		font-size: .95rem;
 	}
 }
 

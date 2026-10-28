@@ -23,6 +23,10 @@
 				if ($term->taxonomy === 'product_brand'){
 					$html .= \VasskisgepTheme\Catalog::brand_categories_html($term);
 				}
+				// Kategóriaoldal: az alkategóriák képes csempékben (ügyfélkérés, 2026-10).
+				if ($term->taxonomy === 'product_cat'){
+					$html .= \VasskisgepTheme\Catalog::category_children_html($term);
+				}
 			}
 
 			return $html === '' ? '' : '<div class="vk-term-header">'.$html.'</div>';
