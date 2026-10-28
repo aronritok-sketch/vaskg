@@ -254,17 +254,18 @@
 	 * késleltetéssel mentődik; a válasz a WooCommerce kosár-töredékei, ezekkel frissül a panel és a számláló.
 	 */
 	const miniCartTimers = {};
+	const cartQtyUrl = (window.vasskisgep || {}).cart_qty_url || '';
 	const miniCartSave = function($box){
 		const key = $box.data('key');
 		const qty = Math.max(0, parseInt($box.find('.vk-mc-input').val(), 10) || 0);
 		clearTimeout(miniCartTimers[key]);
 		miniCartTimers[key] = setTimeout(function(){
-			if (!settings.cart_qty_url) return;
+			if (!cartQtyUrl) return;
 			$box.closest('.woocommerce-mini-cart-item').addClass('vk-mc-loading');
 			const data = { key: key, qty: qty };
 			// A tárhely tűzfala a POST-ot elutasíthatja (403): akkor ugyanez GET-tel.
-			$.post(settings.cart_qty_url, data).then(null, function(xhr){
-				return xhr.status === 403 ? $.get(settings.cart_qty_url, data) : $.Deferred().reject(xhr);
+			$.post(cartQtyUrl, data).then(null, function(xhr){
+				return xhr.status === 403 ? $.get(cartQtyUrl, data) : $.Deferred().reject(xhr);
 			}).done(function(response){
 				if (!response || !response.fragments) return;
 				const $content = $(response.fragments['div.widget_shopping_cart_content']);
@@ -274,9 +275,11 @@
 				$content.find('.quantity').each(function(){ count += parseInt($(this).text(), 10) || 0; });
 				$('.iu-woocommerce-mini-cart__badge').text(count > 0 ? count : '');
 				$(document.body).trigger('wc_fragments_refreshed');
-			}).fail(function(){
+			}).fail(function(xhr){
 				$box.closest('.woocommerce-mini-cart-item').removeClass('vk-mc-loading');
-				notify('A mennyiség nem módosult, kérjük, próbálja újra.');
+				// 404: a tétel már nincs a kosárban (pl. közben törölték) – nincs teendő.
+				if (xhr && xhr.status === 404) return;
+				window.alert('A mennyiség nem módosult, kérjük, próbálja újra.');
 			});
 		}, 450);
 	};
