@@ -30,6 +30,47 @@ class Checkout {
         add_action('wp_ajax_nopriv_vasskisgep_taxpayer', [$this, 'ajax_taxpayer']);
         add_action('admin_menu', [$this, 'admin_menu'], 60);
         add_action('admin_post_vasskisgep_nav', [$this, 'save_settings']);
+
+        // Végösszeg három sorban (ügyfélkérés, 2026-10): nettó érték, ÁFA (27%), bruttó érték – a zárójeles
+        // „Adótartalom” helyett, a pénztárban és a kosár oldalon.
+        foreach([ 'woocommerce_review_order_before_order_total', 'woocommerce_cart_totals_before_order_total' ] as $hook){
+            add_action($hook, [$this, 'net_and_tax_rows']);
+        }
+        foreach([ 'woocommerce_review_order_after_order_total', 'woocommerce_cart_totals_after_order_total' ] as $hook){
+            add_action($hook, [$this, 'total_label_off']);
+        }
+        add_filter('woocommerce_cart_totals_order_total_html', [$this, 'order_total_html']);
+    }
+
+    /* ---------- Végösszeg: nettó, ÁFA, bruttó ---------- */
+
+    function net_and_tax_rows(){
+        $cart = WC()->cart;
+        if (!$cart || !wc_tax_enabled()) return;
+        $tax = (float)$cart->get_total_tax();
+        $gross = (float)$cart->get_total('edit');
+        echo '<tr class="vk-total-net"><th>Nettó érték (áfa nélkül)</th><td data-title="Nettó érték (áfa nélkül)">'.wc_price($gross - $tax).'</td></tr>';
+        foreach($cart->get_tax_totals() as $code => $row){
+            $percent = \WC_Tax::get_rate_percent((int)$row->tax_rate_id);
+            $label = 'ÁFA'.($percent !== '' ? ' ('.str_replace('.', ',', $percent).')' : '');
+            echo '<tr class="vk-total-tax tax-rate-'.esc_attr(sanitize_title($code)).'"><th>'.esc_html($label).'</th><td data-title="'.esc_attr($label).'">'.wp_kses_post($row->formatted_amount).'</td></tr>';
+        }
+        // A következő „Total” (Összeg) sor felirata: Bruttó érték.
+        add_filter('gettext_woocommerce', [$this, 'total_label'], 10, 2);
+    }
+
+    function total_label($translation, $text){
+        return $text === 'Total' ? 'Bruttó érték' : $translation;
+    }
+
+    function total_label_off(){
+        remove_filter('gettext_woocommerce', [$this, 'total_label'], 10);
+    }
+
+    /** A végösszeg mellől a zárójeles „(Adótartalom: … ÁFA)” ki: külön sorban van. */
+    function order_total_html($html){
+        if (!wc_tax_enabled() || !WC()->cart) return $html;
+        return '<strong>'.WC()->cart->get_total().'</strong>';
     }
 
     function enqueue(){
