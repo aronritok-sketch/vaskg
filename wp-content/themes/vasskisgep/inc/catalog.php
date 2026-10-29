@@ -223,7 +223,8 @@ class Catalog {
             foreach($children as $child_id => $count){
                 $child = get_term($child_id, 'product_cat');
                 if (!$child || is_wp_error($child)) continue;
-                $tiles[] = [ 'url' => $url($child, 'tipusok'), 'image' => (int)($groups[$active_group]['child_images'][$child_id] ?? 0), 'name' => $child->name, 'count' => $count, 'active' => $active_id === (int)$child_id ];
+                // Az alkategória csempéje egyből a termékeihez visz (ügyfélkérés, 2026-10).
+                $tiles[] = [ 'url' => $url($child, 'termekek'), 'image' => (int)($groups[$active_group]['child_images'][$child_id] ?? 0), 'name' => $child->name, 'count' => $count, 'active' => $active_id === (int)$child_id ];
             }
             $all = '<a class="vk-brand-cats-all'.($active_id === $active_group ? ' vk-active' : '').'" href="'.esc_url($url($group_term, 'tipusok')).'">Mind <small>'.(int)$groups[$active_group]['count'].'</small></a>';
             $html .= '<div class="vk-brand-subcats" id="tipusok"><div class="vk-brand-cats-head"><span class="vk-brand-cats-label">'.esc_html($group_term->name).' – válasszon típust</span>'.$all.'</div>'.self::tiles_html($tiles).'</div>';
@@ -252,7 +253,7 @@ class Catalog {
     static function category_children_html($term){
         $children = get_terms([ 'taxonomy' => 'product_cat', 'parent' => $term->term_id, 'hide_empty' => true, 'orderby' => 'meta_value_num', 'meta_key' => 'order' ]);
         if (is_wp_error($children) || count($children) < 2) return '';
-        $key = 'vk_cat_tiles_'.$term->term_id.'_'.md5(wp_cache_get_last_changed('posts').wp_cache_get_last_changed('terms'));
+        $key = 'vk_cat_tiles2_'.$term->term_id.'_'.md5(wp_cache_get_last_changed('posts').wp_cache_get_last_changed('terms'));
         $tiles = get_transient($key);
         if (!is_array($tiles)){
             $tiles = [];
@@ -267,7 +268,10 @@ class Catalog {
                         if ($image) break;
                     }
                 }
-                $tiles[] = [ 'url' => get_term_link($child), 'image' => $image, 'name' => $child->name, 'count' => $count ];
+                // A csempe a termékekhez visz; ha az alkategóriának is vannak alkategóriái, az oldal tetejére (ott a csempéi).
+                $grandchildren = get_terms([ 'taxonomy' => 'product_cat', 'parent' => $child->term_id, 'hide_empty' => true, 'fields' => 'ids', 'number' => 2 ]);
+                $link = get_term_link($child);
+                $tiles[] = [ 'url' => is_wp_error($link) ? '' : $link.(!is_wp_error($grandchildren) && count($grandchildren) > 1 ? '' : '#termekek'), 'image' => $image, 'name' => $child->name, 'count' => $count ];
             }
             set_transient($key, $tiles, DAY_IN_SECONDS);
         }

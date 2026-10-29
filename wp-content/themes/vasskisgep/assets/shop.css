@@ -366,6 +366,12 @@ ul.products:not(.columns-1) li.product .iu-group.brand:has(.vk-cofidis-badge) .i
 	opacity: .6;
 	cursor: pointer;
 }
+/* Az iu_woocommerce „.woocommerce-product-gallery .flex-control-nav li img { object-fit: cover }” szabálya erősebb volt:
+   a bélyegképek le voltak vágva. A teljes kép látszódjon (ügyfélkérés, 2026-10). */
+.vk-product-gallery .woocommerce-product-gallery .flex-control-nav li img {
+	object-fit: contain;
+	padding: .1rem;
+}
 .vk-product-gallery .flex-control-thumbs img.flex-active {
 	border-color: var(--iu-text-color);
 	opacity: 1;

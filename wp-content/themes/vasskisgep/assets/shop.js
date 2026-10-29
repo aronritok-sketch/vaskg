@@ -351,9 +351,16 @@
 				list.scrollLeft += ($(this).hasClass('vk-thumbs-prev') ? -1 : 1) * list.clientWidth * 0.8;
 			});
 			$(list).on('scroll', update);
-			// A kiválasztott kép bélyegképe látszódjon (a főkép lapozásakor is).
-			$(list).on('click', 'img', function(){ this.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' }); });
+			// A kiválasztott kép bélyegképe középre gördül: kattintásra és a nagy kép lapozásakor is (ügyfélkérés, 2026-10).
+			const follow = function(){
+				const active = list.querySelector('img.flex-active');
+				if (!active) return;
+				const li = active.parentNode;
+				list.scrollTo({ left: Math.max(0, li.offsetLeft - (list.clientWidth - li.offsetWidth) / 2), behavior: 'smooth' });
+			};
+			new MutationObserver(follow).observe(list, { subtree: true, attributes: true, attributeFilter: [ 'class' ] });
 			update();
+			follow();
 		});
 	};
 	$(window).on('load', function(){ setTimeout(thumbsNav, 300); });
