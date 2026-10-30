@@ -58,6 +58,7 @@ class Setup {
         39 => 'related_products',
         40 => 'arukereso_feed',
         41 => 'size_variants',
+        42 => 'berrin_logo',
     ];
 
     /**
@@ -1168,6 +1169,35 @@ class Setup {
         if (!$wpdb->get_var("SELECT 1 FROM {$wpdb->postmeta} WHERE meta_key = '_vk_old_url' LIMIT 1")) return;
         MigrationVariants::start();
         $this->log[] = 'Méretek átvétele a régi webshopból elindítva a háttérben (Termékek → Régi webshop átköltöztetés).';
+    }
+
+    /**
+     * 42. Új Berrin logó (ügyfélkérés, 2026-10): a márka logója (Gyártók oldal, megamenü, termékkép, márkaoldal) és a
+     * kezdőlapi márkasáv Berrin diája. A sávban 230 px széles (a fájl nagyobb, hogy éles legyen).
+     */
+    function berrin_logo(){
+        $logo = self::media('berrin-logo-2026.png');
+        if (!$logo) return;
+        $term = taxonomy_exists('product_brand') ? get_term_by('slug', 'berrin', 'product_brand') : null;
+        if ($term) update_term_meta($term->term_id, 'thumbnail_id', $logo);
+
+        $page_id = (int)get_option('page_on_front');
+        $post = $page_id ? get_post($page_id) : null;
+        if ($post){
+            $url = wp_get_attachment_url($logo);
+            // A blokk-attribútumokban a kép kódolva áll (src=\u0022…\u0022), a kirajzolt HTML-ben nem: mindkettő.
+            $count = 0;
+            $content = preg_replace_callback('#src=(\\\\u0022|")[^"\\\\]*?/berrin-logo(?:-\d+x\d+)?\.png\1#', function($m) use ($url, &$count){
+                $count++;
+                $q = $m[1];
+                return 'width='.$q.'230'.$q.' src='.$q.$url.$q;
+            }, $post->post_content);
+            if ($count){
+                wp_update_post([ 'ID' => $post->ID, 'post_content' => wp_slash($content) ]);
+            }
+            $this->log[] = 'Berrin logó: márka'.($term ? '' : ' (nincs Berrin márka)').', kezdőlapi márkasáv: '.$count.' helyen.';
+        }
+        if (class_exists(__NAMESPACE__.'\\MegaMenu')) MegaMenu::flush();
     }
 
     /** 40. Árukereső termékfeed: /arukereso.xml (Feed); a cím a permalinkek frissítése után él. */

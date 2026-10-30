@@ -147,6 +147,7 @@ A `wp-content/plugins`, `uploads` és `languages` mappák nincsenek verzióköve
 - **Ügyfélkör 16** (2026-10):
   - Alkategória-csempék egyből a termékekhez visznek (`#termekek`): a kategóriaoldalon (ha az alkategóriának nincsenek további alkategóriái) és a márkaoldali típusválasztóban.
   - Termékgaléria: a bélyegképek sora követi a nagy kép lapozását (az aktív középre gördül, `MutationObserver` a `flex-active` osztályra), a bélyegképeken a teljes kép látszik (az iu_woocommerce `object-fit: cover` szabálya erősebb volt).
+- **Ügyfélkör 17** (2026-10): új Berrin logó (`setup/media/berrin-logo-2026.png`, 42. lépés): a márka logója (Gyártók oldal, megamenü, termékkép, márkaoldal) és a kezdőlapi márkasáv Berrin diája (230 px széles).
 - **Átadás** (`docs/atadas/`): ügyfél-kézikönyv (`kezikonyv.html` → `node pdf.js` → `VassKisgep_webshop_kezikonyv.pdf`, HelloProVision-arculat, tegező, képernyőképek a devről). Funkcióváltozásnál frissíteni.
 - **Kirakat-sorrend** (`Catalog::showcase_clauses`, `vk_showcase` lekérdezés-paraméter): a terméklista alapértelmezett rendezése és a kezdőlapi Kiemelt karusszel: Kiemelt → gép (a Tartozékok és az Alkatrészek és karbantartás ág hátrébb) → készleten → legújabb. A Népszerű karusszel előtte az eladások szerint rendez (a `wc_get_products()` a „popularity” rendezést nem ismeri, ezért korábban dátum szerint rendezett).
 - **Kedvencek tárolása**: vendégnél sütiben (1 év, a böngésző törölheti); belépett vásárlónál az adatbázisban is, és ha a süti elveszett, onnan áll vissza.
