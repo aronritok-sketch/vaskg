@@ -1889,6 +1889,30 @@ ul.products:not(.columns-1) li.product .iu-group.brand:has(.vk-cofidis-badge) .i
 	}
 }
 
+/* ---------- Kezdőlapi márka-hero gépen (ügyfélkérés, 2026-10) ----------
+   A bezárt sávokon a nyitott sáv fehér, V alakú szövegpanelje (láthatatlan szöveggel) eltakarta a képet: nagy,
+   egyenetlen fehér folt. Bezárt sávon ez átlátszó, így a kép a logó fehér talpáig lefut; a talp balról jobbra
+   lépcsőzetesen emelkedik, hogy látszódjon, hol kezdődik egy-egy márka. */
+@media (min-width: 992px) {
+	.vasskisgep-pager-hero .vasskisgep-pager-hero-slide-open {
+		transition: background-color .3s;
+	}
+	.vasskisgep-pager-hero .vasskisgep-pager-hero-slide:not(.open) .vasskisgep-pager-hero-slide-open {
+		background: transparent;
+	}
+	.vasskisgep-pager-hero .vasskisgep-pager-hero-slide-closed {
+		height: calc(13rem + var(--vk-step, 0) * 1.1rem);
+		padding-top: 3rem;
+		clip-path: polygon(0 1.1rem, 100% 0, 100% 100%, 0 100%);
+	}
+	.vasskisgep-pager-hero .vasskisgep-pager-hero-slide:nth-child(2) { --vk-step: 1; }
+	.vasskisgep-pager-hero .vasskisgep-pager-hero-slide:nth-child(3) { --vk-step: 2; }
+	.vasskisgep-pager-hero .vasskisgep-pager-hero-slide:nth-child(4) { --vk-step: 3; }
+	.vasskisgep-pager-hero .vasskisgep-pager-hero-slide:nth-child(5) { --vk-step: 4; }
+	.vasskisgep-pager-hero .vasskisgep-pager-hero-slide:nth-child(6) { --vk-step: 5; }
+	.vasskisgep-pager-hero .vasskisgep-pager-hero-slide:nth-child(7) { --vk-step: 6; }
+}
+
 /* ---------- Mobil: kezdőlapi márka-hero és lábléc ---------- */
 
 @media (max-width: 991.8px) {
