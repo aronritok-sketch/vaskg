@@ -11,11 +11,15 @@ namespace VasskisgepTheme;
  * a „visszaigazolástól 1-5 munkanap” (utánrendelhető) termék 5. Szállítási díj (Delivery_Cost): a súly
  * szerinti díjtábla alapján egy darabra, „ingyenes” a díjmentes határ felett; ismeretlen súlynál vagy a
  * táblán kívül (csak személyes átvétel) üresen marad, akkor a Partner Portál díjtáblája számít.
- * Óránként újragenerálódik (a termék mentésekor azonnal).
+ * Óránként újragenerálódik (a termék mentése után a következő lekéréskor). A kész feed fájlban van
+ * (uploads/vk-feed/arukereso.xml); ha az újragenerálás elakad, az utolsó jó változat megy ki. Az építés
+ * adagonként üríti a memória-gyorsítótárat (~1900 termék egy kérésben: a WordPress futásidejű gyorsítótára
+ * termékenként ~40 KB-tal nőne, ez az élesen kifutott a memóriakorlátból → 500).
  */
 class Feed {
     const QUERY_VAR = 'vk_feed';
     const CACHE = 'vk_feed_arukereso';
+    const MAX_AGE = HOUR_IN_SECONDS;
     const BACKORDER_DAYS = 5;
     const IMAGES = 5;
 
@@ -45,23 +49,62 @@ class Feed {
         return get_option('permalink_structure') ? home_url('/arukereso.xml') : add_query_arg(self::QUERY_VAR, 'arukereso', home_url('/'));
     }
 
+    /** A kész feed fájlja. */
+    static function file(){
+        $dir = trailingslashit(wp_upload_dir()['basedir']).'vk-feed';
+        if (!is_dir($dir)) wp_mkdir_p($dir);
+        return $dir.'/arukereso.xml';
+    }
+
+    /** Termék mentésekor: a következő lekérés újragenerálja (addig a mostani megy ki). */
     static function flush(){
         delete_transient(self::CACHE);
+        update_option(self::CACHE.'_stale', time(), false);
+    }
+
+    /** A feed (újra)generálása fájlba. true, ha sikerült. */
+    static function generate(){
+        $file = self::file();
+        $xml = self::build();
+        if (substr_count($xml, '<product>') === 0 && is_file($file) && filesize($file) > 1000) return false;
+        $tmp = $file.'.tmp';
+        if (file_put_contents($tmp, $xml) === false) return false;
+        rename($tmp, $file);
+        delete_option(self::CACHE.'_stale');
+        return true;
     }
 
     function serve(){
         if (get_query_var(self::QUERY_VAR) !== 'arukereso') return;
-        $xml = get_transient(self::CACHE);
-        if (!is_string($xml) || $xml === ''){
-            $xml = self::build();
-            set_transient(self::CACHE, $xml, HOUR_IN_SECONDS);
+        $file = self::file();
+        $fresh = is_file($file) && filemtime($file) > time() - self::MAX_AGE && !get_option(self::CACHE.'_stale');
+        if (!$fresh && !get_transient(self::CACHE.'_lock')){
+            set_transient(self::CACHE.'_lock', 1, 10 * MINUTE_IN_SECONDS);
+            try {
+                self::generate();
+            } catch (\Throwable $e){
+                error_log('Árukereső feed: '.$e->getMessage());
+            }
+            delete_transient(self::CACHE.'_lock');
+        }
+        if (!is_file($file)){
+            status_header(503);
+            header('Retry-After: 120');
+            exit;
         }
         status_header(200);
         nocache_headers();
         header('Content-Type: application/xml; charset=UTF-8');
         header('X-Robots-Tag: noindex');
-        echo $xml;
+        header('Content-Length: '.filesize($file));
+        readfile($file);
         exit;
+    }
+
+    /** A futásidejű gyorsítótár ürítése az adagok között (a tartós gyorsítótárhoz nem nyúl). */
+    private static function free_memory(){
+        if (function_exists('wp_cache_flush_runtime')) wp_cache_flush_runtime();
+        elseif (!wp_using_ext_object_cache()) wp_cache_flush();
     }
 
     private static function tag($name, $value, $cdata = false){
@@ -135,7 +178,8 @@ class Feed {
     }
 
     static function build(){
-        @set_time_limit(300);
+        @set_time_limit(600);
+        wp_raise_memory_limit('admin');
         $shipping = Shipping::method();
         $xml = '<?xml version="1.0" encoding="UTF-8"?>'."\n".'<products>'."\n";
         $page = 1;
@@ -144,11 +188,18 @@ class Feed {
             foreach($ids as $id){
                 $product = wc_get_product($id);
                 foreach($product && $product->is_type('variable') ? $product->get_children() : [ $id ] as $child){
-                    $item = self::item($child === $id ? $product : wc_get_product($child), $shipping);
+                    try {
+                        $item = self::item($child === $id ? $product : wc_get_product($child), $shipping);
+                    } catch (\Throwable $e){
+                        // Egy hibás termék ne vigye el az egész feedet.
+                        error_log('Árukereső feed, termék '.$child.': '.$e->getMessage());
+                        $item = null;
+                    }
                     if ($item !== null) $xml .= $item."\n";
                 }
             }
             $page++;
+            self::free_memory();
         } while (count($ids) === 200);
         return $xml.'</products>'."\n";
     }

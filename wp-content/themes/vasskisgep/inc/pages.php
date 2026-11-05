@@ -26,6 +26,26 @@ class Pages {
         add_action('save_post_page', [$this, 'save'], 10, 2);
         add_filter('the_content', [$this, 'strip_template_header'], 0);
         add_filter('body_class', [$this, 'body_class']);
+        add_filter('render_block', [$this, 'hide_disabled_payments'], 10, 2);
+    }
+
+    /**
+     * A tartalomban (pl. Szállítás és fizetés oldal) a Barion-os listaelem / bekezdés csak akkor látszik, ha a Barion
+     * fizetési mód be van kapcsolva (2026-11: az élesítés Barion nélkül indult; visszakapcsoláskor magától visszajön).
+     */
+    function hide_disabled_payments($content, $block){
+        if (is_admin() || stripos((string)$content, 'barion') === false) return $content;
+        if (!in_array($block['blockName'] ?? '', [ 'core/list-item', 'iu/list-item', 'core/paragraph', 'iu/text' ], true)) return $content;
+        static $enabled = null;
+        if ($enabled === null){
+            $enabled = false;
+            if (function_exists('WC') && WC()->payment_gateways()){
+                foreach(WC()->payment_gateways()->payment_gateways() as $gateway){
+                    if (strpos($gateway->id, 'barion') === 0 && $gateway->enabled === 'yes') $enabled = true;
+                }
+            }
+        }
+        return $enabled ? $content : '';
     }
 
     static function has_custom_header($post_id = null){
