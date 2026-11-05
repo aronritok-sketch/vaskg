@@ -48,7 +48,7 @@
 				}
 
 				$html .= '<li class="vk-xs-item">
-					<a class="vk-xs-image" href="'.esc_url($url).'">'.$item->get_image('woocommerce_gallery_thumbnail').'</a>
+					<a class="vk-xs-image" href="'.esc_url($url).'">'.$item->get_image('woocommerce_thumbnail', [ 'sizes' => '(max-width: 991px) 45vw, 64px' ]).'</a>
 					<div class="vk-xs-body">
 						<a class="vk-xs-title" href="'.esc_url($url).'">'.esc_html($item->get_name()).'</a>
 						<span class="vk-xs-stock '.$stock_class.'">'.$stock.'</span>

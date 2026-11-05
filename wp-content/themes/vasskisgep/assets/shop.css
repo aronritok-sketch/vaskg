@@ -4309,3 +4309,46 @@ body.vk-has-sticky-buy {
 		opacity: 1;
 	}
 }
+
+/* Kapcsolódó termékek mobilon és tableten (ügyfélkérés, 2026-11): nagyobb kártyák, a kép kitölti a négyzetet;
+   vízszintesen lapozható, a következő kártya széle kilóg (látszik, hogy van még). */
+@media (max-width: 991.8px) {
+	.vk-xs-list {
+		gap: .6rem;
+		padding-bottom: .4rem;
+		scroll-snap-type: x mandatory;
+	}
+	.vk-xs-item {
+		flex: 0 0 min(46%, 13.5rem);
+		flex-direction: column;
+		gap: .55rem;
+		padding: .55rem;
+		scroll-snap-align: start;
+	}
+	.vk-xs-image,
+	.vk-xs-image img {
+		flex: 0 0 auto;
+		width: 100%;
+		height: auto;
+		aspect-ratio: 1;
+	}
+	.vk-xs-image img {
+		object-fit: contain;
+	}
+	.vk-xs-body {
+		gap: .3rem;
+	}
+	.vk-xs-title {
+		font-size: .8rem;
+	}
+	.vk-xs-stock {
+		font-size: .75rem;
+	}
+	.vk-xs-price {
+		font-size: 1.05rem;
+	}
+	.vk-xs-cart {
+		width: 2.5rem;
+		height: 2.5rem;
+	}
+}
