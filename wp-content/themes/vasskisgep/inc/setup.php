@@ -60,6 +60,7 @@ class Setup {
         41 => 'size_variants',
         42 => 'berrin_logo',
         43 => 'aszf_shipping',
+        44 => 'aszf_rates',
     ];
 
     /**
@@ -1772,6 +1773,25 @@ class Setup {
         } else {
             $this->log[] = 'FIGYELEM: a Szállítás és fizetés oldalra az „ÁSZF: fizetés és szállítás” blokkot kézzel kell betenni.';
         }
+    }
+
+
+    /** 44. Házhozszállítás díjai az ÁSZF szerint (Dávid, 2026-11-06: „az ÁSZF a mérvadó”, 40 kg felett a megadott díjak). */
+    function aszf_rates(){
+        $done = 0;
+        foreach(\WC_Shipping_Zones::get_zones() as $data){
+            $zone = new \WC_Shipping_Zone($data['id']);
+            foreach($zone->get_shipping_methods() as $method){
+                if ($method->id !== Shipping::METHOD) continue;
+                $key = 'woocommerce_'.Shipping::METHOD.'_'.$method->get_instance_id().'_settings';
+                $settings = (array)get_option($key, []);
+                $settings['rates'] = Shipping::DEFAULT_RATES;
+                update_option($key, $settings);
+                $done++;
+            }
+        }
+        \WC_Cache_Helper::invalidate_cache_group('shipping_zones');
+        $this->log[] = $done ? 'Szállítás: új díjtábla az ÁSZF szerint (10 kg-ig 2 490 Ft … 300 kg-ig 19 990 Ft, felette 24 990 Ft).' : 'FIGYELEM: nem találtam a súly szerinti házhozszállítást – a díjakat kézzel kell beírni (WooCommerce → Szállítás).';
     }
 
 }

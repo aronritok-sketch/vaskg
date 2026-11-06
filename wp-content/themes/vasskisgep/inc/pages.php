@@ -43,10 +43,10 @@ class Pages {
         // Lábléc alja, középen: az Árukereső logója (a régi oldal kódja, ha megvan: ARUKERESO_CENTER) – a copyright sor
         // bal oldali linkjei és a jobb oldali © közé.
         if (self::ARUKERESO_CENTER !== '' && strpos($content, 'Minden jog fenntartva') !== false && in_array($name, [ 'core/paragraph', 'iu/text' ], true)) return '<div class="vk-arukereso-center">'.self::ARUKERESO_CENTER.'</div>'.$content;
+        // Lábléc: a kártyalogók helyén a Barion logósora – a Barion az elfogadóhely jóváhagyásához kéri, ezért akkor is
+        // látszik, ha a bankkártyás fizetés még nincs bekapcsolva (Barion, 2026-11).
+        if (strpos($content, 'Payment-methods-logos-container') !== false && strpos($name, 'image') !== false) return Barion::banner();
         $card = stripos($content, 'barion') !== false && in_array($name, [ 'core/list-item', 'iu/list-item', 'core/paragraph', 'iu/text' ], true);
-        // Lábléc: „Elfogadott fizetési módok” és a kártyalogók csak online kártyás fizetésnél (Barion).
-        if (strpos($content, 'Payment-methods-logos-container') !== false && strpos($name, 'image') !== false) $card = true;
-        if (strpos($content, 'Elfogadott fizetési módok') !== false && in_array($name, [ 'core/paragraph', 'iu/text' ], true)) $card = true;
         if (!$card) return $content;
         return self::card_payment_enabled() ? $content : '';
     }

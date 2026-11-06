@@ -27,6 +27,7 @@ require_once(__DIR__.'/abandoned-cart.php');
 require_once(__DIR__.'/seasons-admin.php');
 require_once(__DIR__.'/gls.php');
 require_once(__DIR__.'/aszf.php');
+require_once(__DIR__.'/barion.php');
 
 class Theme {
     private static $instance;
@@ -59,6 +60,7 @@ class Theme {
         SeasonsAdmin::get_instance();
         Gls::get_instance();
         Aszf::get_instance();
+        Barion::get_instance();
         Pages::get_instance();
         Search::get_instance();
         Cofidis::get_instance();

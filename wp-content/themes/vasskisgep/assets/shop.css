@@ -4478,3 +4478,18 @@ body.admin-bar .iu-woocommerce-mini-cart__drawer {
 .iu-woocommerce-mini-cart__drawer .woocommerce-mini-cart__buttons {
 	flex: 0 0 auto;
 }
+
+/* Lábléc: Barion Smart Payment logósor (a Barion kéri az elfogadóhely jóváhagyásához). */
+.vk-barion-banner {
+	margin: -.3rem 0 0;
+}
+.vk-barion-banner img {
+	display: block;
+	width: auto;
+	height: 2.8rem;
+	max-width: 100%;
+	margin-left: auto;
+}
+@media (max-width: 767px) {
+	.vk-barion-banner img { margin: 0 auto; }
+}

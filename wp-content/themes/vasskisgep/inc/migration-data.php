@@ -169,6 +169,7 @@ class MigrationData {
         if ($q !== '') return [ 'lookup' => MigrationNewProducts::lookup($q) ];
         if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'nav') return Checkout::diagnose();
         if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'gls') return Gls::diagnose();
+        if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'barion') return Barion::find_old_pixel();
         // A függő beállító lépések lefuttatása (különben csak az admin felület első betöltésekor futnak).
         if ($request instanceof \WP_REST_Request && $request->get_param('setup') === 'run'){
             $from = (int)get_option(Setup::OPTION, 0);

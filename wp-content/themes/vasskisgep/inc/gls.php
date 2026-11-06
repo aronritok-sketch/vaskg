@@ -361,6 +361,14 @@ class Gls {
         if (!self::ready()) return $out;
         $res = self::request('GetParcelList', [ 'PrintDateFrom' => '/Date('.((time() - 7 * DAY_IN_SECONDS) * 1000).')/', 'PrintDateTo' => '/Date('.(time() * 1000).')/' ]);
         $out['GetParcelList'] = is_wp_error($res) ? 'HIBA: '.$res->get_error_message() : 'OK ('.count((array)($res['PrintDataInfoList'] ?? [])).')';
+        if (is_wp_error($res)){
+            // A MyGLS nyers válasza (hibakód, leírás) – titok nélkül.
+            $raw = wp_remote_post('https://api'.($s['test'] ? '.test' : '').'.mygls.hu/ParcelService.svc/json/GetParcelList', [ 'timeout' => 30, 'headers' => [ 'Content-Type' => 'application/json' ], 'body' => (string)json_encode([ 'Username' => $s['username'], 'Password' => self::password_bytes($s['password_hash']), 'WebshopEngine' => 'WooCommerce', 'PrintDateFrom' => '/Date('.((time() - DAY_IN_SECONDS) * 1000).')/', 'PrintDateTo' => '/Date('.(time() * 1000).')/' ]) ]);
+            $out['raw_http'] = is_wp_error($raw) ? $raw->get_error_message() : (int)wp_remote_retrieve_response_code($raw);
+            $out['raw_body'] = is_wp_error($raw) ? '' : mb_substr(preg_replace('/"Password"[^,}]*/', '', (string)wp_remote_retrieve_body($raw)), 0, 600);
+            $out['username_domain'] = substr(strrchr($s['username'], '@') ?: '', 1);
+            $out['username_trimmed'] = trim($s['username']) === $s['username'];
+        }
         $orders = wc_get_orders([ 'limit' => 5, 'orderby' => 'date', 'order' => 'DESC', 'return' => 'objects' ]);
         $notes = [];
         foreach($orders as $order){

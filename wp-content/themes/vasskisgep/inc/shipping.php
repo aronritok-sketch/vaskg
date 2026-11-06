@@ -12,7 +12,9 @@ class Shipping {
     const METHOD = 'vk_weight_rate';
 
     /** A régi webshop díjtáblája (ÁSZF 5.5.2., bruttó): legfeljebb ennyi kg → ennyi Ft. */
-    const DEFAULT_RATES = "10 | 1900\n15 | 2390\n20 | 2790\n30 | 3190\n40 | 4290\n50 | 5790\n60 | 7490\n80 | 8790\n100 | 11490\n300 | 15890\n500 | 17790";
+    const DEFAULT_RATES = "10 | 2490\n15 | 2990\n20 | 3490\n30 | 3990\n40 | 4990\n50 | 8890\n60 | 9990\n80 | 9990\n100 | 11490\n300 | 19990\n99999 | 24990";
+    /** E fölötti felső határ: „X kg felett” (a díjtábla utolsó sora, ha nincs felső súlyhatár). */
+    const NO_LIMIT = 99999;
 
     private static $instance;
     static function get_instance(){
@@ -106,8 +108,11 @@ class Shipping {
         $rows = self::parse_rates($method->get_option('rates', self::DEFAULT_RATES));
         if (empty($rows)) return '';
         $html = '<table class="vk-shipping-rates"><thead><tr><th>Csomag súlya</th><th>Szállítási díj (bruttó)</th></tr></thead><tbody>';
+        $prev = 0;
         foreach($rows as [$max, $price]){
-            $html .= '<tr><td>'.esc_html(wc_format_localized_decimal($max).' kg-ig').'</td><td>'.wc_price($price).'</td></tr>';
+            $label = $max >= self::NO_LIMIT ? wc_format_localized_decimal($prev).' kg felett' : wc_format_localized_decimal($max).' kg-ig';
+            $html .= '<tr><td>'.esc_html($label).'</td><td>'.wc_price($price).'</td></tr>';
+            $prev = $max;
         }
         $html .= '</tbody></table>';
         $free_total = (float)$method->get_option('free_total', '30000');
@@ -115,7 +120,7 @@ class Shipping {
         $last = end($rows)[0];
         $notes = [];
         if ($free_total > 0) $notes[] = wc_price($free_total).' feletti rendelésnél'.($free_weight > 0 ? ' '.wc_format_localized_decimal($free_weight).' kg-ig' : '').' a házhozszállítás ingyenes.';
-        $notes[] = wc_format_localized_decimal($last).' kg felett a szállítás módját és díját egyedileg egyeztetjük.';
+        if ($last < self::NO_LIMIT) $notes[] = wc_format_localized_decimal($last).' kg felett a szállítás módját és díját egyedileg egyeztetjük.';
         return $html.'<p class="iu-text vk-shipping-rates-note">'.implode(' ', $notes).'</p>';
     }
 }
