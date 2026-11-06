@@ -13,7 +13,7 @@ namespace VasskisgepTheme;
  * Kép: a régi fájl a szerveren (ha a régi oldal fájljai valahol még megvannak), különben a régi címen próbálja.
  */
 class MigrationNewProducts {
-    const STATE = 'vk_mig_newprod';
+    const STATE = 'vk_mig_newprod2';
     const VAT = 27;
 
     /** A hiányzó régi termékek: [ [ id, name, sku, created, parent ], … ] (legfeljebb $limit). */
@@ -24,8 +24,9 @@ class MigrationNewProducts {
         $rows = $wpdb->get_results('SELECT p.virtuemart_product_id AS id, p.product_parent_id AS parent, p.product_sku AS sku, p.created_on AS created'
             .($lang !== '' ? ', l.product_name AS name FROM '.MigrationData::t('virtuemart_products').' p LEFT JOIN '.MigrationData::t($lang).' l ON l.virtuemart_product_id = p.virtuemart_product_id' : ', \'\' AS name FROM '.MigrationData::t('virtuemart_products').' p')
             .' WHERE p.published = 1 ORDER BY p.virtuemart_product_id', ARRAY_A);
+        // Megvan: közzétett termék ezzel a régi azonosítóval (az átköltöztetési rekord, piszkozat vagy kuka nem számít).
         $mapped = [];
-        foreach($wpdb->get_col("SELECT meta_value FROM {$wpdb->postmeta} WHERE meta_key = '_vk_old_id'") as $old) $mapped[(int)$old] = true;
+        foreach($wpdb->get_col("SELECT pm.meta_value FROM {$wpdb->postmeta} pm JOIN {$wpdb->posts} p ON p.ID = pm.post_id WHERE pm.meta_key = '_vk_old_id' AND p.post_type = 'product' AND p.post_status = 'publish'") as $old) $mapped[(int)$old] = true;
         // Csak a legutóbb átvett régi termék után felvettek: a régebbi, de hiányzó termékeket (az átköltöztetéskor
         // kihagyva, az új boltból törölve) nem hozza vissza.
         $cutoff = '';
@@ -51,10 +52,10 @@ class MigrationNewProducts {
         if ($lang === '') return [];
         $like = '%'.$wpdb->esc_like($q).'%';
         $rows = $wpdb->get_results($wpdb->prepare('SELECT p.virtuemart_product_id AS id, p.product_parent_id AS parent, p.product_sku AS sku, p.published, p.created_on AS created, l.product_name AS name FROM '.MigrationData::t('virtuemart_products').' p LEFT JOIN '.MigrationData::t($lang).' l ON l.virtuemart_product_id = p.virtuemart_product_id WHERE l.product_name LIKE %s OR p.product_sku LIKE %s LIMIT 20', $like, $like), ARRAY_A);
-        $mapped_max = (string)$wpdb->get_var('SELECT MAX(p.created_on) FROM '.MigrationData::t('virtuemart_products').' p JOIN '.$wpdb->postmeta." pm ON pm.meta_key = '_vk_old_id' AND pm.meta_value = p.virtuemart_product_id");
+        $mapped_max = (string)$wpdb->get_var('SELECT MAX(p.created_on) FROM '.MigrationData::t('virtuemart_products').' p JOIN '.$wpdb->postmeta." pm ON pm.meta_key = '_vk_old_id' AND pm.meta_value = p.virtuemart_product_id JOIN {$wpdb->posts} wp ON wp.ID = pm.post_id AND wp.post_type = 'product' AND wp.post_status = 'publish'");
         $rows = (array)$rows;
         foreach($rows as &$row){
-            $row['mapped_to'] = (int)$wpdb->get_var($wpdb->prepare("SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = '_vk_old_id' AND meta_value = %s LIMIT 1", (string)$row['id']));
+            $row['mapped_to'] = (string)$wpdb->get_var($wpdb->prepare("SELECT CONCAT(p.ID, ' ', p.post_type, ' ', p.post_status) FROM {$wpdb->postmeta} pm JOIN {$wpdb->posts} p ON p.ID = pm.post_id WHERE pm.meta_key = '_vk_old_id' AND pm.meta_value = %s ORDER BY (p.post_type = 'product') DESC LIMIT 1", (string)$row['id']));
             $row['sku_owner'] = trim((string)$row['sku']) !== '' ? (int)wc_get_product_id_by_sku(trim((string)$row['sku'])) : 0;
             $row['cutoff'] = $mapped_max;
         }
