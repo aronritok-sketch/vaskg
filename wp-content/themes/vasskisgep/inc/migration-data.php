@@ -27,12 +27,25 @@ class MigrationData {
     const SKIP_TABLES = [ 'session' ];
     /** Régi rendelés nyitott állapotban, ennél régebben: lezártként kerül át (a napi munkát ne zavarja). */
     const OPEN_DAYS = 30;
+    /** Magától induló átvétel (élesítés után, 2026-11): háttérlépés, és az állapotlap kulcsának sha256-ja (a kulcs nincs a repóban). */
+    const HOOK = 'vasskisgep_data_step';
+    const AUTO = 'vk_mig_data_auto';
+    const STATUS_KEY_HASH = '0417b1a451bf0e0e8f8af7ebd309eb5e9fdebb89fdd6578a62e0d7228532bdae';
 
     private static $tables = null;
     private static $products = null;
 
     static function init(){
         add_action('admin_post_vk_mig_data_download', [__CLASS__, 'download']);
+        add_action(self::HOOK, [__CLASS__, 'background']);
+        add_action('init', [__CLASS__, 'auto'], 99);
+        add_action('rest_api_init', function(){
+            register_rest_route('vasskisgep/v1', '/data-status', [
+                'methods' => 'GET',
+                'callback' => [__CLASS__, 'rest_status'],
+                'permission_callback' => function($request){ return hash_equals(self::STATUS_KEY_HASH, hash('sha256', (string)$request->get_param('key'))); },
+            ]);
+        });
         // A régi rendelés a régi rendelésszámával látszik (admin, vásárlói fiók, levelek), és arra is kereshető.
         add_filter('woocommerce_order_number', function($number, $order){
             $old = $order instanceof \WC_Order ? (string)$order->get_meta('_vk_old_order_number') : '';
@@ -67,6 +80,85 @@ class MigrationData {
             if ($prefix !== $wpdb->prefix) $found[] = $prefix;
         }
         return $found;
+    }
+
+    /**
+     * A régi táblák bármelyik elérhető adatbázisban (information_schema): [ [ 'db' => …, 'prefix' => … ], … ];
+     * előbb a WordPress saját adatbázisa (oda importálva), utána a többi (a régi Joomla-adatbázis ugyanazon a szerveren).
+     */
+    static function locate(){
+        global $wpdb;
+        $rows = $wpdb->get_results("SELECT TABLE_SCHEMA AS db, TABLE_NAME AS name FROM information_schema.TABLES WHERE TABLE_NAME LIKE '%virtuemart\\_orders' ORDER BY (TABLE_SCHEMA = DATABASE()) DESC, TABLE_SCHEMA", ARRAY_A);
+        $out = [];
+        foreach((array)$rows as $row){
+            $prefix = substr($row['name'], 0, -strlen('virtuemart_orders'));
+            $same = $row['db'] === DB_NAME;
+            if ($same && $prefix === $wpdb->prefix) continue;
+            $out[] = [ 'db' => $same ? '' : $row['db'], 'prefix' => $prefix ];
+        }
+        return $out;
+    }
+
+    /**
+     * Magától indul (Áron, 2026-11-06: „hozd át magadtól a régiről”): ha a régi táblák elérhetők, és még nem futott le
+     * ezzel a forrással, a háttérben lefut az egész átvétel (adagonként, Action Scheduler / WP-Cron). Óránként egyszer néz
+     * körül, így ha a régi adatbázist később importálják, akkor indul.
+     */
+    static function auto(){
+        if (!function_exists('WC') || wp_doing_ajax() || get_transient(self::AUTO.'_probe')) return;
+        set_transient(self::AUTO.'_probe', 1, HOUR_IN_SECONDS);
+        $found = self::locate();
+        if (!$found) return;
+        $source = $found[0];
+        $done = (array)get_option(self::AUTO, []);
+        if (($done['db'] ?? null) === $source['db'] && ($done['prefix'] ?? null) === $source['prefix']) return;
+        self::save_settings($source['db'], $source['prefix']);
+        self::reset();
+        update_option(self::AUTO, [ 'db' => $source['db'], 'prefix' => $source['prefix'], 'started' => time() ], false);
+        self::schedule(5);
+    }
+
+    static function schedule($delay = 0){
+        if (function_exists('as_schedule_single_action')) as_schedule_single_action(time() + $delay, self::HOOK, [], 'vasskisgep');
+        else wp_schedule_single_event(time() + $delay, self::HOOK);
+    }
+
+    /** Egy háttéradag; ha nincs kész, a következő azonnal (hibánál 5 perc múlva, legfeljebb 20-szor). */
+    static function background(){
+        $result = self::step();
+        if (is_wp_error($result)){
+            $state = self::state();
+            $state['notes'][] = wp_date('Y-m-d H:i').' '.$result->get_error_message();
+            $state['errors'] = ($state['errors'] ?? 0) + 1;
+            update_option(self::STATE, $state, false);
+            if ($state['errors'] <= 20) self::schedule(5 * MINUTE_IN_SECONDS);
+            return;
+        }
+        if (!empty($result['locked'])){ self::schedule(60); return; }
+        if (empty($result['done'])) self::schedule();
+    }
+
+    /** Állapot (kulccsal): a forrás, a lépés, a számlálók – személyes adat nélkül. */
+    static function rest_status(){
+        global $wpdb;
+        $state = self::state();
+        $prefix = self::prefix();
+        return [
+            'located' => self::locate(),
+            'settings' => self::settings(),
+            'auto' => get_option(self::AUTO, []),
+            'source' => $prefix !== '' ? self::source_counts() : [],
+            'stage' => $state['stage'],
+            'counts' => $state['counts'],
+            'notes' => array_slice((array)$state['notes'], -10),
+            'started' => $state['started'] ? wp_date('Y-m-d H:i', $state['started']) : '',
+            'finished' => $state['finished'] ? wp_date('Y-m-d H:i', $state['finished']) : '',
+            'message' => self::message($state),
+            'wp_orders_migrated' => (int)$wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->postmeta} WHERE meta_key = '_vk_old_order_id'") + (int)($wpdb->get_var("SHOW TABLES LIKE '{$wpdb->prefix}wc_orders_meta'") ? $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}wc_orders_meta WHERE meta_key = '_vk_old_order_id'") : 0),
+            'wp_customers_migrated' => (int)$wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->usermeta} WHERE meta_key = '_vk_old_user_id'"),
+            'latest_old_order' => $prefix !== '' && self::has('virtuemart_orders') ? (string)$wpdb->get_var('SELECT MAX(created_on) FROM '.self::t('virtuemart_orders')) : '',
+            'pending_actions' => function_exists('as_get_scheduled_actions') ? count(as_get_scheduled_actions([ 'hook' => self::HOOK, 'status' => 'pending' ], 'ids')) : null,
+        ];
     }
 
     /** Az előtag (beállított, vagy ha egy van, a megtalált). */
