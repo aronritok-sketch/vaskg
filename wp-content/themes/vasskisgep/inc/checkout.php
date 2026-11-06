@@ -52,8 +52,11 @@ class Checkout {
     /** Cégként vásárolva az adószám kötelező (ügyfélkérés, 2026-11). */
     function company_validation($data, $errors){
         if (empty($_POST['vk_is_company'])) return;
-        $tax = preg_replace('/\D/', '', (string)($data['billing_tax_number'] ?? ''));
-        if (strlen($tax) < 8) $errors->add('billing_tax_number_required', '<strong>Adószám</strong>: cégként vásárolva kötelező megadni (pl. 12345678-2-15).', [ 'id' => 'billing_tax_number' ]);
+        // Az adószám a téma mezőjében, vagy (élesen) a Számlázz.hu bővítményében.
+        $field = isset($_POST['wc_szamlazz_adoszam']) && !isset($_POST['billing_tax_number']) ? 'wc_szamlazz_adoszam' : 'billing_tax_number';
+        $raw = $data[$field] ?? wp_unslash($_POST[$field] ?? '');
+        $tax = preg_replace('/\D/', '', (string)$raw);
+        if (strlen($tax) < 8) $errors->add($field.'_required', '<strong>Adószám</strong>: cégként vásárolva kötelező megadni (pl. 12345678-2-15).', [ 'id' => $field ]);
         if (trim((string)($data['billing_company'] ?? '')) === '') $errors->add('billing_company_required', '<strong>Cégnév</strong>: cégként vásárolva kötelező megadni (az adószám beírása után magától kitöltődik).', [ 'id' => 'billing_company' ]);
     }
 
@@ -83,7 +86,10 @@ class Checkout {
     /** Cég nélkül a cégnév / adószám nem mentődik; a telefonszám nemzetközi alakra (06… → +36…). */
     function posted_data($data){
         if (array_key_exists('vk_is_company', $data) && empty($data['vk_is_company'])){
-            foreach([ 'billing_company', 'billing_tax_number' ] as $key) if (isset($data[$key])) $data[$key] = '';
+            foreach([ 'billing_company', 'billing_tax_number', 'wc_szamlazz_adoszam' ] as $key){
+                if (isset($data[$key])) $data[$key] = '';
+                if (isset($_POST[$key])) $_POST[$key] = '';
+            }
         }
         unset($data['vk_is_company']);
         if (!empty($data['billing_phone'])) $data['billing_phone'] = self::normalize_phone($data['billing_phone']);

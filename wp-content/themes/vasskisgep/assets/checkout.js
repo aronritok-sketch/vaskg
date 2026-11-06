@@ -65,9 +65,14 @@
 
 	/* ---------- Adószám → cégadatok ---------- */
 
+	// Az adószám mező: a témáé (billing_tax_number), vagy élesen a Számlázz.hu bővítményé (wc_szamlazz_adoszam).
+	var TAX = '#billing_tax_number, #wc_szamlazz_adoszam';
+	var TAX_ROWS = '#billing_tax_number_field, #wc_szamlazz_adoszam_field';
+	function $tax(){ return $(TAX).first(); }
+
 	var lastTax = '';
 	function taxStatus(text, type){
-		var $row = $('#billing_tax_number_field');
+		var $row = $tax().closest('.form-row');
 		var $status = $row.find('.vk-tax-status');
 		if (!$status.length) $status = $('<p class="vk-tax-status" aria-live="polite"></p>').appendTo($row);
 		$status.text(text || '').attr('data-type', type || '').toggle(!!text);
@@ -75,7 +80,7 @@
 
 	function onTaxNumber(){
 		if (!cfg.taxpayer) return;
-		var digits = ($('#billing_tax_number').val() || '').replace(/\D/g, '');
+		var digits = ($tax().val() || '').replace(/\D/g, '');
 		if (digits.length < 8){ lastTax = ''; taxStatus(''); return; }
 		digits = digits.slice(0, 8);
 		if (digits === lastTax) return;
@@ -90,7 +95,7 @@
 			}
 			var d = res.data;
 			setValue($('#billing_company'), d.company);
-			if (d.tax_number && d.tax_number.length > 8) setValue($('#billing_tax_number'), d.tax_number);
+			if (d.tax_number && d.tax_number.length > 8) setValue($tax(), d.tax_number);
 			// A címet csak üres mezőkbe írjuk (a vásárló már beírt címét nem írjuk felül).
 			var empty = !$.trim($('#billing_postcode').val()) && !$.trim($('#billing_city').val()) && !$.trim($('#billing_address_1').val());
 			if (empty && d.postcode){
@@ -177,20 +182,26 @@
 		var $box = $('#vk_is_company');
 		if (!$box.length) return;
 		var on = $box.is(':checked');
-		$('#billing_company_field, #billing_tax_number_field').toggle(on).toggleClass('validate-required', on).each(function(){
+		$('form.checkout').toggleClass('vk-company', on);
+		$('#billing_company_field, ' + TAX_ROWS).toggle(on).toggleClass('validate-required', on).each(function(){
 			// Cégként vásárolva kötelező: csillag a felirat mellett, a „(nem kötelező)” jelölés nélkül.
 			var $label = $(this).find('label').first();
 			$label.find('.optional').toggle(!on);
-			if (on && !$label.find('.required').length) $label.append(' <abbr class="required" title="kötelező">*</abbr>');
-			if (!on) $label.find('.required').remove();
+			if (on && !$label.find('abbr.required').length) $label.append(' <abbr class="required" title="kötelező">*</abbr>');
+			if (!on) $label.find('abbr.required').remove();
+			if (on) $(this).find('input').prop('disabled', false);
 		});
-		if (!on) $('#billing_tax_number_field .vk-tax-status').hide();
+		if (!on) $('.vk-tax-status').hide();
 	}
 
 	$(function(){
 		$('input#billing_phone, input#shipping_phone, .woocommerce-address-fields input[type=tel]').each(function(){ setupPhone(this); });
 		companyToggle();
 		$(document.body).on('change', '#vk_is_company', companyToggle);
+		// A Számlázz.hu bővítmény a cégnév / ország változásakor a saját szabálya szerint állítja az adószám mezőt:
+		// utána a „Cégként vásárolok” pipa állapota érvényes.
+		$(document.body).on('blur change keyup', 'select#billing_country, input#billing_company', function(){ setTimeout(companyToggle, 0); });
+		$(document.body).on('updated_checkout', function(){ setTimeout(companyToggle, 0); });
 		$.each(['billing', 'shipping'], function(i, prefix){
 			var timer;
 			$(document.body).on('input change', '#' + prefix + '_postcode', function(){
@@ -200,9 +211,9 @@
 			if ($('#' + prefix + '_postcode').val()) onPostcode(prefix);
 		});
 		var taxTimer;
-		$(document.body).on('input', '#billing_tax_number', function(){
+		$(document.body).on('input', TAX, function(){
 			clearTimeout(taxTimer); taxTimer = setTimeout(onTaxNumber, 500);
 		});
-		$(document.body).on('change blur', '#billing_tax_number', onTaxNumber);
+		$(document.body).on('change blur', TAX, onTaxNumber);
 	});
 })(jQuery);

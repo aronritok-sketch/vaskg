@@ -4439,3 +4439,9 @@ body.vk-has-sticky-buy {
 #vk_is_company_field .optional {
 	display: none;
 }
+
+/* Számlázz.hu bővítmény adószám mezője: csak „Cégként vásárolok” bepipálva látszik (a bővítmény magától mutatná). */
+form.checkout:has(#vk_is_company):not(.vk-company) #wc_szamlazz_adoszam_field,
+form.checkout:has(#vk_is_company):not(.vk-company) #billing_company_field {
+	display: none !important;
+}
