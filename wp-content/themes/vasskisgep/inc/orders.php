@@ -99,9 +99,17 @@ class Orders {
      * importálása” gombhoz a boltkezelőnek nincs joga). Egyszer, a háttérben (a WooCommerce saját importja).
      */
     function analytics_import(){
-        if (wp_doing_ajax() || get_option('vk_analytics_import') || !class_exists('\\Automattic\\WooCommerce\\Admin\\ReportsSync')) return;
+        if (wp_doing_ajax() || get_option('vk_analytics_import2')) return;
         if (!get_option('vk_mig_data_auto') && !get_option('vk_mig_data_state')) return;
-        update_option('vk_analytics_import', time(), false);
+        // Az élesen az Analitika ki volt kapcsolva (WooCommerce → Beállítások → Haladó → Funkciók): egyszer bekapcsolja
+        // (az ügyfél kéri a kimutatásokat); az import a következő kérésnél indul, amikor az Analitika már betöltődött.
+        if (get_option('woocommerce_analytics_enabled') === 'no' && !get_option('vk_analytics_enabled')){
+            update_option('vk_analytics_enabled', time(), false);
+            update_option('woocommerce_analytics_enabled', 'yes');
+            return;
+        }
+        if (!class_exists('\\Automattic\\WooCommerce\\Admin\\ReportsSync') || get_option('woocommerce_analytics_enabled') === 'no') return;
+        update_option('vk_analytics_import2', time(), false);
         \Automattic\WooCommerce\Admin\ReportsSync::regenerate_report_data(false, true);
     }
 
