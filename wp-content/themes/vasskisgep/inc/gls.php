@@ -198,7 +198,7 @@ class Gls {
     }
 
     /** A rendelés csomagja a PrintLabels-hez. */
-    private static function parcel(\WC_Order $order){
+    private static function parcel(\WC_Order $order, $count = 1){
         $s = self::settings();
         $pre = $order->has_shipping_address() ? 'shipping' : 'billing';
         $first = (string)$order->{'get_'.$pre.'_first_name'}();
@@ -216,7 +216,7 @@ class Gls {
         $p = [
             'ClientNumber' => (int)$s['client_number'],
             'ClientReference' => mb_substr((string)$order->get_order_number(), 0, 40),
-            'Count' => 1,
+            'Count' => max(1, min(20, (int)$count)),
             'Content' => mb_substr('Rendelés '.$order->get_order_number(), 0, 60),
             'PickupAddress' => self::address([ 'name' => $s['sender_name'], 'address_1' => $s['sender_line'], 'city' => $s['sender_city'], 'postcode' => $s['sender_postcode'], 'country' => 'HU', 'phone' => $s['sender_phone'], 'email' => $s['sender_email'] ]),
             'DeliveryAddress' => self::address($ship),
@@ -265,10 +265,20 @@ class Gls {
         return is_array($info) ? $info : [];
     }
 
-    private static function store(\WC_Order $order, $parcel_id, $parcel, $pdf = ''){
+    /** A rendelés GLS-csomagjainak azonosítói (több dobozos küldeménynél több). */
+    static function parcel_ids(array $info){
+        if (!empty($info['parcel_ids'])) return array_map('intval', (array)$info['parcel_ids']);
+        return !empty($info['parcel_id']) ? [ (int)$info['parcel_id'] ] : [];
+    }
+
+    /** @param int[] $parcel_ids @param string[] $parcels csomagszámok (az első a küldemény követési száma) */
+    private static function store(\WC_Order $order, array $parcel_ids, array $parcels, $pdf = ''){
         $info = self::info($order);
-        $info['parcel_id'] = (int)$parcel_id;
-        $info['parcel'] = (string)$parcel;
+        $info['parcel_ids'] = array_values(array_map('intval', $parcel_ids));
+        $info['parcel_id'] = (int)($info['parcel_ids'][0] ?? 0);
+        $info['parcels'] = array_values(array_map('strval', $parcels));
+        $info['parcel'] = (string)($info['parcels'][0] ?? '');
+        $parcel = $info['parcel'];
         if ($pdf !== ''){
             $file = 'gls-'.$order->get_id().'-'.wp_generate_password(8, false).'.pdf';
             file_put_contents(self::label_dir().'/'.$file, $pdf);
@@ -287,44 +297,79 @@ class Gls {
      * Címke egy vagy több rendeléshez. Ami már kapott csomagszámot, újranyomtat (nem hoz létre új csomagot).
      * @return array|\WP_Error [ 'pdf' => bináris, 'done' => [order_id => csomagszám], 'errors' => [order_id => hiba] ]
      */
-    static function labels(array $orders){
+    static function labels(array $orders, array $counts = []){
         $s = self::settings();
         $type = isset(self::PRINTERS[$s['printer']]) ? $s['printer'] : 'A4_2x2';
         $new = $ids = $done = $errors = [];
         foreach($orders as $order){
-            $info = self::info($order);
-            if (!empty($info['parcel_id'])){ $ids[$order->get_id()] = (int)$info['parcel_id']; continue; }
+            $existing = self::parcel_ids(self::info($order));
+            if ($existing){ $ids[$order->get_id()] = $existing; continue; }
             if (!self::needs_label($order)){ $errors[$order->get_id()] = 'személyes átvétel – nem kell GLS-címke'; continue; }
             $new[$order->get_id()] = $order;
         }
         if ($new){
-            $res = self::request('PrintLabels', [ 'ParcelList' => array_values(array_map([ __CLASS__, 'parcel' ], $new)), 'TypeOfPrinter' => $type, 'PrintPosition' => 1, 'ShowPrintDialog' => false ]);
+            $list = [];
+            foreach($new as $id => $order) $list[] = self::parcel($order, $counts[$id] ?? 1);
+            $res = self::request('PrintLabels', [ 'ParcelList' => $list, 'TypeOfPrinter' => $type, 'PrintPosition' => 1, 'ShowPrintDialog' => false ]);
             if (is_wp_error($res)){
                 foreach($new as $id => $order){ $errors[$id] = $res->get_error_message(); $order->add_order_note('GLS-címke nem készült el: '.$res->get_error_message()); }
             } else {
-                $by_ref = [];
+                $by_ref = $got = [];
                 foreach($new as $id => $order) $by_ref[(string)$order->get_order_number()] = $order;
                 foreach((array)($res['PrintLabelsInfoList'] ?? []) as $row){
                     $order = $by_ref[(string)($row['ClientReference'] ?? '')] ?? null;
                     if (!$order || empty($row['ParcelId'])) continue;
-                    self::store($order, $row['ParcelId'], (string)($row['ParcelNumber'] ?? ''));
-                    $order->add_order_note('GLS-címke elkészült (csomagszám: '.($row['ParcelNumber'] ?? '').').');
-                    $ids[$order->get_id()] = (int)$row['ParcelId'];
+                    $got[$order->get_id()]['ids'][] = (int)$row['ParcelId'];
+                    $got[$order->get_id()]['numbers'][] = (string)($row['ParcelNumber'] ?? '');
+                }
+                foreach($got as $order_id => $g){
+                    $order = $new[$order_id];
+                    self::store($order, $g['ids'], $g['numbers']);
+                    $order->add_order_note('GLS-címke elkészült ('.count($g['ids']).' csomag; csomagszám: '.implode(', ', $g['numbers']).').');
+                    $ids[$order_id] = $g['ids'];
                 }
             }
         }
         if (!$ids) return $errors ? new \WP_Error('vk_gls', implode('; ', array_unique($errors))) : new \WP_Error('vk_gls', 'Nincs címkézhető rendelés.');
-        $res = self::request('GetPrintedLabels', [ 'ParcelIdList' => array_values($ids), 'PrintPosition' => 1, 'ShowPrintDialog' => false, 'TypeOfPrinter' => $type ]);
+        $res = self::request('GetPrintedLabels', [ 'ParcelIdList' => array_values(array_merge(...array_values($ids))), 'PrintPosition' => 1, 'ShowPrintDialog' => false, 'TypeOfPrinter' => $type ]);
         if (is_wp_error($res)) return $res;
         $pdf = self::bytes($res['Labels'] ?? null);
         if (strpos($pdf, '%PDF') !== 0) return new \WP_Error('vk_gls', 'A MyGLS nem adott PDF-címkét.');
-        foreach($ids as $order_id => $parcel_id){
+        foreach($ids as $order_id => $parcel_ids){
             $order = wc_get_order($order_id);
             if (!$order) continue;
-            if (count($ids) === 1) self::store($order, $parcel_id, (string)(self::info($order)['parcel'] ?? ''), $pdf);
-            $done[$order_id] = (string)(self::info($order)['parcel'] ?? '');
+            $info = self::info($order);
+            if (count($ids) === 1) self::store($order, $parcel_ids, (array)($info['parcels'] ?? [ $info['parcel'] ?? '' ]), $pdf);
+            $done[$order_id] = (string)($info['parcel'] ?? '');
         }
         return [ 'pdf' => $pdf, 'done' => $done, 'errors' => $errors ];
+    }
+
+    /** Kapcsolat-diagnosztika titok nélkül (a státusz-végpont diag=gls kérésére). */
+    static function diagnose(){
+        $s = self::settings();
+        $out = [
+            'ready' => self::ready(),
+            'username_set' => $s['username'] !== '',
+            'username_is_email' => (bool)is_email($s['username']),
+            'password_hash_len' => strlen($s['password_hash']),
+            'client_number_len' => strlen((string)$s['client_number']),
+            'client_number_digits' => ctype_digit((string)$s['client_number']),
+            'test' => (int)$s['test'],
+            'sender' => $s['sender_postcode'].' '.$s['sender_city'],
+        ];
+        if (!self::ready()) return $out;
+        $res = self::request('GetParcelList', [ 'PrintDateFrom' => '/Date('.((time() - 7 * DAY_IN_SECONDS) * 1000).')/', 'PrintDateTo' => '/Date('.(time() * 1000).')/' ]);
+        $out['GetParcelList'] = is_wp_error($res) ? 'HIBA: '.$res->get_error_message() : 'OK ('.count((array)($res['PrintDataInfoList'] ?? [])).')';
+        $orders = wc_get_orders([ 'limit' => 5, 'orderby' => 'date', 'order' => 'DESC', 'return' => 'objects' ]);
+        $notes = [];
+        foreach($orders as $order){
+            foreach(wc_get_order_notes([ 'order_id' => $order->get_id(), 'limit' => 5 ]) as $note){
+                if (stripos($note->content, 'GLS') !== false) $notes[] = '#'.$order->get_order_number().': '.$note->content;
+            }
+        }
+        $out['notes'] = $notes;
+        return $out;
     }
 
     private static function send_pdf($pdf, $name){
@@ -353,14 +398,16 @@ class Gls {
         $info = self::info($order);
         $label_url = wp_nonce_url(admin_url('admin-post.php?action=vk_gls_label&order='.$order->get_id()), 'vk_gls_label_'.$order->get_id());
         if (!empty($info['parcel_id'])){
-            echo '<p>Csomagszám: <strong>'.esc_html($info['parcel'] ?? '').'</strong></p>';
+            $all = (array)($info['parcels'] ?? [ $info['parcel'] ?? '' ]);
+            echo '<p>'.(count($all) > 1 ? count($all).' csomag, csomagszámok' : 'Csomagszám').': <strong>'.esc_html(implode(', ', $all)).'</strong></p>';
             echo '<p><a class="button" target="_blank" href="'.esc_url(wp_nonce_url(admin_url('admin-post.php?action=vk_gls_download&order='.$order->get_id()), 'vk_gls_dl_'.$order->get_id())).'">Címke letöltése (PDF)</a></p>';
             $status = $order->get_meta('_vk_gls_status');
             if (is_array($status) && !empty($status['text'])) echo '<p class="description">GLS-állapot: '.esc_html($status['text']).'</p>';
         } elseif (!self::needs_label($order)){
             echo '<p class="description">Személyes átvétel – nem kell GLS-címke.</p>';
         } else {
-            echo '<p><a class="button button-primary" target="_blank" href="'.esc_url($label_url).'">GLS-címke készítése</a></p>';
+            echo '<p><label for="vk-gls-count">Dobozok száma:</label> <input type="number" id="vk-gls-count" min="1" max="20" value="1" style="width:4.5em"></p>';
+            echo '<p><a class="button button-primary" target="_blank" href="'.esc_url($label_url).'" onclick="var n=parseInt(document.getElementById(\'vk-gls-count\').value,10)||1;this.href=this.href.replace(/&count=\\d+/,\'\')+\'&count=\'+Math.max(1,Math.min(20,n));">GLS-címke készítése</a></p>';
             echo '<p class="description">'.($order->get_payment_method() === 'cod' ? 'Utánvét: '.wp_strip_all_tags(wc_price($order->get_total())).'. ' : '').'A csomagszám magától a rendelésbe kerül.</p>';
         }
     }
@@ -370,7 +417,7 @@ class Gls {
         if (!current_user_can('edit_shop_orders') || !check_admin_referer('vk_gls_label_'.$id)) wp_die('', '', [ 'response' => 403 ]);
         $order = wc_get_order($id);
         if (!$order) wp_die('Nincs ilyen rendelés.');
-        $res = self::labels([ $order ]);
+        $res = self::labels([ $order ], [ $order->get_id() => max(1, min(20, (int)($_GET['count'] ?? 1))) ]);
         if (is_wp_error($res)) wp_die('<p>'.esc_html($res->get_error_message()).'</p><p><a href="javascript:history.back()">Vissza</a></p>', 'GLS-címke', [ 'response' => 200 ]);
         self::send_pdf($res['pdf'], 'gls-'.$order->get_order_number().'.pdf');
     }

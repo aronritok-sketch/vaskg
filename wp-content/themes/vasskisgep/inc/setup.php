@@ -59,6 +59,7 @@ class Setup {
         40 => 'arukereso_feed',
         41 => 'size_variants',
         42 => 'berrin_logo',
+        43 => 'aszf_shipping',
     ];
 
     /**
@@ -1755,4 +1756,22 @@ class Setup {
         MegaMenu::flush();
         $this->log[] = 'Megamenü feliratok beállítva';
     }
+
+    /** 43. Szállítás és fizetés oldal: a fizetési módok és a szállítási díjak az ÁSZF-ből (Aszf, Dávid 17. pontja). */
+    function aszf_shipping(){
+        $page = get_page_by_path('szallitas-es-fizetes');
+        if (!$page || strpos($page->post_content, 'vasskisgep/aszf-shipping') !== false) return;
+        $pattern = '#<!-- wp:heading \{"level":4\} -->\s*<h4[^>]*>Házhozszállítás díja.*?(?=<!-- wp:heading [^>]*-->\s*<h3[^>]*>Rendelés menete)#su';
+        $new = "<!-- wp:heading {\"level\":3,\"marginTop\":\"2.1rem\",\"iu_style\":\"margin-top:2.1rem\"} -->\n<h3 class=\"wp-block-heading iu-heading\">Fizetési módok és szállítási díjak</h3>\n<!-- /wp:heading -->\n\n"
+            ."<!-- wp:vasskisgep/aszf-shipping /-->\n\n"
+            ."<!-- wp:paragraph {\"className\":\"\"} -->\n<p class=\"iu-text\">Az árak forintban értendők és tartalmazzák a 27% ÁFA-t. A vásárlásról elektronikus számlát küldünk.</p>\n<!-- /wp:paragraph -->\n\n";
+        $content = preg_replace($pattern, str_replace('$', '\\$', $new), $page->post_content, 1, $count);
+        if ($count){
+            wp_update_post([ 'ID' => $page->ID, 'post_content' => wp_slash($content) ]);
+            $this->log[] = 'Szállítás és fizetés oldal: a fizetési módok és a szállítási díjak az ÁSZF-ből.';
+        } else {
+            $this->log[] = 'FIGYELEM: a Szállítás és fizetés oldalra az „ÁSZF: fizetés és szállítás” blokkot kézzel kell betenni.';
+        }
+    }
+
 }
