@@ -211,6 +211,8 @@ class Orders {
             .vk-status-select.status-completed { border-left-color: #1565c0; background-color: #eaf2fb; }
             .vk-status-select.status-on-hold { border-left-color: #f0a500; background-color: #fff7e6; }
             .vk-status-select.status-pending { border-left-color: #9e9e9e; }
+            .vk-status-select.status-shipped { border-left-color: #6d28d9; background-color: #f3eefe; }
+            .vk-status-select.status-partial { border-left-color: #d97706; background-color: #fff4e5; }
             .vk-status-select.status-cancelled, .vk-status-select.status-failed, .vk-status-select.status-refunded { border-left-color: #c62828; background-color: #fbeeee; }
             tr.vk-status-changed td { background: #fff3c4 !important; }
             .vk-status-bar { position: fixed; z-index: 9999; left: 50%; bottom: 20px; transform: translateX(-50%); display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: #1d2327; color: #fff; border-radius: 6px; box-shadow: 0 6px 24px rgba(0,0,0,.25); font-size: 14px; }

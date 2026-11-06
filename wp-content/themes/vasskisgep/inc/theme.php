@@ -22,6 +22,7 @@ require_once(__DIR__.'/shipping.php');
 require_once(__DIR__.'/feed.php');
 require_once(__DIR__.'/minicart.php');
 require_once(__DIR__.'/emails.php');
+require_once(__DIR__.'/order-statuses.php');
 
 class Theme {
     private static $instance;
@@ -49,6 +50,7 @@ class Theme {
         Feed::get_instance();
         MiniCart::get_instance();
         Emails::get_instance();
+        OrderStatuses::get_instance();
         Pages::get_instance();
         Search::get_instance();
         Cofidis::get_instance();
