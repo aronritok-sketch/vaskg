@@ -186,6 +186,7 @@ class MigrationData {
             'missing_products' => $prefix !== '' ? MigrationNewProducts::missing(30) : [],
             'new_products' => get_option(MigrationNewProducts::STATE, []),
             'missing_images' => MigrationNewProducts::missing_images(),
+            'analytics' => [ 'started' => (int)get_option('vk_analytics_import'), 'importing' => class_exists('\\Automattic\\WooCommerce\\Admin\\ReportsSync') ? \Automattic\WooCommerce\Admin\ReportsSync::is_importing() : null, 'orders_in_stats' => $wpdb->get_var("SHOW TABLES LIKE '{$wpdb->prefix}wc_order_stats'") ? (int)$wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}wc_order_stats") : null ],
             'pending_actions' => function_exists('as_get_scheduled_actions') ? count(as_get_scheduled_actions([ 'hook' => self::HOOK, 'status' => 'pending' ], 'ids')) : null,
         ];
     }

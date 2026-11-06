@@ -38,9 +38,11 @@ class Pages {
         if (is_admin()) return $content;
         $content = (string)$content;
         $name = $block['blockName'] ?? '';
-        // Lábléc alja, középen: az Árukereső jelvénye (ügyfélkérés, 2026-11: „alul középen”, mint a régi oldalon) –
-        // a copyright sorban a bal oldali linkek és a jobb oldali © közé.
-        if (strpos($content, 'Minden jog fenntartva') !== false && in_array($name, [ 'core/paragraph', 'iu/text' ], true)) return self::arukereso_badge().$content;
+        // Lábléc: a saját „Megbízható Bolt” kép helyén az Árukereső hivatalos jelvénye (ügyfélkérés, 2026-11: „az előző helyen jó volt”).
+        if (strpos($content, 'Payment-methods-image.svg') !== false && strpos($name, 'image') !== false) return self::arukereso_badge();
+        // Lábléc alja, középen: az Árukereső logója (a régi oldal kódja, ha megvan: ARUKERESO_CENTER) – a copyright sor
+        // bal oldali linkjei és a jobb oldali © közé.
+        if (self::ARUKERESO_CENTER !== '' && strpos($content, 'Minden jog fenntartva') !== false && in_array($name, [ 'core/paragraph', 'iu/text' ], true)) return '<div class="vk-arukereso-center">'.self::ARUKERESO_CENTER.'</div>'.$content;
         $card = stripos($content, 'barion') !== false && in_array($name, [ 'core/list-item', 'iu/list-item', 'core/paragraph', 'iu/text' ], true);
         // Lábléc: „Elfogadott fizetési módok” és a kártyalogók csak online kártyás fizetésnél (Barion).
         if (strpos($content, 'Payment-methods-logos-container') !== false && strpos($name, 'image') !== false) $card = true;
@@ -65,11 +67,13 @@ class Pages {
     /** Árukereső „Megbízható Bolt” jelvény (az Árukereső kódja, a bolt azonosítójával). */
     const ARUKERESO_KEY = '64c44dfc124163ee93d84b39212c4c04';
     const ARUKERESO_SHOP = '196224';
+    /** Az alul középre kerülő Árukereső-logó kódja (Dávid második e-mailje) – amíg üres, nem jelenik meg. */
+    const ARUKERESO_CENTER = '';
 
     static function arukereso_badge(){
         return '<!-- ÁRUKERESŐ.HU - PLEASE DO NOT MODIFY THE LINES BELOW -->'
-            .'<div class="vk-arukereso-badge" style="background: transparent; text-align: center; padding: 0; margin: 0 auto;">'
-            .'<a title="Árukereső.hu" href="https://www.arukereso.hu"><img src="https://image.arukereso.hu/trustedbadge/'.self::ARUKERESO_SHOP.'-100x100-'.self::ARUKERESO_KEY.'.png" alt="Árukereső.hu" style="border-style:none;" /></a>'
+            .'<div class="iu-image vk-arukereso-badge" style="background: transparent; text-align: center; padding: 0; margin: 0;">'
+            .'<a title="Árukereső.hu" href="https://www.arukereso.hu"><img src="https://image.arukereso.hu/trustedbadge/'.self::ARUKERESO_SHOP.'-100x100-'.self::ARUKERESO_KEY.'.png" alt="Árukereső.hu" width="100" height="100" style="border-style:none;height:4.8rem;width:auto" /></a>'
             .'</div>'
             .'<!-- ÁRUKERESŐ.HU CODE END -->';
     }

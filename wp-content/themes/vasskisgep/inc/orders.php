@@ -26,6 +26,7 @@ class Orders {
         add_action('admin_head', [$this, 'styles']);
         add_action('admin_footer', [$this, 'status_script']);
         add_action('wp_ajax_vk_orders_status', [$this, 'save_statuses']);
+        add_action('init', [$this, 'analytics_import'], 99);
         // A „Feldolgozás alatt” rendelés tételei is szerkeszthetők (tétel hozzáadása, törlése, mennyiség);
         // a WooCommerce alapból csak a függő és a visszatartott rendelést engedi.
         add_filter('wc_order_is_editable', [$this, 'editable'], 10, 2);
@@ -42,6 +43,7 @@ class Orders {
         foreach($columns as $key => $label){
             if ($key === 'order_status') $label = 'Státusz';
             $out[$key] = $label;
+            if ($key === 'order_status') $out['vk_notify'] = 'Értesítés';
             if ($key === 'order_number') $out['vk_items'] = 'Termékek';
         }
         if (!isset($out['vk_items'])) $out['vk_items'] = 'Termékek';
@@ -51,6 +53,11 @@ class Orders {
     function column($column, $order){
         if ($column === 'order_status'){
             $this->status_select($order);
+            return;
+        }
+        if ($column === 'vk_notify'){
+            $id = $order instanceof \WC_Order ? $order->get_id() : (int)$order;
+            echo '<span class="no-link"><label class="vk-notify-wrap" title="A vásárló e-mailt kap a státusz változásáról"><input type="checkbox" class="vk-notify" data-order="'.(int)$id.'" checked> vásárló</label></span>';
             return;
         }
         if ($column !== 'vk_items') return;
@@ -87,18 +94,43 @@ class Orders {
         echo '</select></span>';
     }
 
+    /**
+     * Analitika: a régi webshopból átvett rendelések a kimutatásokba (ügyfélkérés, 2026-11: az „Előzményadatok
+     * importálása” gombhoz a boltkezelőnek nincs joga). Egyszer, a háttérben (a WooCommerce saját importja).
+     */
+    function analytics_import(){
+        if (wp_doing_ajax() || get_option('vk_analytics_import') || !class_exists('\\Automattic\\WooCommerce\\Admin\\ReportsSync')) return;
+        if (!get_option('vk_mig_data_auto') && !get_option('vk_mig_data_state')) return;
+        update_option('vk_analytics_import', time(), false);
+        \Automattic\WooCommerce\Admin\ReportsSync::regenerate_report_data(false, true);
+    }
+
     /** Több rendelés státuszának mentése (a listából). */
     function save_statuses(){
         if (!current_user_can('edit_shop_orders') || !check_ajax_referer('vk_orders_status', 'nonce', false)) wp_send_json_error([ 'message' => 'Nincs jogosultság.' ], 403);
         $statuses = wc_get_order_statuses();
         $changes = (array)json_decode(wp_unslash((string)($_POST['changes'] ?? '')), true);
+        $notify = (array)json_decode(wp_unslash((string)($_POST['notify'] ?? '')), true);
         $done = 0;
         $errors = [];
         foreach($changes as $id => $status){
             $order = wc_get_order((int)$id);
             if (!$order || !isset($statuses[$status])){ $errors[] = '#'.(int)$id; continue; }
             if ('wc-'.$order->get_status() === $status) continue;
-            $order->update_status(substr($status, 3), 'Státusz módosítva a rendeléslistából.', true);
+            // „Értesítés” pipa nélkül a vásárló nem kap levelet erről a státuszváltásról (a bolt értesítői maradnak).
+            $silent = isset($notify[$id]) && !$notify[$id];
+            $off = [];
+            if ($silent){
+                foreach(WC()->mailer()->get_emails() as $email){
+                    if ($email->is_customer_email()){
+                        $hook = 'woocommerce_email_enabled_'.$email->id;
+                        add_filter($hook, '__return_false', 999);
+                        $off[] = $hook;
+                    }
+                }
+            }
+            $order->update_status(substr($status, 3), 'Státusz módosítva a rendeléslistából'.($silent ? ' (a vásárló nem kapott értesítést).' : '.'), true);
+            foreach($off as $hook) remove_filter($hook, '__return_false', 999);
             $done++;
         }
         wp_send_json_success([ 'done' => $done, 'errors' => $errors ]);
@@ -118,14 +150,19 @@ class Orders {
                 $('.vk-status-select').each(function(){ $(this).closest('tr').toggleClass('vk-status-changed', this.value !== $(this).data('orig')); });
                 $bar.prop('hidden', n === 0).find('.vk-status-count').text(n + ' rendelés státusza módosult');
             }
-            $(document).on('click mousedown', '.vk-status-wrap', function(e){ e.stopPropagation(); });
+            $(document).on('click mousedown', '.vk-status-wrap, .vk-notify-wrap', function(e){ e.stopPropagation(); });
             $(document).on('change', '.vk-status-select', refresh);
             $bar.on('click', '.vk-status-cancel', function(){ $('.vk-status-select').each(function(){ this.value = $(this).data('orig'); }); refresh(); });
             $bar.on('click', '.vk-status-save', function(){
-                var data = {};
-                changed().each(function(){ data[$(this).data('order')] = this.value; });
+                var data = {}, notify = {};
+                changed().each(function(){
+                    var id = $(this).data('order');
+                    data[id] = this.value;
+                    var $n = $('.vk-notify[data-order="' + id + '"]');
+                    notify[id] = $n.length ? ($n.prop('checked') ? 1 : 0) : 1;
+                });
                 var $btn = $(this).prop('disabled', true).text('Mentés…');
-                $.post(ajaxurl, { action: 'vk_orders_status', nonce: nonce, changes: JSON.stringify(data) }).done(function(r){
+                $.post(ajaxurl, { action: 'vk_orders_status', nonce: nonce, changes: JSON.stringify(data), notify: JSON.stringify(notify) }).done(function(r){
                     if (r && r.success){ window.location.reload(); return; }
                     window.alert((r && r.data && r.data.message) || 'A mentés nem sikerült.');
                     $btn.prop('disabled', false).text('Státuszok mentése');
@@ -158,6 +195,9 @@ class Orders {
             /* Státusz a listában: választó (a WooCommerce saját jelölése helyett). */
             .column-order_status mark.order-status { display: none; }
             .column-order_status { width: 13rem; }
+            .column-vk_notify { width: 7rem; }
+            .vk-notify-wrap { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; cursor: pointer; }
+            .vk-notify-wrap input { margin: 0; }
             .vk-status-select { width: 100%; max-width: 12.5rem; font-size: 14px; border-radius: 4px; border-left-width: 5px; }
             .vk-status-select.status-processing { border-left-color: #2e7d32; background-color: #eef7ee; }
             .vk-status-select.status-completed { border-left-color: #1565c0; background-color: #eaf2fb; }
