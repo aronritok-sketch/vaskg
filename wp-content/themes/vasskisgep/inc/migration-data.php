@@ -21,7 +21,7 @@ class MigrationData {
     const STATE = 'vk_mig_data_state';
     const LOCK = 'vk_mig_data_lock';
     const STAGES = [ 'customers' => 'Vásárlók', 'orders' => 'Rendelések', 'reviews' => 'Értékelések', 'coupons' => 'Kuponok', 'archive' => 'Archívum (minden tábla)' ];
-    const BATCH = [ 'customers' => 150, 'orders' => 40, 'reviews' => 200, 'coupons' => 200, 'archive' => 4000 ];
+    const BATCH = [ 'customers' => 150, 'orders' => 40, 'reviews' => 200, 'coupons' => 200, 'archive' => 400 ];
     /** Az archívumból kihagyott oszlopok (jelszavak, titkok) és táblák (munkamenetek). */
     const SECRET_COLUMNS = [ 'password', 'otpkey', 'otep', 'activation', 'order_pass', 'order_create_invoice_pass', 'params_secret' ];
     const SKIP_TABLES = [ 'session' ];
@@ -105,7 +105,15 @@ class MigrationData {
      * körül, így ha a régi adatbázist később importálják, akkor indul.
      */
     static function auto(){
-        if (!function_exists('WC') || wp_doing_ajax() || get_transient(self::AUTO.'_probe')) return;
+        if (!function_exists('WC') || wp_doing_ajax()) return;
+        // Megakadt futás (pl. egy adag kifutott a memóriából / időből): 10 perc csend után folytatja.
+        $state = self::state();
+        if (!empty($state['started']) && empty($state['finished']) && get_option(self::AUTO) && (int)($state['touched'] ?? $state['started']) < time() - 10 * MINUTE_IN_SECONDS && !get_transient(self::AUTO.'_resume')){
+            set_transient(self::AUTO.'_resume', 1, 10 * MINUTE_IN_SECONDS);
+            delete_transient(self::LOCK);
+            self::schedule();
+        }
+        if (get_transient(self::AUTO.'_probe')) return;
         set_transient(self::AUTO.'_probe', 1, HOUR_IN_SECONDS);
         $found = self::locate();
         if (!$found) return;
@@ -284,6 +292,7 @@ class MigrationData {
                 $state['finished'] = time();
             }
         }
+        $state['touched'] = time();
         update_option(self::STATE, $state, false);
         delete_transient(self::LOCK);
         return [ 'done' => !empty($state['finished']), 'message' => self::message($state) ];
