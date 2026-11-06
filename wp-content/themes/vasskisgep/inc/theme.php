@@ -25,6 +25,7 @@ require_once(__DIR__.'/emails.php');
 require_once(__DIR__.'/order-statuses.php');
 require_once(__DIR__.'/abandoned-cart.php');
 require_once(__DIR__.'/seasons-admin.php');
+require_once(__DIR__.'/gls.php');
 
 class Theme {
     private static $instance;
@@ -55,6 +56,7 @@ class Theme {
         OrderStatuses::get_instance();
         AbandonedCart::get_instance();
         SeasonsAdmin::get_instance();
+        Gls::get_instance();
         Pages::get_instance();
         Search::get_instance();
         Cofidis::get_instance();
