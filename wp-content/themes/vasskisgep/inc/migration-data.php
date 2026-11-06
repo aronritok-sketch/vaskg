@@ -169,6 +169,13 @@ class MigrationData {
         if ($q !== '') return [ 'lookup' => MigrationNewProducts::lookup($q) ];
         if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'nav') return Checkout::diagnose();
         if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'gls') return Gls::diagnose();
+        // A függő beállító lépések lefuttatása (különben csak az admin felület első betöltésekor futnak).
+        if ($request instanceof \WP_REST_Request && $request->get_param('setup') === 'run'){
+            $from = (int)get_option(Setup::OPTION, 0);
+            if ($from < Setup::latest_version()) Setup::get_instance()->run();
+            wp_set_current_user(0);
+            return [ 'from' => $from, 'to' => (int)get_option(Setup::OPTION, 0), 'log' => get_option(Setup::LOG_OPTION, []) ];
+        }
         $state = self::state();
         $prefix = self::prefix();
         return [

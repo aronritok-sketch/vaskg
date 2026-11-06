@@ -80,7 +80,7 @@ class Gls {
         $row('Címke formátuma', $printer.'</select>');
         $row('Értesítés', '<label><input type="checkbox" name="notify" value="1"'.checked($s['notify'], 1, false).'> A GLS e-mailben / SMS-ben értesítse a vásárlót a kézbesítésről</label>');
         $row('Automatikus státusz', '<label><input type="checkbox" name="auto_status" value="1"'.checked($s['auto_status'], 1, false).'> A csomag állapota alapján: átadva → Postázva, kézbesítve → Teljesítve</label>');
-        $row('Teszt környezet', '<label><input type="checkbox" name="test" value="1"'.checked($s['test'], 1, false).'> MyGLS teszt rendszer (csak próbához)</label>');
+        $row('Teszt környezet', '<label><input type="checkbox" name="test" value="1"'.checked($s['test'], 1, false).'> MyGLS teszt rendszer (csak próbához)</label>', 'Éles MyGLS-fiókkal hagyd kikapcsolva: a teszt rendszerben az éles fiók nem létezik.');
         echo '</table><p><button class="button button-primary" name="do" value="save">Mentés</button> <button class="button" name="do" value="test">Mentés és kapcsolat tesztelése</button></p></form></div>';
     }
 
@@ -128,13 +128,13 @@ class Gls {
         if (is_wp_error($res)) return new \WP_Error('vk_gls_transport', 'A MyGLS nem érhető el: '.$res->get_error_message());
         $code = (int)wp_remote_retrieve_response_code($res);
         $json = json_decode((string)wp_remote_retrieve_body($res), true);
-        if ($code === 401) return new \WP_Error('vk_gls_auth', 'MyGLS: hibás felhasználó vagy jelszó.');
+        if ($code === 401) return new \WP_Error('vk_gls_auth', 'MyGLS: hibás felhasználó vagy jelszó.'.($s['test'] ? ' A „Teszt környezet” be van kapcsolva: éles MyGLS-fiókkal kapcsold ki (WooCommerce → GLS (MyGLS)).' : ''));
         if ($code !== 200 || !is_array($json)) return new \WP_Error('vk_gls', 'MyGLS: HTTP '.$code);
         if (isset($json['ErrorCode']) && !isset($json[self::error_key($method)])) return new \WP_Error('vk_gls_'.(int)$json['ErrorCode'], 'MyGLS ('.(int)$json['ErrorCode'].'): '.(string)($json['ErrorDescription'] ?? 'hibás kérés'));
         $errs = (array)($json[self::error_key($method)] ?? []);
         if ($errs){
             $e = (array)$errs[0];
-            if ((int)($e['ErrorCode'] ?? 0) === -1) return new \WP_Error('vk_gls_auth', 'MyGLS: hibás felhasználó vagy jelszó.');
+            if ((int)($e['ErrorCode'] ?? 0) === -1) return new \WP_Error('vk_gls_auth', 'MyGLS: hibás felhasználó vagy jelszó.'.($s['test'] ? ' A „Teszt környezet” be van kapcsolva: éles MyGLS-fiókkal kapcsold ki (WooCommerce → GLS (MyGLS)).' : ''));
             return new \WP_Error('vk_gls_'.(int)($e['ErrorCode'] ?? 0), 'MyGLS ('.(int)($e['ErrorCode'] ?? 0).'): '.(string)($e['ErrorDescription'] ?? 'hiba'), [ 'json' => $json ]);
         }
         return $json;
