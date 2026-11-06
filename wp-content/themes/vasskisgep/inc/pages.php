@@ -38,8 +38,9 @@ class Pages {
         if (is_admin()) return $content;
         $content = (string)$content;
         $name = $block['blockName'] ?? '';
-        // Lábléc: a saját „Megbízható Bolt” kép helyett az Árukereső hivatalos jelvénye (ügyfélkérés, 2026-11).
-        if (strpos($content, 'Payment-methods-image.svg') !== false && strpos($name, 'image') !== false) return self::arukereso_badge();
+        // Lábléc alja, középen: az Árukereső jelvénye (ügyfélkérés, 2026-11: „alul középen”, mint a régi oldalon) –
+        // a copyright sorban a bal oldali linkek és a jobb oldali © közé.
+        if (strpos($content, 'Minden jog fenntartva') !== false && in_array($name, [ 'core/paragraph', 'iu/text' ], true)) return self::arukereso_badge().$content;
         $card = stripos($content, 'barion') !== false && in_array($name, [ 'core/list-item', 'iu/list-item', 'core/paragraph', 'iu/text' ], true);
         // Lábléc: „Elfogadott fizetési módok” és a kártyalogók csak online kártyás fizetésnél (Barion).
         if (strpos($content, 'Payment-methods-logos-container') !== false && strpos($name, 'image') !== false) $card = true;
@@ -67,8 +68,8 @@ class Pages {
 
     static function arukereso_badge(){
         return '<!-- ÁRUKERESŐ.HU - PLEASE DO NOT MODIFY THE LINES BELOW -->'
-            .'<div class="iu-image vk-arukereso-badge" style="background: transparent; text-align: center; padding: 0; margin: 0;">'
-            .'<a title="Árukereső.hu" href="https://www.arukereso.hu"><img src="https://image.arukereso.hu/trustedbadge/'.self::ARUKERESO_SHOP.'-100x100-'.self::ARUKERESO_KEY.'.png" alt="Árukereső.hu" width="100" height="100" style="border-style:none;height:4.8rem;width:auto" /></a>'
+            .'<div class="vk-arukereso-badge" style="background: transparent; text-align: center; padding: 0; margin: 0 auto;">'
+            .'<a title="Árukereső.hu" href="https://www.arukereso.hu"><img src="https://image.arukereso.hu/trustedbadge/'.self::ARUKERESO_SHOP.'-100x100-'.self::ARUKERESO_KEY.'.png" alt="Árukereső.hu" style="border-style:none;" /></a>'
             .'</div>'
             .'<!-- ÁRUKERESŐ.HU CODE END -->';
     }
