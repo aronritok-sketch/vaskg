@@ -38,6 +38,7 @@ class MigrationData {
     static function init(){
         add_action('admin_post_vk_mig_data_download', [__CLASS__, 'download']);
         add_action(self::HOOK, [__CLASS__, 'background']);
+        add_action('vasskisgep_newproducts', function(){ MigrationNewProducts::run(); });
         add_action('init', [__CLASS__, 'auto'], 99);
         add_action('rest_api_init', function(){
             register_rest_route('vasskisgep/v1', '/data-status', [
@@ -113,6 +114,12 @@ class MigrationData {
             delete_transient(self::LOCK);
             self::schedule();
         }
+        // Kész átvétel, de a később felvett termékek még nem jöttek át: egyszer, a háttérben.
+        if (!empty($state['finished']) && get_option(self::AUTO) && !get_option(MigrationNewProducts::STATE) && !get_transient(self::AUTO.'_newprod')){
+            set_transient(self::AUTO.'_newprod', 1, HOUR_IN_SECONDS);
+            if (function_exists('as_schedule_single_action')) as_schedule_single_action(time() + 5, 'vasskisgep_newproducts', [], 'vasskisgep');
+            else wp_schedule_single_event(time() + 5, 'vasskisgep_newproducts');
+        }
         if (get_transient(self::AUTO.'_probe')) return;
         set_transient(self::AUTO.'_probe', 1, HOUR_IN_SECONDS);
         $found = self::locate();
@@ -144,6 +151,8 @@ class MigrationData {
         }
         if (!empty($result['locked'])){ self::schedule(60); return; }
         if (empty($result['done'])) self::schedule();
+        // A végén: a régi boltba később felvett (a beolvasásból kimaradt) termékek.
+        elseif (class_exists(__NAMESPACE__.'\\MigrationNewProducts')) MigrationNewProducts::run();
     }
 
     /** Állapot (kulccsal): a forrás, a lépés, a számlálók – személyes adat nélkül. */
@@ -165,6 +174,8 @@ class MigrationData {
             'wp_orders_migrated' => (int)$wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->postmeta} WHERE meta_key = '_vk_old_order_id'") + (int)($wpdb->get_var("SHOW TABLES LIKE '{$wpdb->prefix}wc_orders_meta'") ? $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}wc_orders_meta WHERE meta_key = '_vk_old_order_id'") : 0),
             'wp_customers_migrated' => (int)$wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->usermeta} WHERE meta_key = '_vk_old_user_id'"),
             'latest_old_order' => $prefix !== '' && self::has('virtuemart_orders') ? (string)$wpdb->get_var('SELECT MAX(created_on) FROM '.self::t('virtuemart_orders')) : '',
+            'missing_products' => $prefix !== '' ? MigrationNewProducts::missing(30) : [],
+            'new_products' => get_option(MigrationNewProducts::STATE, []),
             'pending_actions' => function_exists('as_get_scheduled_actions') ? count(as_get_scheduled_actions([ 'hook' => self::HOOK, 'status' => 'pending' ], 'ids')) : null,
         ];
     }

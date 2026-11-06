@@ -9,6 +9,7 @@ require_once(__DIR__.'/migration-stock.php');
 require_once(__DIR__.'/migration-related.php');
 require_once(__DIR__.'/migration-variants.php');
 require_once(__DIR__.'/migration-data.php');
+require_once(__DIR__.'/migration-newproducts.php');
 
 /**
  * Ideiglenes átköltöztető a régi (Joomla + VirtueMart) webshopból: Termékek → Régi webshop átköltöztetés.
@@ -530,6 +531,12 @@ class Migration {
             $rows = MigrationStock::parse($args[1] ?? '');
             if (is_wp_error($rows)) \WP_CLI::error($rows->get_error_message());
             \WP_CLI::success(MigrationStock::message(MigrationStock::load($rows)));
+            return;
+        }
+        if ($what === 'newproducts'){
+            $state = MigrationNewProducts::run(200);
+            foreach($state['imported'] as $old => $row) \WP_CLI::log('Átvéve: '.$row['name'].' ('.$row['url'].', kép: '.$row['images_found'].'/'.$row['images'].')');
+            foreach($state['skipped'] as $old => $why) \WP_CLI::log('Kihagyva: '.$why);
             return;
         }
         if (isset($loops[$what])){
