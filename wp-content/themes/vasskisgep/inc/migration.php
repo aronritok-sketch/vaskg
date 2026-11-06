@@ -348,8 +348,21 @@ class Migration {
 
         $map = self::redirects();
         $url = '';
-        if (!empty($map['products'][$path])){
-            $url = get_permalink($map['products'][$path]);
+        $product = !empty($map['products'][$path]) ? (int)$map['products'][$path] : 0;
+        // Rövid régi termékcím (hirdetésekben: /termekek/<termék>, kategóriák nélkül – ügyfélkérés, 2026-11):
+        // a cím utolsó tagja a régi termékcímek végén, vagy egy termék webcíme.
+        if (!$product && empty($map['categories'][$path])){
+            $slug = basename($path);
+            foreach((array)$map['products'] as $old => $id){
+                if (basename($old) === $slug && get_post_status((int)$id) === 'publish'){ $product = (int)$id; break; }
+            }
+            if (!$product){
+                $post = get_page_by_path(sanitize_title($slug), OBJECT, 'product');
+                if ($post && $post->post_status === 'publish') $product = (int)$post->ID;
+            }
+        }
+        if ($product){
+            $url = get_permalink($product);
         } else {
             // Kategória: a leghosszabb ismert előtag.
             for ($try = $path; $try !== '' && $try !== 'termekek'; $try = dirname($try)){

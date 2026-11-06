@@ -27,6 +27,7 @@ class Pages {
         add_filter('the_content', [$this, 'strip_template_header'], 0);
         add_filter('body_class', [$this, 'body_class']);
         add_filter('render_block', [$this, 'hide_disabled_payments'], 10, 2);
+        add_action('wp_footer', [$this, 'arukereso_widget'], 99);
     }
 
     /**
@@ -34,8 +35,20 @@ class Pages {
      * fizetési mód be van kapcsolva (2026-11: az élesítés Barion nélkül indult; visszakapcsoláskor magától visszajön).
      */
     function hide_disabled_payments($content, $block){
-        if (is_admin() || stripos((string)$content, 'barion') === false) return $content;
-        if (!in_array($block['blockName'] ?? '', [ 'core/list-item', 'iu/list-item', 'core/paragraph', 'iu/text' ], true)) return $content;
+        if (is_admin()) return $content;
+        $content = (string)$content;
+        $name = $block['blockName'] ?? '';
+        // Lábléc: a saját „Megbízható Bolt” kép helyett az Árukereső hivatalos jelvénye (ügyfélkérés, 2026-11).
+        if (strpos($content, 'Payment-methods-image.svg') !== false && strpos($name, 'image') !== false) return self::arukereso_badge();
+        $card = stripos($content, 'barion') !== false && in_array($name, [ 'core/list-item', 'iu/list-item', 'core/paragraph', 'iu/text' ], true);
+        // Lábléc: „Elfogadott fizetési módok” és a kártyalogók csak online kártyás fizetésnél (Barion).
+        if (strpos($content, 'Payment-methods-logos-container') !== false && strpos($name, 'image') !== false) $card = true;
+        if (strpos($content, 'Elfogadott fizetési módok') !== false && in_array($name, [ 'core/paragraph', 'iu/text' ], true)) $card = true;
+        if (!$card) return $content;
+        return self::card_payment_enabled() ? $content : '';
+    }
+
+    static function card_payment_enabled(){
         static $enabled = null;
         if ($enabled === null){
             $enabled = false;
@@ -45,7 +58,36 @@ class Pages {
                 }
             }
         }
-        return $enabled ? $content : '';
+        return $enabled;
+    }
+
+    /** Árukereső „Megbízható Bolt” jelvény (az Árukereső kódja, a bolt azonosítójával). */
+    const ARUKERESO_KEY = '64c44dfc124163ee93d84b39212c4c04';
+    const ARUKERESO_SHOP = '196224';
+
+    static function arukereso_badge(){
+        return '<!-- ÁRUKERESŐ.HU - PLEASE DO NOT MODIFY THE LINES BELOW -->'
+            .'<div class="iu-image vk-arukereso-badge" style="background: transparent; text-align: center; padding: 0; margin: 0;">'
+            .'<a title="Árukereső.hu" href="https://www.arukereso.hu"><img src="https://image.arukereso.hu/trustedbadge/'.self::ARUKERESO_SHOP.'-100x100-'.self::ARUKERESO_KEY.'.png" alt="Árukereső.hu" width="100" height="100" style="border-style:none;height:4.8rem;width:auto" /></a>'
+            .'</div>'
+            .'<!-- ÁRUKERESŐ.HU CODE END -->';
+    }
+
+    /** Árukereső widget (lebegő „Megbízható Bolt” jelvény, bal alul) – az Árukereső kódja változatlanul. */
+    function arukereso_widget(){
+        if (is_admin()) return;
+        echo "\n<!-- ÁRUKERESŐ.HU - PLEASE DO NOT MODIFY THE LINES BELOW -->\n"
+            .'<script type="text/javascript">'."\n"
+            .'if(ak_widget_params === undefined || ak_widget_script === undefined) {'."\n"
+            .'var ak_widget_params = ["'.self::ARUKERESO_KEY.'","L","HU",1,"LB",0,480];'."\n"
+            .'  var ak_widget_script = document.createElement("script");'."\n"
+            .'  ak_widget_script.type = "text/javascript";'."\n"
+            .'  ak_widget_script.src = "https://static.arukereso.hu/widget/presenter.js";'."\n"
+            .'  ak_widget_script.async = true;'."\n"
+            .'  document.body.appendChild(ak_widget_script);'."\n"
+            .'}'."\n"
+            .'</script>'."\n"
+            ."<!-- ÁRUKERESŐ.HU CODE END -->\n";
     }
 
     static function has_custom_header($post_id = null){
