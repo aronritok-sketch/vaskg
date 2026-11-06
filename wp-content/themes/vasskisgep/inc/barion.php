@@ -82,4 +82,25 @@ class Barion {
         if (count($found) === 1 && !get_option(self::FOUND)) update_option(self::FOUND, $found[0], false);
         return [ 'found' => $found, 'active' => self::pixel_id() ];
     }
+    /**
+     * A Barion fizetési mód állapota, és (enable=1 / 0) be- vagy kikapcsolása – a kulcsos státusz-végpontról
+     * (diag=barion-gateway), hogy a Barion jóváhagyása után admin-belépés nélkül bekapcsolható legyen (Áron, 2026-11-06:
+     * „ha jóváhagyták, bekapcsoljuk”). A POSKey és a többi beállítás a WooCommerce → Fizetés → Barion alatt marad.
+     */
+    static function gateway($enable = null){
+        $out = [];
+        if (!function_exists('WC') || !WC()->payment_gateways()) return [ 'error' => 'nincs WooCommerce' ];
+        foreach(WC()->payment_gateways()->payment_gateways() as $gateway){
+            if (strpos($gateway->id, 'barion') !== 0) continue;
+            if ($enable !== null){
+                $key = 'woocommerce_'.$gateway->id.'_settings';
+                $settings = (array)get_option($key, []);
+                $settings['enabled'] = $enable ? 'yes' : 'no';
+                update_option($key, $settings);
+            }
+            $settings = (array)get_option('woocommerce_'.$gateway->id.'_settings', []);
+            $out[$gateway->id] = [ 'enabled' => ($settings['enabled'] ?? 'no'), 'title' => $gateway->get_title(), 'poskey_set' => !empty($settings['poskey']) || !empty($settings['pos_key']) ];
+        }
+        return $out ?: [ 'error' => 'nincs Barion fizetési mód (bővítmény?)' ];
+    }
 }
