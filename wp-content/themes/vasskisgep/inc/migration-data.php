@@ -156,8 +156,10 @@ class MigrationData {
     }
 
     /** Állapot (kulccsal): a forrás, a lépés, a számlálók – személyes adat nélkül. */
-    static function rest_status(){
+    static function rest_status($request = null){
         global $wpdb;
+        $q = $request instanceof \WP_REST_Request ? sanitize_text_field((string)$request->get_param('q')) : '';
+        if ($q !== '') return [ 'lookup' => MigrationNewProducts::lookup($q) ];
         $state = self::state();
         $prefix = self::prefix();
         return [

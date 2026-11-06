@@ -43,6 +43,25 @@ class MigrationNewProducts {
         return $out;
     }
 
+    /** Hibakereséshez (állapotlap, ?q=): a régi termékek név / cikkszám szerint, és hogy miért nem hiányzónak számítanak. */
+    static function lookup($q){
+        global $wpdb;
+        if ($q === '' || !MigrationData::has('virtuemart_products')) return [];
+        $lang = MigrationData::lang_table('virtuemart_products');
+        if ($lang === '') return [];
+        $like = '%'.$wpdb->esc_like($q).'%';
+        $rows = $wpdb->get_results($wpdb->prepare('SELECT p.virtuemart_product_id AS id, p.product_parent_id AS parent, p.product_sku AS sku, p.published, p.created_on AS created, l.product_name AS name FROM '.MigrationData::t('virtuemart_products').' p LEFT JOIN '.MigrationData::t($lang).' l ON l.virtuemart_product_id = p.virtuemart_product_id WHERE l.product_name LIKE %s OR p.product_sku LIKE %s LIMIT 20', $like, $like), ARRAY_A);
+        $mapped_max = (string)$wpdb->get_var('SELECT MAX(p.created_on) FROM '.MigrationData::t('virtuemart_products').' p JOIN '.$wpdb->postmeta." pm ON pm.meta_key = '_vk_old_id' AND pm.meta_value = p.virtuemart_product_id");
+        $rows = (array)$rows;
+        foreach($rows as &$row){
+            $row['mapped_to'] = (int)$wpdb->get_var($wpdb->prepare("SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = '_vk_old_id' AND meta_value = %s LIMIT 1", (string)$row['id']));
+            $row['sku_owner'] = trim((string)$row['sku']) !== '' ? (int)wc_get_product_id_by_sku(trim((string)$row['sku'])) : 0;
+            $row['cutoff'] = $mapped_max;
+        }
+        unset($row);
+        return $rows;
+    }
+
     /** A régi kategória útvonala a gyökértől: [ [ név, slug ], … ]. */
     private static function category_chain($category_id){
         global $wpdb;
