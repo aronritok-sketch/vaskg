@@ -115,8 +115,8 @@ class MigrationData {
             self::schedule();
         }
         // Kész átvétel, de a később felvett termékek még nem jöttek át: egyszer, a háttérben.
-        if (!empty($state['finished']) && get_option(self::AUTO) && !get_option(MigrationNewProducts::STATE) && !get_transient(self::AUTO.'_newprod')){
-            set_transient(self::AUTO.'_newprod', 1, HOUR_IN_SECONDS);
+        if (!empty($state['finished']) && get_option(self::AUTO) && !get_option(MigrationNewProducts::STATE) && !get_transient(self::AUTO.'_newprod2')){
+            set_transient(self::AUTO.'_newprod2', 1, HOUR_IN_SECONDS);
             if (function_exists('as_schedule_single_action')) as_schedule_single_action(time() + 5, 'vasskisgep_newproducts', [], 'vasskisgep');
             else wp_schedule_single_event(time() + 5, 'vasskisgep_newproducts');
         }
