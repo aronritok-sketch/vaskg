@@ -33,7 +33,7 @@ class Barion {
             'fields' => [
                 'barion_pixel_id' => [
                     'type' => 'text',
-                    'label' => 'Barion Pixel azonosító (BP-0000000000-00; a Barion fiókban az üzlet adatainál)'
+                    'label' => 'Barion Pixel azonosító (BP-xxxxxxxxxx-xx; a Barion fiókban az üzlet adatainál)'
                 ]
             ]
         ];
@@ -41,9 +41,10 @@ class Barion {
     }
 
     static function pixel_id(){
-        $id = strtoupper(Reviews::setting('barion_pixel_id'));
-        if ($id === '') $id = strtoupper((string)get_option(self::FOUND, ''));
-        return preg_match('/^BP-\d{10}-\d{2}$/', $id) ? $id : '';
+        // A Barion Pixel azonosító betűket is tartalmaz, kis- és nagybetű számít (pl. BP-8LFwQ1BBAd-EC).
+        $id = trim(Reviews::setting('barion_pixel_id'));
+        if ($id === '') $id = trim((string)get_option(self::FOUND, ''));
+        return preg_match('/^BP-[A-Za-z0-9]{10}-[A-Za-z0-9]{2}$/', $id) ? $id : '';
     }
 
     /** Barion Pixel alapkód (a Barion leírása szerint). */
@@ -74,7 +75,7 @@ class Barion {
             if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $name)) !== $name) continue;
             $rows = $wpdb->get_col("SELECT `$column` FROM `$name` WHERE `$column` LIKE '%BP-%'");
             foreach((array)$rows as $value){
-                if (preg_match_all('/BP-\d{10}-\d{2}/', (string)$value, $m)) $found = array_merge($found, $m[0]);
+                if (preg_match_all('/BP-[A-Za-z0-9]{10}-[A-Za-z0-9]{2}/', (string)$value, $m)) $found = array_merge($found, $m[0]);
             }
         }
         $found = array_values(array_unique($found));

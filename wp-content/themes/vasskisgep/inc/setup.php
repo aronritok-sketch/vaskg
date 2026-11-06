@@ -61,6 +61,7 @@ class Setup {
         42 => 'berrin_logo',
         43 => 'aszf_shipping',
         44 => 'aszf_rates',
+        45 => 'feed_refresh',
     ];
 
     /**
@@ -1792,6 +1793,13 @@ class Setup {
         }
         \WC_Cache_Helper::invalidate_cache_group('shipping_zones');
         $this->log[] = $done ? 'Szállítás: új díjtábla az ÁSZF szerint (10 kg-ig 2 490 Ft … 300 kg-ig 19 990 Ft, felette 24 990 Ft).' : 'FIGYELEM: nem találtam a súly szerinti házhozszállítást – a díjakat kézzel kell beírni (WooCommerce → Szállítás).';
+    }
+
+
+    /** 45. Árukereső feed azonnali újragenerálása (delivery_time / delivery_cost javítás, új díjtábla). */
+    function feed_refresh(){
+        Feed::flush();
+        $this->log[] = 'Árukereső feed: a következő lekéréskor újragenerálódik (kisbetűs delivery_time / delivery_cost, új díjak).';
     }
 
 }

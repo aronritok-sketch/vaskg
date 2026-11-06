@@ -7,10 +7,9 @@ namespace VasskisgepTheme;
  * Partner Portálon megadni (a régi bolt feedje helyett, élesítéskor).
  *
  * Csak a látható, áras, rendelhető termékek kerülnek bele; a változatos termék (pl. ruha méretekkel) változatonként
- * egy sor, közös groupid-vel és a méret (size) mezővel. Készlet: Delivery_Time 1 = „Raktáron”,
- * a „visszaigazolástól 1-5 munkanap” (utánrendelhető) termék 5. Szállítási díj (Delivery_Cost): a súly
- * szerinti díjtábla alapján egy darabra, „ingyenes” a díjmentes határ felett; ismeretlen súlynál vagy a
- * táblán kívül (csak személyes átvétel) üresen marad, akkor a Partner Portál díjtáblája számít.
+ * egy sor, közös groupid-vel és a méret (size) mezővel. Készlet: delivery_time 1 = „Raktáron”,
+ * a „visszaigazolástól 1-5 munkanap” (utánrendelhető) termék 7 (max. 1 hét). Szállítási díj (delivery_cost, csak
+ * szám): a súly szerinti díjtábla alapján egy darabra, 0 a díjmentes határ felett; ismeretlen súlynál a 10 kg-os díj.
  * Óránként újragenerálódik (a termék mentése után a következő lekéréskor). A kész feed fájlban van
  * (uploads/vk-feed/arukereso.xml); ha az újragenerálás elakad, az utolsó jó változat megy ki. Az építés
  * adagonként üríti a memória-gyorsítótárat (~1900 termék egy kérésben: a WordPress futásidejű gyorsítótára
@@ -20,7 +19,7 @@ class Feed {
     const QUERY_VAR = 'vk_feed';
     const CACHE = 'vk_feed_arukereso';
     const MAX_AGE = HOUR_IN_SECONDS;
-    const BACKORDER_DAYS = 5;
+    const BACKORDER_DAYS = 7; // az Árukereső értékei: 1 = Raktáron, 3, 7 (max. 1 hét), 14, 17
     const IMAGES = 5;
 
     private static $instance;
@@ -148,9 +147,10 @@ class Feed {
 
         $cost = '';
         if ($shipping){
+            // Ismeretlen súlynál a legkisebb (10 kg-ig) díj; ingyenesnél 0 (az Árukereső csak számot fogad el).
             $weight = Shipping::product_weight($product);
-            $value = $weight > 0 ? Shipping::gross_cost($shipping, $weight, $gross) : null;
-            if ($value !== null) $cost = $value > 0 ? (string)round($value) : 'ingyenes';
+            $value = Shipping::gross_cost($shipping, $weight > 0 ? $weight : 1, $gross);
+            if ($value !== null) $cost = (string)max(0, round($value));
         }
         $ean = method_exists($product, 'get_global_unique_id') ? $product->get_global_unique_id() : '';
 
@@ -167,8 +167,8 @@ class Feed {
             $out .= self::tag($i ? 'image_url_'.($i + 1) : 'image_url', wp_get_attachment_image_url($image, 'full'));
         }
         $out .= self::tag('description', self::text($parent->get_short_description() ?: $parent->get_description()), true)
-            .self::tag('Delivery_Time', $product->is_on_backorder() ? self::BACKORDER_DAYS : 1)
-            .self::tag('Delivery_Cost', $cost)
+            .self::tag('delivery_time', $product->is_on_backorder() ? self::BACKORDER_DAYS : 1)
+            .self::tag('delivery_cost', $cost)
             .self::tag('ProductNumber', $product->get_sku())
             .self::tag('EAN_code', $ean)
             .($variant !== '' ? self::tag('size', $variant).self::tag('groupid', 'vk-'.$parent->get_id()) : '')
