@@ -4493,3 +4493,65 @@ body.admin-bar .iu-woocommerce-mini-cart__drawer {
 @media (max-width: 767px) {
 	.vk-barion-banner img { margin: 0 auto; }
 }
+
+/* Kosár oldal: az összesítő és a „Tovább a pénztárhoz” gomb felül / jobb oldalt mindig látszik, az „Érdekelhet még”
+   ajánlatok asztali nézetben a kosár alatt, három oszlopban (Dávid, 2026-11: a nagy ajánlódoboz alatt alig lehetett
+   megtalálni a gombot). */
+.iu-woocommerce-cart .cart-collaterals {
+	display: flex;
+	flex-direction: column;
+}
+.iu-woocommerce-cart .cart-collaterals .cart_totals {
+	order: -1;
+}
+@media (min-width: 992px) {
+	.iu-woocommerce-cart .woocommerce {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) 414px;
+		column-gap: 1.75rem;
+		row-gap: 1.75rem;
+		align-items: start;
+	}
+	.iu-woocommerce-cart .woocommerce > .woocommerce-notices-wrapper {
+		grid-column: 1 / -1;
+	}
+	.iu-woocommerce-cart .woocommerce > .woocommerce-notices-wrapper:empty {
+		display: none;
+	}
+	.iu-woocommerce-cart .woocommerce > .woocommerce-cart-form {
+		grid-column: 1;
+		grid-row: 2;
+		min-width: 0;
+	}
+	.iu-woocommerce-cart .cart-collaterals {
+		display: contents;
+	}
+	.iu-woocommerce-cart .cart-collaterals .cart_totals {
+		grid-column: 2;
+		grid-row: 2 / span 2;
+		width: auto;
+		position: sticky;
+		top: 1.5rem;
+		border: 1px solid #1a1a1a;
+		border-radius: .82rem;
+		padding: 1rem 1.72rem 1.72rem;
+		background: #fff;
+	}
+	.iu-woocommerce-cart .cart-collaterals .cross-sells {
+		grid-column: 1;
+		grid-row: 3;
+		min-width: 0;
+	}
+	.iu-woocommerce-cart .cross-sells ul.products {
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: 1rem;
+		margin: 0;
+		padding: 0;
+	}
+	.iu-woocommerce-cart .cross-sells ul.products > li.product {
+		width: auto;
+		margin: 0;
+		float: none;
+	}
+}
