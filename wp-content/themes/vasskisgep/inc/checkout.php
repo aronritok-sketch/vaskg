@@ -228,6 +228,21 @@ class Checkout {
         exit;
     }
 
+    /** Kapcsolat-diagnosztika (titok nélkül): eléri-e a szerver a NAV-ot, és mi a hiba oka. */
+    static function diagnose(){
+        $out = [ 'configured' => self::configured(), 'test_env' => self::settings()['test'], 'curl' => function_exists('curl_version') ? curl_version()['version'].' / '.curl_version()['ssl_version'] : 'nincs' ];
+        foreach([ 'nav' => self::ENDPOINT, 'nav_test' => self::ENDPOINT_TEST ] as $key => $url){
+            $start = microtime(true);
+            $res = wp_remote_post($url, [ 'timeout' => 25, 'headers' => [ 'Content-Type' => 'application/xml' ], 'body' => '<x/>' ]);
+            $out[$key] = is_wp_error($res) ? 'HIBA: '.$res->get_error_message() : 'HTTP '.wp_remote_retrieve_response_code($res);
+            $out[$key.'_ms'] = (int)((microtime(true) - $start) * 1000);
+        }
+        $res = wp_remote_get('https://www.google.com/', [ 'timeout' => 10 ]);
+        $out['google'] = is_wp_error($res) ? 'HIBA: '.$res->get_error_message() : 'HTTP '.wp_remote_retrieve_response_code($res);
+        $out['ip'] = gethostbyname('api.onlineszamla.nav.gov.hu');
+        return $out;
+    }
+
     /* ---------- Lekérdezés ---------- */
 
     function ajax_taxpayer(){
@@ -282,14 +297,20 @@ class Checkout {
             .'<taxNumber>'.$digits.'</taxNumber></QueryTaxpayerRequest>';
 
         $response = wp_remote_post($s['test'] ? self::ENDPOINT_TEST : self::ENDPOINT, [
-            'timeout' => 15,
+            'timeout' => 25,
             'headers' => [ 'Content-Type' => 'application/xml', 'Accept' => 'application/xml' ],
             'body' => $xml,
         ]);
-        if (is_wp_error($response)) return new \WP_Error('nav', 'A NAV nem érhető el, kérjük, töltse ki kézzel.');
+        if (is_wp_error($response)){
+            if (function_exists('wc_get_logger')) wc_get_logger()->warning('NAV queryTaxpayer kapcsolat: '.$response->get_error_message(), [ 'source' => 'vasskisgep-nav' ]);
+            // A pénztárban rövid üzenet, az admin próbánál a pontos ok (pl. tűzfal, tanúsítvány, időtúllépés).
+            $why = is_admin() && current_user_can('manage_woocommerce') ? ' (ok: '.$response->get_error_message().')' : '';
+            return new \WP_Error('nav', 'A NAV nem érhető el, kérjük, töltse ki kézzel.'.$why);
+        }
+        $code = (int)wp_remote_retrieve_response_code($response);
         $body = wp_remote_retrieve_body($response);
         $doc = @simplexml_load_string($body);
-        if (!$doc) return new \WP_Error('nav', 'A NAV válasza nem értelmezhető.');
+        if (!$doc) return new \WP_Error('nav', 'A NAV válasza nem értelmezhető (HTTP '.$code.').');
         $first = function($node, $name){
             $found = $node->xpath('.//*[local-name()="'.$name.'"]');
             return $found ? trim((string)$found[0]) : '';

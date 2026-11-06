@@ -167,6 +167,7 @@ class MigrationData {
         global $wpdb;
         $q = $request instanceof \WP_REST_Request ? sanitize_text_field((string)$request->get_param('q')) : '';
         if ($q !== '') return [ 'lookup' => MigrationNewProducts::lookup($q) ];
+        if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'nav') return Checkout::diagnose();
         $state = self::state();
         $prefix = self::prefix();
         return [
