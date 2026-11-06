@@ -4445,3 +4445,36 @@ form.checkout:has(#vk_is_company):not(.vk-company) #wc_szamlazz_adoszam_field,
 form.checkout:has(#vk_is_company):not(.vk-company) #billing_company_field {
 	display: none !important;
 }
+
+/* Kosár oldalpanel: sok tételnél a lista görgethető, a végösszeg és a gombok alul mindig látszanak
+   (ügyfélkérés, 2026-11, Dávid 16. pontja; az iu_woocommerce panelje nem görgetett). */
+.iu-woocommerce-mini-cart__drawer {
+	display: flex;
+	flex-direction: column;
+	height: 100vh;
+	height: 100dvh;
+}
+body.admin-bar .iu-woocommerce-mini-cart__drawer {
+	height: calc(100dvh - var(--wp-admin--admin-bar--height, 32px));
+}
+.iu-woocommerce-mini-cart__drawer .iu-woocommerce-mini-cart__content > h4 {
+	flex: 0 0 auto;
+}
+.iu-woocommerce-mini-cart__drawer .iu-woocommerce-mini-cart__content,
+.iu-woocommerce-mini-cart__drawer .iu-woocommerce-mini-cart__content > .inner {
+	flex: 1 1 auto;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+}
+.iu-woocommerce-mini-cart__drawer .woocommerce-mini-cart.cart_list {
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	-webkit-overflow-scrolling: touch;
+}
+.iu-woocommerce-mini-cart__drawer .woocommerce-mini-cart__total,
+.iu-woocommerce-mini-cart__drawer .woocommerce-mini-cart__buttons {
+	flex: 0 0 auto;
+}
