@@ -23,7 +23,7 @@
 	<div class="meta">
 		<div>Webshop<b>vasskisgep.hu</b></div>
 		<div>Készült<b>a Vass Kisgép 2011 Kft. részére</b></div>
-		<div>Átadás<b>2026. október</b></div>
+		<div>Élesítés<b>2026. november 5.</b></div>
 	</div>
 </section>
 
@@ -72,7 +72,7 @@
 	<p class="lead">A webshopot a WordPress admin felületén kezeled. Ezt csak ti látjátok, a vásárlók nem férnek hozzá.</p>
 
 	<ol class="steps">
-		<li>Nyisd meg a böngészőben: <span class="path">vasskisgep.hu/wp-admin</span> (az élesítésig a tesztoldalon: <span class="path">dev.otletoldal.hu/vasskisgep-ai/wp-admin</span>).</li>
+		<li>Nyisd meg a böngészőben: <span class="path">vasskisgep.hu/wp-admin</span></li>
 		<li>Írd be a felhasználóneved (vagy e-mail címed) és a jelszavad, majd <b>Belépés</b>. A belépési adatokat Istvántól kapod meg.</li>
 		<li>Bal oldalon látod a menüt. A legfontosabbak: <b>WooCommerce</b> (rendelések, beállítások), <b>Termékek</b> (termékek, kategóriák, márkák, értékelések), <b>Oldalak</b>, <b>Bejegyzések</b> (Tudástár), <b>Média</b> (képek, PDF-ek).</li>
 	</ol>
@@ -122,7 +122,7 @@
 	<h3 class="flow-keep">A rendelés állapotai</h3>
 	<table class="status">
 		<tr><th>Állapot</th><th>Mit jelent, mi a teendő</th></tr>
-		<tr><td>Függőben lévő fizetés</td><td>A vásárló online fizetést kezdett (Barion, Cofidis), de még nem fejezte be. Várj; ha pár nap után sem fizet, töröld vagy hívd fel.</td></tr>
+		<tr><td>Függőben lévő fizetés</td><td>A vásárló online fizetést kezdett (pl. Cofidis), de még nem fejezte be. Várj; ha pár nap után sem fizet, töröld vagy hívd fel.</td></tr>
 		<tr><td>Visszatartva</td><td>Előre utalásnál: a vásárló megkapta a számlaszámot, várjátok az utalást. Ha megjött, állítsd <b>Feldolgozás alatt</b>-ra.</td></tr>
 		<tr><td>Feldolgozás alatt</td><td>Fizetve (vagy utánvétes / személyes átvételes): csomagolni, szállítani kell. Ebben az állapotban a rendelés még szerkeszthető (tétel, mennyiség, cím).</td></tr>
 		<tr><td>Teljesítve</td><td>Kiszállítva vagy átvéve. A vásárló e-mailt kap róla.</td></tr>
@@ -137,6 +137,10 @@
 		<li>Megjegyzést a jobb oldali <b>Rendelési jegyzetek</b> dobozba írhatsz: belső jegyzetet (csak ti látjátok), vagy a vásárlónak szólót (e-mailben megkapja).</li>
 	</ol>
 
+	<div class="box tip">
+		<span class="eyebrow">A régi webshop rendelései és vásárlói</span>
+		<p>A régi webshop mind az <b>1839 rendelése</b> átjött, a régi rendelésszámmal (a listában erre is rá tudsz keresni), tételekkel, állapottal; a régi állapotváltások a rendelés jegyzeteiben vannak. A vásárlók a <b>régi jelszavukkal</b> be tudnak lépni, és a fiókjukban látják a korábbi rendeléseiket. A régi bolt teljes adatmentése: <span class="path">Termékek → Régi webshop átköltöztetés → Archívum letöltése</span>.</p>
+	</div>
 	<div class="box tip">
 		<span class="eyebrow">Számla</span>
 		<p>A Számlázz.hu beállítása után a számla a rendeléshez magától elkészül, és a NAV-nak is bejelentődik. A céges vásárló adószámát a pénztár a NAV-ból ellenőrzi, és kitölti a cégnevet és a címet.</p>
@@ -278,7 +282,7 @@
 	<h3 class="flow-keep">Fizetési módok</h3>
 	<table>
 		<tr><th>Fizetési mód</th><th>Tudnivaló</th></tr>
-		<tr><td>Bankkártya (Barion)</td><td>Online fizetés; sikeres fizetés után a rendelés <b>Feldolgozás alatt</b> lesz.</td></tr>
+		<tr><td>Bankkártya online (Barion)</td><td><b>Hamarosan</b> – most ki van kapcsolva. Amíg ki van kapcsolva, a webshop a kártyalogókat és a Barion-említést magától elrejti; bekapcsolás után sikeres fizetésnél a rendelés <b>Feldolgozás alatt</b> lesz.</td></tr>
 		<tr><td>Előre utalás</td><td>A vásárló e-mailben megkapja a számlaszámot; a rendelés <b>Visszatartva</b>, amíg az utalás meg nem jön.</td></tr>
 		<tr><td>Fizetés átvételkor</td><td>Utánvét a futárnál, vagy fizetés személyes átvételkor.</td></tr>
 		<tr><td>Cofidis áruhitel</td><td>Csak a Cofidis-jelölt termékeknél. A kalkulátor adatai (THM, kamat, futamidők, min./max. összeg): <span class="path">Megjelenés → Beállítások → Cofidis áruhitel</span>, a Cofidistól kapott érvényes értékekkel.</td></tr>
@@ -318,8 +322,14 @@
 		<li>Benne van minden látható, áras, rendelhető termék: név, márka, kategória, ár, képek, rövid leírás, cikkszám.</li>
 		<li><b>Készlet:</b> a készleten lévő termék az Árukeresőn „Raktáron”, a rendelésre kapható legfeljebb 5 munkanapos szállítással jelenik meg.</li>
 		<li><b>Szállítási díj:</b> a súly szerinti díjtáblából, egy darabra; 30 000 Ft felett 10 kg-ig „ingyenes”. Súly nélküli terméknél az Árukereső fiókban beállított díj számít, ezért érdemes a súlyt kitölteni.</li>
-		<li>Élesítéskor az Árukereső Partner Portálon a régi lista címét erre kell átírni; ebben segítünk.</li>
+		<li>Az Árukereső Partner Portálon a lista címét erre kell átírni (a régi bolt listája helyett); ebben segítünk.</li>
+		<li><b>Megbízható Bolt jelvény:</b> a láblécben és a lebegő ablakban (bal alul) az Árukereső hivatalos jelvénye látszik.</li>
 	</ul>
+
+	<div class="box tip">
+		<span class="eyebrow">Régi címek és hirdetési linkek</span>
+		<p>A régi webshop címei (<span class="path">vasskisgep.hu/termekek/…</span>) magától az új oldalra visznek – a hosszú, kategóriás címek és a rövid hirdetési linkek is (pl. <span class="path">vasskisgep.hu/termekek/cedrus-rb02pro-agaprito-agdaralo</span>). A meglévő hirdetésekben ezért nem kell átírni a linkeket; újakhoz az új címet használd (<span class="path">vasskisgep.hu/termek/…</span>).</p>
+	</div>
 
 	<h2 class="flow-keep" style="margin-top:9mm"><span class="num">12</span><br>Havi ötperces ellenőrzés és segítség</h2>
 	<ul class="check">
@@ -328,7 +338,7 @@
 		<li>Jöttek-e űrlapok és értékelések, és mind kapott-e választ?</li>
 		<li>Akciók: lejárt-e valamelyik, és kell-e új (szezon)?</li>
 		<li>Új termékeknél: van ár, súly, kép, kategória, márka?</li>
-		<li>Ha a WordPress frissítést jelez: szólj nekünk, mi frissítjük (mentéssel együtt).</li>
+		<li>Ha a WordPress frissítést jelez: szólj nekünk, mi frissítjük (mentéssel együtt). A webshop saját sablonja (témája) magától frissül, ahhoz nem kell nyúlni.</li>
 	</ul>
 
 	<h3 class="flow-keep">Ha valami nem úgy működik</h3>
