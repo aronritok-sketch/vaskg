@@ -40,6 +40,57 @@ class Checkout {
             add_action($hook, [$this, 'total_label_off']);
         }
         add_filter('woocommerce_cart_totals_order_total_html', [$this, 'order_total_html']);
+
+        // Fizetési módok neve (ügyfélkérés, 2026-11): pénztár, termékoldal, levelek.
+        add_filter('woocommerce_gateway_title', [$this, 'gateway_title'], 20, 2);
+        // „Cégként vásárolok” pipa: csak bepipálva látszik (és mentődik) a cégnév és az adószám.
+        add_filter('woocommerce_checkout_fields', [$this, 'company_toggle_field'], 30);
+        add_filter('woocommerce_checkout_posted_data', [$this, 'posted_data']);
+    }
+
+    const GATEWAY_TITLES = [ 'cod' => 'Fizetés átvételkor (Utánvét)', 'bacs' => 'Banki utalás (Előre utalás)' ];
+
+    function gateway_title($title, $id = ''){
+        if (isset(self::GATEWAY_TITLES[$id])) return self::GATEWAY_TITLES[$id];
+        if (strpos((string)$id, 'barion') === 0) return 'Bankkártyás fizetés';
+        if ($id === Cofidis::ID) return 'Részletfizetés (Cofidis)';
+        return $title;
+    }
+
+    function company_toggle_field($fields){
+        if (!isset($fields['billing']['billing_company']) && !isset($fields['billing']['billing_tax_number'])) return $fields;
+        $customer = function_exists('WC') && WC()->customer ? WC()->customer : null;
+        $fields['billing']['vk_is_company'] = [
+            'type' => 'checkbox',
+            'label' => 'Cégként vásárolok',
+            'required' => false,
+            'class' => [ 'form-row-wide', 'vk-company-toggle' ],
+            'priority' => 20,
+            'default' => $customer && $customer->get_billing_company() !== '' ? 1 : 0,
+        ];
+        return $fields;
+    }
+
+    /** Cég nélkül a cégnév / adószám nem mentődik; a telefonszám nemzetközi alakra (06… → +36…). */
+    function posted_data($data){
+        if (array_key_exists('vk_is_company', $data) && empty($data['vk_is_company'])){
+            foreach([ 'billing_company', 'billing_tax_number' ] as $key) if (isset($data[$key])) $data[$key] = '';
+        }
+        unset($data['vk_is_company']);
+        if (!empty($data['billing_phone'])) $data['billing_phone'] = self::normalize_phone($data['billing_phone']);
+        return $data;
+    }
+
+    static function normalize_phone($phone){
+        $phone = trim(preg_replace('/\s+/', ' ', (string)$phone));
+        $digits = preg_replace('/\D/', '', $phone);
+        if ($digits === '') return $phone;
+        if (strpos($phone, '+') === 0) return $phone;
+        if (strpos($digits, '00') === 0) return '+'.substr($digits, 2);
+        if (strpos($digits, '06') === 0) return '+36 '.substr($digits, 2);
+        if (strpos($digits, '36') === 0 && strlen($digits) >= 10) return '+'.$digits;
+        if (strlen($digits) === 9) return '+36 '.$digits;
+        return $phone;
     }
 
     /* ---------- Végösszeg: nettó, ÁFA, bruttó ---------- */
@@ -77,7 +128,9 @@ class Checkout {
         if (!function_exists('is_checkout') || !(is_checkout() || is_account_page())) return;
         $dir = get_stylesheet_directory();
         $uri = get_stylesheet_directory_uri();
-        wp_enqueue_script('vasskisgep-checkout', $uri.'/assets/checkout.js', ['jquery'], filemtime($dir.'/assets/checkout.js'), true);
+        // Az iu_woocommerce telefonszám-maszkja után töltődjön (azt a pénztárban a saját országválasztónk váltja).
+        $deps = wp_script_is('iu-woocommerce', 'registered') ? [ 'jquery', 'iu-woocommerce' ] : [ 'jquery' ];
+        wp_enqueue_script('vasskisgep-checkout', $uri.'/assets/checkout.js', $deps, filemtime($dir.'/assets/checkout.js'), true);
         wp_localize_script('vasskisgep-checkout', 'vasskisgepCheckout', [
             'postcodes' => $uri.'/assets/iranyitoszamok.json?ver='.filemtime($dir.'/assets/iranyitoszamok.json'),
             'ajax_url' => admin_url('admin-ajax.php'),

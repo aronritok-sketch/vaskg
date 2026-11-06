@@ -91,7 +91,7 @@ class Reviews {
                     'rating' => (float)$json['rating'],
                     'count' => (int)($json['userRatingCount'] ?? 0),
                     'url' => $json['googleMapsUri'] ?? '',
-                    'reviews' => array_slice($reviews, 0, 3)
+                    'reviews' => array_slice($reviews, 0, 5)
                 ];
                 update_option(self::LAST_GOOD, $data, false);
             }

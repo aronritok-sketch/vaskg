@@ -4352,3 +4352,90 @@ body.vk-has-sticky-buy {
 		height: 2.5rem;
 	}
 }
+
+/* ---------- Ügyfélkérések, 2026-11 (élesítés után) ---------- */
+
+/* „Új termék” jelvény (30 napig). */
+.iu-woocommerce-badge.vk-new {
+	background: #2e7d32;
+	color: #fff;
+}
+
+/* Google értékelések: vízszintesen lapozható kis kártyák (csúszka). */
+.vk-reviews-list {
+	display: flex;
+	grid-template-columns: none;
+	gap: 1.2rem;
+	overflow-x: auto;
+	scroll-snap-type: x mandatory;
+	padding-bottom: .6rem;
+	-webkit-overflow-scrolling: touch;
+}
+.vk-reviews-list .vk-review {
+	flex: 0 0 calc((100% - 2.4rem) / 3);
+	scroll-snap-align: start;
+}
+@media (max-width: 991.8px) {
+	.vk-reviews-list .vk-review {
+		flex-basis: 82%;
+	}
+}
+
+/* Pénztár: telefonszám országhívószámmal. */
+.vk-phone {
+	display: flex;
+	gap: .4rem;
+	width: 100%;
+}
+.vk-phone .vk-phone-dial {
+	flex: 0 0 auto;
+	width: auto;
+	min-width: 6.4rem;
+	padding-right: 1.6rem;
+}
+.vk-phone input {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+/* Pénztár: „Cégként vásárolok” pipa, jól látható dobozban. */
+#vk_is_company_field {
+	margin: .4rem 0 .8rem;
+	padding: .8rem 1rem;
+	border: 1px solid var(--vk-border, #d9dbe0);
+	border-radius: .4rem;
+	background: #f6f7f9;
+}
+#vk_is_company_field label {
+	display: flex;
+	align-items: center;
+	gap: .6rem;
+	margin: 0;
+	font-weight: 600;
+	font-size: 1rem;
+	cursor: pointer;
+}
+#vk_is_company_field input[type=checkbox] {
+	width: 1.2rem;
+	height: 1.2rem;
+	margin: 0;
+}
+
+/* Mobilmenü: a „Termékek” középen, nyíl nélkül (a Gyártók oldalra visz). */
+@media (max-width: 991.8px) {
+	li.vk-has-mega > a {
+		justify-content: center;
+		text-align: center;
+	}
+	li.vk-has-mega > a .iu-menu-trigger {
+		display: none;
+	}
+}
+
+/* Lábléc alja: az Árukereső logó középen. */
+.vk-arukereso-center {
+	flex: 0 0 auto;
+}
+#vk_is_company_field .optional {
+	display: none;
+}

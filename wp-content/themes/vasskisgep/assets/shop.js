@@ -394,3 +394,20 @@
 	});
 
 })(jQuery);
+
+/*
+ * Legutóbb megtekintett termékek (ügyfélkérés, 2026-11: telefonon néha üres volt): a termékoldal a böngészőben is
+ * felírja magát a vk_recent sütibe (mint a szerver), így akkor is számít, ha az oldal gyorsítótárból jött, vagy a
+ * szerveroldali süti nem ment ki.
+ */
+(function(){
+	var body = document.body;
+	if (!body || !body.classList.contains('single-product')) return;
+	var m = body.className.match(/(?:^|\s)postid-(\d+)/);
+	if (!m) return;
+	var id = m[1], name = 'vk_recent', limit = 12;
+	var current = (document.cookie.match(/(?:^|;\s*)vk_recent=([^;]*)/) || [])[1] || '';
+	var ids = decodeURIComponent(current).split(',').filter(function(x){ return /^\d+$/.test(x) && x !== id; });
+	ids.unshift(id);
+	document.cookie = name + '=' + encodeURIComponent(ids.slice(0, limit).join(',')) + '; path=/; max-age=' + (30 * 86400) + '; samesite=lax';
+})();

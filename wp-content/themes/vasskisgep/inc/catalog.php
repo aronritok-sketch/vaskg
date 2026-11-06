@@ -61,6 +61,7 @@ class Catalog {
         // Termékkártya a design szerint: promóciós szöveg a cím alatt, Cofidis jelvény a képen.
         add_filter('render_block_iu-woocommerce/loop-product-title', [$this, 'card_promo'], 10, 2);
         add_filter('render_block_iu/group', [$this, 'card_cofidis'], 10, 2);
+        add_filter('render_block_iu-woocommerce/product-badges', [$this, 'new_badge'], 10, 2);
 
         // Régi / hibás kategóriacímek átirányítása (pl. /termekkategoria/kerteszeti-gepek/funyirok/).
         add_action('template_redirect', [$this, 'redirect_legacy_category'], 5);
@@ -367,6 +368,59 @@ class Catalog {
         return $pos === false ? $content : substr_replace($content, self::cofidis_badge().'</div>', $pos, 6);
     }
 
+    /**
+     * „Új termék” jelvény (ügyfélkérés, 2026-11): a felvétel után 30 napig, magától lekerül. A régi webshopból
+     * átköltöztetett termékek nem újak (azok felvétele az átköltöztetés napja); kivétel a régi boltba utoljára,
+     * az átköltöztetés után felvett néhány termék (MigrationNewProducts). A keretrendszer 10 napos „Új” jelvénye helyett.
+     */
+    const NEW_DAYS = 30;
+
+    static function is_new($product){
+        $created = $product->get_date_created();
+        if (!$created || $created->getTimestamp() < time() - self::NEW_DAYS * DAY_IN_SECONDS) return false;
+        if ($product->get_meta('_vk_old_id') === '') return true;
+        static $late = null;
+        if ($late === null){
+            $late = [];
+            foreach((array)(get_option('vk_mig_newprod2', [])['imported'] ?? []) as $row) $late[(int)$row['product']] = true;
+        }
+        return isset($late[$product->get_id()]);
+    }
+
+    function new_badge($content, $block){
+        global $product;
+        $content = str_replace('<span class="iu-woocommerce-badge new">Új</span>', '', (string)$content);
+        if (!$product instanceof \WC_Product || !self::is_new($product)) return $content;
+        $pos = strpos($content, '>');
+        return $pos === false ? $content : substr_replace($content, '><span class="iu-woocommerce-badge vk-new">Új termék</span>', $pos, 1);
+    }
+
+    /**
+     * Garancia az ár alapján (ügyfélkérés, 2026-11): 249 990 Ft-ig 2 év, felette 3 év – a gépeknél (a Tartozékok és
+     * az Alkatrészek és karbantartás ág termékeinél nem). A régi bolt garancia-mezője helyett ez látszik.
+     */
+    const WARRANTY_LIMIT = 249990;
+
+    static function warranty_months($product){
+        $price = (float)wc_get_price_including_tax($product);
+        if ($price <= 0) return 0;
+        static $accessory = null;
+        if ($accessory === null){
+            $accessory = [];
+            foreach([ 'Tartozékok', 'Alkatrészek és karbantartás' ] as $name){
+                $root = get_term_by('name', $name, 'product_cat');
+                if (!$root) continue;
+                $accessory[(int)$root->term_id] = true;
+                foreach(get_term_children($root->term_id, 'product_cat') as $id) $accessory[(int)$id] = true;
+            }
+        }
+        $id = $product->get_parent_id() ?: $product->get_id();
+        $cats = wc_get_product_cat_ids($id);
+        if (!$cats) return 0;
+        foreach($cats as $cat) if (isset($accessory[(int)$cat])) return 0;
+        return $price <= self::WARRANTY_LIMIT ? 24 : 36;
+    }
+
     /** A szűrhető tulajdonságok: [slug => ['label' => …, 'unit' => …]] a megjelenítési sorrendben. */
     static function attributes(){
         if (is_null(self::$attributes)){
@@ -415,6 +469,10 @@ class Catalog {
             else $other[] = $row;
         }
 
+        $months = self::warranty_months($product);
+        if ($months){
+            $rows['garancia'] = [ 'slug' => 'garancia', 'label' => $known['garancia']['label'] ?? 'Garancia', 'value' => (string)$months, 'unit' => 'hó', 'text' => ($months / 12).' év' ];
+        }
         $ordered = [];
         foreach(array_keys($known) as $slug){
             if (isset($rows[$slug])) $ordered[] = $rows[$slug];

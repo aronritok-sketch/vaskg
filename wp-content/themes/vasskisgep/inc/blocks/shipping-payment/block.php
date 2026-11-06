@@ -58,13 +58,13 @@
 			$payment = '';
 			$map = [ 'barion' => 'card', 'bacs' => 'doc', 'cod' => 'cash', 'cheque' => 'doc' ];
 			foreach(WC()->payment_gateways()->payment_gateways() as $gateway){
-				if ($gateway->enabled !== 'yes') continue;
+				if ($gateway->enabled !== 'yes' || $gateway->id === \VasskisgepTheme\Cofidis::ID) continue;
 				$type = 'card';
 				foreach($map as $key => $value){ if (strpos($gateway->id, $key) === 0) $type = $value; }
 				$payment .= '<li>'.$icon($type).'<span>'.esc_html(wp_strip_all_tags($gateway->get_title())).'</span></li>';
 			}
 			if ($product && \VasskisgepTheme\Catalog::has_cofidis($product)){
-				$payment .= '<li>'.$icon('loan').'<span>Cofidis áruhitel</span></li>';
+				$payment .= '<li>'.$icon('loan').'<span>Részletfizetés (Cofidis)</span></li>';
 			}
 
 			if ($shipping === '' && $payment === '') return '';

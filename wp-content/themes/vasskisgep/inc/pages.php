@@ -68,7 +68,14 @@ class Pages {
     const ARUKERESO_KEY = '64c44dfc124163ee93d84b39212c4c04';
     const ARUKERESO_SHOP = '196224';
     /** Az alul középre kerülő Árukereső-logó kódja (Dávid második e-mailje) – amíg üres, nem jelenik meg. */
-    const ARUKERESO_CENTER = '';
+    const ARUKERESO_CENTER = <<<'HTML'
+<!-- ÁRUKERESŐ.HU CODE - PLEASE DO NOT MODIFY THE LINES BELOW -->
+<div style="background: transparent; text-align: center; padding: 0; margin: 0 auto; width: 120px">
+<a title="Árukereső.hu" href="https://www.arukereso.hu/" style="display: block;border:0; padding:0;margin:0"><img style="padding: 0; margin:0; border:0" alt="Árukereső.hu" src="https://static.arukereso.hu/hu/logo-120.png"/></a>
+<a title="Árukereső.hu" style="line-height:16px;font-size: 11px; font-family: Arial, Verdana; color: #000" href="https://www.arukereso.hu/">Árukereső.hu</a>
+</div>
+<!-- ÁRUKERESŐ.HU CODE END -->
+HTML;
 
     static function arukereso_badge(){
         return '<!-- ÁRUKERESŐ.HU - PLEASE DO NOT MODIFY THE LINES BELOW -->'

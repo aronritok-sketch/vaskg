@@ -103,7 +103,88 @@
 		}).fail(function(){ if (digits === lastTax) taxStatus('A lekérdezés nem sikerült, kérjük, töltse ki kézzel.', 'error'); });
 	}
 
+	/* ---------- Telefonszám: országhívószám-választó (ügyfélkérés, 2026-11) ---------- */
+	// Az iu_woocommerce gépelés közbeni maszkja helyett (beillesztés / automatikus kitöltés után a kurzor ugrált,
+	// a „06 …” alakból „+06 …” lett): ország + hívószám választó, a szám szabadon írható, kilépéskor rendeződik.
+	var DIALS = [
+		['HU', '🇭🇺', 'Magyarország', '+36'], ['SK', '🇸🇰', 'Szlovákia', '+421'], ['RO', '🇷🇴', 'Románia', '+40'],
+		['UA', '🇺🇦', 'Ukrajna', '+380'], ['AT', '🇦🇹', 'Ausztria', '+43'], ['RS', '🇷🇸', 'Szerbia', '+381'],
+		['HR', '🇭🇷', 'Horvátország', '+385'], ['SI', '🇸🇮', 'Szlovénia', '+386'], ['CZ', '🇨🇿', 'Csehország', '+420'],
+		['PL', '🇵🇱', 'Lengyelország', '+48'], ['DE', '🇩🇪', 'Németország', '+49'], ['IT', '🇮🇹', 'Olaszország', '+39'],
+		['GB', '🇬🇧', 'Egyesült Királyság', '+44']
+	];
+	var BY_LENGTH = DIALS.slice().sort(function(a, b){ return b[3].length - a[3].length; });
+
+	function splitPhone(value){
+		var raw = $.trim(value || '');
+		var digits = raw.replace(/\D/g, '');
+		if (!digits) return { dial: '+36', national: '' };
+		if (raw.charAt(0) === '+' || digits.indexOf('00') === 0){
+			if (digits.indexOf('00') === 0 && raw.charAt(0) !== '+') digits = digits.slice(2);
+			for (var i = 0; i < BY_LENGTH.length; i++){
+				var code = BY_LENGTH[i][3].slice(1);
+				if (digits.indexOf(code) === 0) return { dial: BY_LENGTH[i][3], national: digits.slice(code.length) };
+			}
+			return { dial: '', national: '+' + digits };
+		}
+		if (digits.indexOf('06') === 0) return { dial: '+36', national: digits.slice(2) };
+		if (digits.indexOf('36') === 0 && digits.length >= 11) return { dial: '+36', national: digits.slice(2) };
+		return { dial: null, national: digits };
+	}
+
+	function formatNational(dial, digits){
+		digits = (digits || '').replace(/\D/g, '').replace(/^0+/, '');
+		if (dial === '+36'){
+			if (digits.charAt(0) === '1') return $.trim(digits.slice(0, 1) + ' ' + digits.slice(1, 4) + ' ' + digits.slice(4));
+			return $.trim(digits.slice(0, 2) + ' ' + digits.slice(2, 5) + ' ' + digits.slice(5));
+		}
+		return digits.replace(/(\d{3})(?=\d)/g, '$1 ');
+	}
+
+	function setupPhone(input){
+		var $input = $(input);
+		if ($input.data('vkPhone')) return;
+		$input.data('vkPhone', true).off('input').attr({ placeholder: '30 123 4567', autocomplete: 'tel-national' });
+		var $select = $('<select class="vk-phone-dial" aria-label="Ország hívószáma"></select>');
+		$.each(DIALS, function(i, d){ $select.append($('<option></option>').val(d[3]).text(d[1] + ' ' + d[3]).attr('title', d[2])); });
+		$select.append('<option value="">Egyéb (+…)</option>');
+		$input.wrap('<span class="vk-phone"></span>').before($select);
+
+		function apply(value){
+			var parts = splitPhone(value);
+			if (parts.dial !== null) $select.val(parts.dial);
+			var dial = $select.val();
+			$input.val(dial ? formatNational(dial, parts.national) : parts.national);
+		}
+		apply($input.val());
+		$input.on('blur paste', function(e){
+			var el = this;
+			setTimeout(function(){ apply(el.value); }, e.type === 'paste' ? 0 : 1);
+		});
+		// Beküldés előtt a teljes, nemzetközi szám kerül a mezőbe; hiba után újra szétválik.
+		var compose = function(){
+			var dial = $select.val(), value = $.trim($input.val());
+			if (!value) return;
+			if (value.charAt(0) === '+') return;
+			$input.val(dial ? dial + ' ' + formatNational(dial, value) : value);
+		};
+		$input.closest('form').on('submit checkout_place_order', compose);
+		$(document.body).on('checkout_error', function(){ apply($input.val()); });
+	}
+
+	/* ---------- Cégként vásárolok ---------- */
+	function companyToggle(){
+		var $box = $('#vk_is_company');
+		if (!$box.length) return;
+		var on = $box.is(':checked');
+		$('#billing_company_field, #billing_tax_number_field').toggle(on);
+		if (!on) $('#billing_tax_number_field .vk-tax-status').hide();
+	}
+
 	$(function(){
+		$('input#billing_phone, input#shipping_phone, .woocommerce-address-fields input[type=tel]').each(function(){ setupPhone(this); });
+		companyToggle();
+		$(document.body).on('change', '#vk_is_company', companyToggle);
 		$.each(['billing', 'shipping'], function(i, prefix){
 			var timer;
 			$(document.body).on('input change', '#' + prefix + '_postcode', function(){

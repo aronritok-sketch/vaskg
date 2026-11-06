@@ -100,4 +100,21 @@
 		});
 	});
 
+	// Mobilon (ügyfélkérés, 2026-11) a „Termékek” egyből a Gyártók oldalra visz (almenü helyett): onnan márka szerint
+	// tovább; a teljes terméklistát telefonon úgysem nézik végig.
+	var mobile = window.matchMedia('(max-width: 991.8px)');
+	document.addEventListener('click', function(e){
+		if (!mobile.matches) return;
+		var link = e.target.closest && e.target.closest('li.vk-has-mega > a');
+		if (!link) return;
+		var brands = null;
+		document.querySelectorAll('a[href]').forEach(function(a){
+			if (!brands && /\/gyartok\/?$/.test(a.getAttribute('href').split('?')[0])) brands = a.href;
+		});
+		e.preventDefault();
+		e.stopPropagation();
+		e.stopImmediatePropagation();
+		window.location.href = brands || '/gyartok/';
+	}, true);
+
 })();
