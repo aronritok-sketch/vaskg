@@ -39,6 +39,7 @@ class MigrationData {
         add_action('admin_post_vk_mig_data_download', [__CLASS__, 'download']);
         add_action(self::HOOK, [__CLASS__, 'background']);
         add_action('vasskisgep_newproducts', function(){ MigrationNewProducts::run(); });
+        add_action('vasskisgep_newproducts_fix', function(){ MigrationNewProducts::fix_imported(); });
         add_action('init', [__CLASS__, 'auto'], 99);
         add_action('rest_api_init', function(){
             register_rest_route('vasskisgep/v1', '/data-status', [
@@ -120,6 +121,12 @@ class MigrationData {
             if (function_exists('as_schedule_single_action')) as_schedule_single_action(time() + 5, 'vasskisgep_newproducts', [], 'vasskisgep');
             else wp_schedule_single_event(time() + 5, 'vasskisgep_newproducts');
         }
+        // Az átvett új termékek rendbetétele (kategória, webcím) és a hiányzó képek újrapróbálása: óránként, a háttérben.
+        if (get_option(MigrationNewProducts::STATE) && !get_transient(self::AUTO.'_fix')){
+            set_transient(self::AUTO.'_fix', 1, HOUR_IN_SECONDS);
+            if (function_exists('as_schedule_single_action')) as_schedule_single_action(time() + 5, 'vasskisgep_newproducts_fix', [], 'vasskisgep');
+            else wp_schedule_single_event(time() + 5, 'vasskisgep_newproducts_fix');
+        }
         if (get_transient(self::AUTO.'_probe')) return;
         set_transient(self::AUTO.'_probe', 1, HOUR_IN_SECONDS);
         $found = self::locate();
@@ -178,6 +185,7 @@ class MigrationData {
             'latest_old_order' => $prefix !== '' && self::has('virtuemart_orders') ? (string)$wpdb->get_var('SELECT MAX(created_on) FROM '.self::t('virtuemart_orders')) : '',
             'missing_products' => $prefix !== '' ? MigrationNewProducts::missing(30) : [],
             'new_products' => get_option(MigrationNewProducts::STATE, []),
+            'missing_images' => MigrationNewProducts::missing_images(),
             'pending_actions' => function_exists('as_get_scheduled_actions') ? count(as_get_scheduled_actions([ 'hook' => self::HOOK, 'status' => 'pending' ], 'ids')) : null,
         ];
     }

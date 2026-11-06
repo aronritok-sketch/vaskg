@@ -115,14 +115,15 @@ class MigrationNewProducts {
             $images = $wpdb->get_col($wpdb->prepare('SELECT m.file_url FROM '.MigrationData::t('virtuemart_product_medias').' pm JOIN '.MigrationData::t('virtuemart_medias').' m ON m.virtuemart_media_id = pm.virtuemart_media_id WHERE pm.virtuemart_product_id = %d AND m.published = 1 ORDER BY pm.ordering', $old_id));
         }
 
-        $slug = (string)($l['slug'] ?? '') !== '' ? $l['slug'] : sanitize_title($l['product_name'] ?? 'termek-'.$old_id);
+        $slug = (string)($l['slug'] ?? '') !== '' ? sanitize_title(rawurldecode($l['slug'])) : sanitize_title($l['product_name'] ?? 'termek-'.$old_id);
+        $raw_slug = (string)($l['slug'] ?? '');
         $path_url = '/termekek/'.implode('/', array_merge(array_filter(array_column($chain, 1)), [ $slug ]));
         $stock = (int)$p['product_in_stock'] - (int)($p['product_ordered'] ?? 0);
         return [
             'id' => (int)$old_id,
             'url' => MigrationSource::base().$path_url,
             'path_url' => $path_url,
-            'all_paths' => [ $path_url ],
+            'all_paths' => array_values(array_unique([ $path_url, dirname($path_url).'/'.$raw_slug ])),
             'name' => trim(html_entity_decode(wp_strip_all_tags((string)($l['product_name'] ?? '')), ENT_QUOTES, 'UTF-8')),
             'sku' => trim((string)$p['product_sku']),
             'price' => $gross > 0 ? (string)$gross : '',
@@ -170,15 +171,80 @@ class MigrationNewProducts {
     }
 
     /** Az új kategória: a megfeleltetés (régi útvonal → levél), különben a régi kategóriacím átirányítása. */
+    /** Gép-kategória → a tartozékai (ha a régi kategória „… tartozékai”, a termék tartozék, nem gép). */
+    const ACCESSORY_LEAVES = [
+        'Multifunkciós művelőgépek' => 'Multifunkciós művelőgép tartozékok',
+        'Egytengelyes traktorok' => 'Egytengelyes traktor tartozékok',
+        'Kapálógépek és rotációs kapák' => 'Kapálógép- és talajmaró-tartozékok',
+        'Talajmarók' => 'Kapálógép- és talajmaró-tartozékok',
+    ];
+
     private static function term(array $data){
-        [ $leaf ] = MigrationClassifier::match($data);
         $leaves = MigrationClassifier::leaves();
-        if ($leaf !== '' && !empty($leaves[$leaf][0])) return (int)$leaves[$leaf][0];
+        $id = function($name) use ($leaves){ return (int)($leaves[$name][0] ?? 0); };
+        // Önálló motor (pl. „Berrin 170F vízszintes tengelyű benzinmotor”) → Motorok.
+        if (preg_match('/tengely\S*\s+benzinmotor/iu', $data['name']) && $id('Motorok')) return $id('Motorok');
+        [ $leaf ] = MigrationClassifier::match($data);
+        $accessory = preg_match('/tartoz[eé]k/iu', implode(' ', (array)$data['path']));
+        if ($leaf !== '' && $accessory && isset(self::ACCESSORY_LEAVES[$leaf]) && $id(self::ACCESSORY_LEAVES[$leaf])) return $id(self::ACCESSORY_LEAVES[$leaf]);
+        if ($leaf !== '' && $id($leaf)) return $id($leaf);
         $map = Migration::redirects()['categories'] ?? [];
         for ($try = Migration::normalize_path(dirname($data['path_url'])); $try !== '' && $try !== '.' && $try !== 'termekek'; $try = dirname($try)){
-            if (!empty($map[$try])) return (int)$map[$try];
+            if (!empty($map[$try])){
+                $term = get_term((int)$map[$try], 'product_cat');
+                if ($accessory && $term && !is_wp_error($term) && isset(self::ACCESSORY_LEAVES[$term->name]) && $id(self::ACCESSORY_LEAVES[$term->name])) return $id(self::ACCESSORY_LEAVES[$term->name]);
+                return (int)$map[$try];
+            }
         }
         return 0;
+    }
+
+    /**
+     * A már átvett (később felvett) termékek utólagos rendbetétele: kategória (a fenti szabályokkal, ha a régi
+     * javaslat szerinti kategóriában van még), webcím (a régi, kódolt slug helyett), és a hiányzó képek újrapróbálása
+     * (ha a régi oldal képmappája visszakerül a szerverre). Óránként fut, amíg van hiányzó kép.
+     */
+    static function fix_imported(){
+        $state = wp_parse_args((array)get_option(self::STATE, []), [ 'imported' => [], 'skipped' => [], 'runs' => 0 ]);
+        if (!$state['imported']) return $state;
+        foreach($state['imported'] as $old => &$row){
+            $product = wc_get_product((int)$row['product']);
+            $data = self::data((int)$old);
+            if (!$product || !$data) continue;
+            if (empty($row['fixed'])){
+                $term = self::term($data);
+                if ($term) $product->set_category_ids([ $term ]);
+                if ($product->get_slug() !== $data['path_url'] && preg_match('/-2c/', $product->get_slug())) $product->set_slug(basename($data['path_url']));
+                $product->save();
+                foreach($data['all_paths'] as $path) Migration::add_redirect('products', $path, $product->get_id());
+                $row['fixed'] = 1;
+            }
+            if ((int)$row['images_found'] < (int)$row['images'] && !$product->get_image_id()){
+                $attachments = [];
+                foreach($data['images'] as $file) if (($a = self::image($file, $product->get_id(), $data['name']))) $attachments[] = $a;
+                if ($attachments){
+                    $row['images_found'] = count($attachments);
+                    $product->set_image_id(array_shift($attachments));
+                    $product->set_gallery_image_ids($attachments);
+                    $product->save();
+                }
+            }
+            $row['url'] = get_permalink($product->get_id());
+        }
+        unset($row);
+        update_option(self::STATE, $state, false);
+        return $state;
+    }
+
+    /** Hiányzó képek fájlnevei (a régi oldal mentéséből visszatölthetők). */
+    static function missing_images(){
+        $out = [];
+        foreach((array)(get_option(self::STATE, [])['imported'] ?? []) as $old => $row){
+            if ((int)($row['images_found'] ?? 0) >= (int)($row['images'] ?? 0)) continue;
+            $data = self::data((int)$old);
+            if ($data) $out[$row['name']] = $data['images'];
+        }
+        return $out;
     }
 
     /** A hiányzó termékek átvétele (egyszerre legfeljebb $limit). Visszaad: [ 'imported' => [...], 'skipped' => [...] ]. */
@@ -220,8 +286,8 @@ class MigrationNewProducts {
                 $product->set_gallery_image_ids($attachments);
                 $product->save();
             }
-            Migration::add_redirect('products', $data['path_url'], $product_id);
-            $state['imported'][$item['id']] = [ 'product' => (int)$product_id, 'name' => $data['name'], 'sku' => $data['sku'], 'price' => $data['price'], 'images' => count($images), 'images_found' => $found, 'url' => get_permalink($product_id) ];
+            foreach($data['all_paths'] as $path) Migration::add_redirect('products', $path, $product_id);
+            $state['imported'][$item['id']] = [ 'product' => (int)$product_id, 'name' => $data['name'], 'sku' => $data['sku'], 'price' => $data['price'], 'images' => count($images), 'images_found' => $found, 'url' => get_permalink($product_id), 'fixed' => 1 ];
         }
         $state['last'] = time();
         update_option(self::STATE, $state, false);
