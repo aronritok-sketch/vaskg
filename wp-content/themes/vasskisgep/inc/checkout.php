@@ -46,6 +46,15 @@ class Checkout {
         // „Cégként vásárolok” pipa: csak bepipálva látszik (és mentődik) a cégnév és az adószám.
         add_filter('woocommerce_checkout_fields', [$this, 'company_toggle_field'], 30);
         add_filter('woocommerce_checkout_posted_data', [$this, 'posted_data']);
+        add_action('woocommerce_after_checkout_validation', [$this, 'company_validation'], 10, 2);
+    }
+
+    /** Cégként vásárolva az adószám kötelező (ügyfélkérés, 2026-11). */
+    function company_validation($data, $errors){
+        if (empty($_POST['vk_is_company'])) return;
+        $tax = preg_replace('/\D/', '', (string)($data['billing_tax_number'] ?? ''));
+        if (strlen($tax) < 8) $errors->add('billing_tax_number_required', '<strong>Adószám</strong>: cégként vásárolva kötelező megadni (pl. 12345678-2-15).', [ 'id' => 'billing_tax_number' ]);
+        if (trim((string)($data['billing_company'] ?? '')) === '') $errors->add('billing_company_required', '<strong>Cégnév</strong>: cégként vásárolva kötelező megadni (az adószám beírása után magától kitöltődik).', [ 'id' => 'billing_company' ]);
     }
 
     const GATEWAY_TITLES = [ 'cod' => 'Fizetés átvételkor (Utánvét)', 'bacs' => 'Banki utalás (Előre utalás)' ];

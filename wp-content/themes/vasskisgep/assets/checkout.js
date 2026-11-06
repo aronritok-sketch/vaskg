@@ -177,7 +177,13 @@
 		var $box = $('#vk_is_company');
 		if (!$box.length) return;
 		var on = $box.is(':checked');
-		$('#billing_company_field, #billing_tax_number_field').toggle(on);
+		$('#billing_company_field, #billing_tax_number_field').toggle(on).toggleClass('validate-required', on).each(function(){
+			// Cégként vásárolva kötelező: csillag a felirat mellett, a „(nem kötelező)” jelölés nélkül.
+			var $label = $(this).find('label').first();
+			$label.find('.optional').toggle(!on);
+			if (on && !$label.find('.required').length) $label.append(' <abbr class="required" title="kötelező">*</abbr>');
+			if (!on) $label.find('.required').remove();
+		});
 		if (!on) $('#billing_tax_number_field .vk-tax-status').hide();
 	}
 

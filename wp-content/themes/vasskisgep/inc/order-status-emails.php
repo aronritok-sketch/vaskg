@@ -129,7 +129,7 @@ class VK_Email_Survey extends VK_Status_Email {
         if ($url === '' && class_exists(__NAMESPACE__.'\\Reviews')) $url = Reviews::setting('google_profile_url');
         return $url !== '' ? $url : 'https://www.google.com/maps/search/?api=1&query='.rawurlencode('Vass Kisgép 2011 Kft. Kisvárda');
     }
-    function get_default_subject(){ return 'Hogy vagy megelégedve? – Vass Kisgép'; }
+    function get_default_subject(){ return 'Elégedett volt vásárlásával?'; }
     function get_default_heading(){ return 'Köszönjük, hogy nálunk vásároltál!'; }
     protected function body_html(){
         return '<p>Reméljük, minden rendben megérkezett, és örömmel használod. Sokat segítene nekünk, ha egy percben elmondanád, hogy voltál megelégedve a vásárlással és a kiszolgálással.</p>'
