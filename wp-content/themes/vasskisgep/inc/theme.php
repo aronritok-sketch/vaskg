@@ -32,6 +32,7 @@ require_once(__DIR__.'/selfcron.php');
 require_once(__DIR__.'/staff-frontend.php');
 require_once(__DIR__.'/stock-note.php');
 require_once(__DIR__.'/publish-admin.php');
+require_once(__DIR__.'/admin-lists.php');
 
 class Theme {
     private static $instance;
@@ -69,6 +70,7 @@ class Theme {
         StaffFrontend::get_instance();
         StockNote::get_instance();
         PublishAdmin::get_instance();
+        AdminLists::get_instance();
         Pages::get_instance();
         Search::get_instance();
         Cofidis::get_instance();
