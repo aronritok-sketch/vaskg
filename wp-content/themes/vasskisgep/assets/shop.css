@@ -4555,3 +4555,14 @@ body.admin-bar .iu-woocommerce-mini-cart__drawer {
 		float: none;
 	}
 }
+
+/* Készlet megjegyzés és várható beérkezés a termékoldalon (inc/stock-note.php). */
+.vk-stock-note,
+.vk-arrival {
+	margin: .3rem 0 0;
+	font-size: .92em;
+	color: #4b5563;
+}
+.vk-arrival strong {
+	color: #1f2937;
+}

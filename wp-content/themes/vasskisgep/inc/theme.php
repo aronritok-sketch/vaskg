@@ -30,6 +30,7 @@ require_once(__DIR__.'/aszf.php');
 require_once(__DIR__.'/barion.php');
 require_once(__DIR__.'/selfcron.php');
 require_once(__DIR__.'/staff-frontend.php');
+require_once(__DIR__.'/stock-note.php');
 
 class Theme {
     private static $instance;
@@ -65,6 +66,7 @@ class Theme {
         Barion::get_instance();
         SelfCron::get_instance();
         StaffFrontend::get_instance();
+        StockNote::get_instance();
         Pages::get_instance();
         Search::get_instance();
         Cofidis::get_instance();

@@ -65,6 +65,8 @@ class Setup {
         46 => 'stihl_battery_groups',
         47 => 'category_order_meta',
         48 => 'old_weights_dims',
+        49 => 'shredder_types',
+        50 => 'old_availability',
     ];
 
     /**
@@ -1904,6 +1906,70 @@ class Setup {
         }
         if (class_exists(__NAMESPACE__.'\\Feed')) Feed::flush();
         $this->log[] = 'Súly és méret a régi webshopból: '.$weights.' termék súlya, '.$dims.' termék mérete pótolva.';
+    }
+
+
+    /**
+     * 49. Ágaprítók és komposztaprítók: benzinmotoros / elektromos alkategória (Dávid, 2026-11-09; a régi webshopban így
+     * volt). Besorolás: a régi kategória neve („Benzin…” / „Elektromos…”), különben a terméknév.
+     */
+    function shredder_types(){
+        global $wpdb;
+        $parents = [
+            'Kerti és erdészeti gépek/Fa- és sövényápolás/Faanyag-feldolgozás/Ágaprítók és ágdarálók' => [ 'Benzinmotoros ágaprítók', 'Elektromos ágaprítók' ],
+            'Kerti és erdészeti gépek/Fa- és sövényápolás/Faanyag-feldolgozás/Komposztaprítók' => [ 'Benzinmotoros komposztaprítók', 'Elektromos komposztaprítók' ],
+        ];
+        $old_kind = [];
+        if (MigrationData::prefix() !== '' && MigrationData::has('virtuemart_product_categories')){
+            $lang = MigrationData::lang_table('virtuemart_categories');
+            $rows = $wpdb->get_results('SELECT pc.virtuemart_product_id pid, c.category_name name FROM '.MigrationData::t('virtuemart_product_categories').' pc JOIN '.MigrationData::t($lang).' c ON c.virtuemart_category_id = pc.virtuemart_category_id WHERE c.category_name LIKE \'%aprít%\' OR c.category_name LIKE \'%darál%\'');
+            foreach((array)$rows as $r){
+                if (preg_match('/benzin/iu', $r->name)) $old_kind[(int)$r->pid] = 0;
+                elseif (preg_match('/elektrom/iu', $r->name)) $old_kind[(int)$r->pid] = 1;
+            }
+        }
+        foreach($parents as $path => $names){
+            $parent = Catalog::category_by_path($path);
+            if (!$parent) continue;
+            $ids = [];
+            foreach($names as $i => $name){
+                $found = get_terms([ 'taxonomy' => 'product_cat', 'name' => $name, 'parent' => $parent->term_id, 'hide_empty' => false, 'number' => 1 ]);
+                $ids[$i] = !is_wp_error($found) && $found ? (int)$found[0]->term_id : 0;
+                if (!$ids[$i]){ $made = wp_insert_term($name, 'product_cat', [ 'parent' => $parent->term_id ]); $ids[$i] = is_wp_error($made) ? 0 : (int)$made['term_id']; }
+                if ($ids[$i] && !metadata_exists('term', $ids[$i], 'order')) update_term_meta($ids[$i], 'order', $i);
+            }
+            $products = get_posts([ 'post_type' => 'product', 'post_status' => 'any', 'numberposts' => -1, 'fields' => 'ids', 'tax_query' => [[ 'taxonomy' => 'product_cat', 'terms' => $parent->term_id, 'include_children' => false ]] ]);
+            $counts = [ 0, 0 ];
+            foreach($products as $product_id){
+                $old = (int)get_post_meta($product_id, '_vk_old_id', true);
+                $kind = $old && isset($old_kind[$old]) ? $old_kind[$old] : null;
+                if ($kind === null){
+                    $title = get_the_title($product_id);
+                    if (preg_match('/benzin|motoros|cm³|cm3|\bLC\d|loncin|briggs|honda/iu', $title)) $kind = 0;
+                    elseif (preg_match('/elektromos|elektr\.|\b\d{3,4}\s?W\b|230\s?V/iu', $title)) $kind = 1;
+                }
+                if ($kind === null || !$ids[$kind]) continue;
+                wp_set_object_terms($product_id, $ids[$kind], 'product_cat', true);
+                $counts[$kind]++;
+            }
+            $this->log[] = $path.': '.$names[0].' '.$counts[0].', '.$names[1].' '.$counts[1].' termék.';
+        }
+        if (function_exists('_wc_term_recount')) _wc_term_recount(get_terms([ 'taxonomy' => 'product_cat', 'hide_empty' => false ]), get_taxonomy('product_cat'), true, false);
+    }
+
+    /** 50. A régi webshop „Elérhetőség” szövege → Készlet megjegyzés (ahol üres; képfájl-nevet nem). */
+    function old_availability(){
+        global $wpdb;
+        if (MigrationData::prefix() === '' || !in_array('product_availability', MigrationData::columns('virtuemart_products'), true)){ $this->log[] = 'Elérhetőség: a régi táblában nincs ilyen oszlop.'; return; }
+        $done = 0;
+        foreach($wpdb->get_results("SELECT pm.post_id, pm.meta_value FROM {$wpdb->postmeta} pm JOIN {$wpdb->posts} p ON p.ID = pm.post_id AND p.post_type = 'product' WHERE pm.meta_key = '_vk_old_id'") as $row){
+            $text = trim(wp_strip_all_tags(html_entity_decode((string)$wpdb->get_var($wpdb->prepare('SELECT product_availability FROM '.MigrationData::t('virtuemart_products').' WHERE virtuemart_product_id = %d', (int)$row->meta_value)), ENT_QUOTES, 'UTF-8')));
+            if ($text === '' || preg_match('/\.(gif|png|jpe?g|svg|webp)$/i', $text)) continue;
+            if (trim((string)get_post_meta((int)$row->post_id, StockNote::NOTE, true)) !== '') continue;
+            update_post_meta((int)$row->post_id, StockNote::NOTE, mb_substr($text, 0, 200));
+            $done++;
+        }
+        $this->log[] = 'Elérhetőség a régi webshopból: '.$done.' termék készlet megjegyzése.';
     }
 
 }
