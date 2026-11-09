@@ -176,7 +176,7 @@ class Catalog {
      * A csempe képe a márka egy terméke a csoportból (kiemelt, készleten lévő előnyben).
      */
     static function brand_categories($brand){
-        $key = 'vk_brand_tiles6_'.$brand->term_id.'_'.md5(wp_cache_get_last_changed('posts').wp_cache_get_last_changed('terms'));
+        $key = 'vk_brand_tiles7_'.$brand->term_id.'_'.md5(wp_cache_get_last_changed('posts').wp_cache_get_last_changed('terms'));
         $cached = get_transient($key);
         if (is_array($cached)) return $cached;
         $ids = get_posts([ 'post_type' => 'product', 'post_status' => 'publish', 'numberposts' => -1, 'fields' => 'ids',
@@ -207,6 +207,9 @@ class Catalog {
                 // Tartozékoknál a legfinomabb kategória (pl. „Fűnyíró traktor tartozékok”, „Robotfűnyíró-tartozékok”),
                 // nem a „Fűnyírás és gyepápolás” szint, ahol minden összekeveredik (ügyfélkérés, 2026-11-09).
                 if ($root === 'Tartozékok' && count($chain) > 1) $child = (int)end($chain);
+                // Gépeknél, ha a típus alatt még van finomabb csoport (pl. Akkumulátoros fűnyírók → STIHL AK rendszerű akkus
+                // fűnyírók), az is megjelenik a választóban (Dávid, 2026-11-09).
+                elseif ($root !== 'Alkatrészek és karbantartás' && $position !== false && count($chain) > $position + 2) $child = (int)end($chain);
                 // Akkumulátorok és töltők: a típus (akku, töltő) és a rendszer (pl. STIHL AK / AP) szintje a választóban.
                 elseif ($root === 'Alkatrészek és karbantartás' && $name($group) === 'Akkumulátorok és töltők' && isset($chain[3])) $child = $chain[3];
                 if (!isset($groups[$group])) $groups[$group] = [ 'count' => 0, 'image' => 0, 'score' => -1, 'kind' => $root === 'Tartozékok' ? 2 : ($root === 'Alkatrészek és karbantartás' ? 1 : 0), 'children' => [], 'child_images' => [] ];

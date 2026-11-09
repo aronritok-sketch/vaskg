@@ -64,6 +64,7 @@ class Setup {
         45 => 'feed_refresh',
         46 => 'stihl_battery_groups',
         47 => 'category_order_meta',
+        48 => 'old_weights_dims',
     ];
 
     /**
@@ -1853,6 +1854,56 @@ class Setup {
             $done++;
         }
         $this->log[] = 'Kategóriák: sorrend-mező pótolva ('.$done.' kategória).';
+    }
+
+
+    /**
+     * 48. Súly és dobozméret a régi webshop adatbázisából (Dávid, 2026-11-09: „nem jött át a súly és a doboz méretek”):
+     * a régi termék product_weight / product_length / _width / _height értéke, a WooCommerce mértékegységére váltva. Csak
+     * ott, ahol az új terméken még nincs érték (a kézzel beírtat nem írja felül).
+     */
+    function old_weights_dims(){
+        global $wpdb;
+        if (MigrationData::prefix() === '' || !MigrationData::has('virtuemart_products')){ $this->log[] = 'FIGYELEM: súly / méret: nincs meg a régi adatbázis.'; return; }
+        $cols = MigrationData::columns('virtuemart_products');
+        $want = [ 'product_weight', 'product_weight_uom', 'product_length', 'product_width', 'product_height', 'product_lwh_uom' ];
+        $have = array_values(array_intersect($want, $cols));
+        if (!in_array('product_weight', $have, true)){ $this->log[] = 'FIGYELEM: súly / méret: a régi táblában nincs súly oszlop.'; return; }
+        $map = [];
+        foreach($wpdb->get_results("SELECT pm.post_id, pm.meta_value FROM {$wpdb->postmeta} pm JOIN {$wpdb->posts} p ON p.ID = pm.post_id AND p.post_type = 'product' WHERE pm.meta_key = '_vk_old_id'") as $row) $map[(int)$row->meta_value][] = (int)$row->post_id;
+        if (!$map) return;
+        $wunit = get_option('woocommerce_weight_unit', 'kg');
+        $dunit = get_option('woocommerce_dimension_unit', 'cm');
+        $wmap = [ 'KG' => 'kg', 'G' => 'g', 'LB' => 'lbs', 'LBS' => 'lbs', 'OZ' => 'oz' ];
+        $dmap = [ 'M' => 'm', 'CM' => 'cm', 'MM' => 'mm', 'IN' => 'in', 'YD' => 'yd' ];
+        $weights = $dims = 0;
+        foreach(array_chunk(array_keys($map), 300) as $chunk){
+            $rows = $wpdb->get_results('SELECT virtuemart_product_id id, '.implode(', ', $have).' FROM '.MigrationData::t('virtuemart_products').' WHERE virtuemart_product_id IN ('.implode(',', array_map('intval', $chunk)).')', ARRAY_A);
+            foreach((array)$rows as $r){
+                $w = (float)($r['product_weight'] ?? 0);
+                $wu = $wmap[strtoupper(trim((string)($r['product_weight_uom'] ?? 'KG')))] ?? 'kg';
+                $du = $dmap[strtoupper(trim((string)($r['product_lwh_uom'] ?? 'CM')))] ?? 'cm';
+                $l = (float)($r['product_length'] ?? 0); $wi = (float)($r['product_width'] ?? 0); $h = (float)($r['product_height'] ?? 0);
+                foreach($map[(int)$r['id']] ?? [] as $product_id){
+                    // Közvetlen meta-írás (gyors, ~1900 termék egy kérésben); utána a termék gyorsítótára törlődik.
+                    $changed = false;
+                    if ($w > 0 && (float)get_post_meta($product_id, '_weight', true) <= 0){
+                        update_post_meta($product_id, '_weight', wc_format_decimal(wc_get_weight($w, $wunit, $wu), 3));
+                        $weights++; $changed = true;
+                    }
+                    $has_dims = (float)get_post_meta($product_id, '_length', true) > 0 || (float)get_post_meta($product_id, '_width', true) > 0 || (float)get_post_meta($product_id, '_height', true) > 0;
+                    if (($l > 0 || $wi > 0 || $h > 0) && !$has_dims){
+                        if ($l > 0) update_post_meta($product_id, '_length', wc_format_decimal(wc_get_dimension($l, $dunit, $du), 2));
+                        if ($wi > 0) update_post_meta($product_id, '_width', wc_format_decimal(wc_get_dimension($wi, $dunit, $du), 2));
+                        if ($h > 0) update_post_meta($product_id, '_height', wc_format_decimal(wc_get_dimension($h, $dunit, $du), 2));
+                        $dims++; $changed = true;
+                    }
+                    if ($changed) wc_delete_product_transients($product_id);
+                }
+            }
+        }
+        if (class_exists(__NAMESPACE__.'\\Feed')) Feed::flush();
+        $this->log[] = 'Súly és méret a régi webshopból: '.$weights.' termék súlya, '.$dims.' termék mérete pótolva.';
     }
 
 }
