@@ -67,6 +67,7 @@ class Setup {
         48 => 'old_weights_dims',
         49 => 'shredder_types',
         50 => 'old_availability',
+        51 => 'power_types',
     ];
 
     /**
@@ -1970,6 +1971,84 @@ class Setup {
             $done++;
         }
         $this->log[] = 'Elérhetőség a régi webshopból: '.$done.' termék készlet megjegyzése.';
+    }
+
+    /**
+     * 51. Gépek hajtás szerint (Dávid, 2026-11-09: a régi webshopban így volt, pl. STIHL fűkaszák, sövényvágók):
+     * akkumulátoros / benzinmotoros / elektromos (sövényvágóknál magassági is) alkategória, és az alkatrészeknél a
+     * Láncok és vezetőlemezek → Fűrészláncok / Vezetőlemezek. Besorolás: a régi kategória neve (ha egyértelmű), különben a
+     * terméknév (STIHL típusjel is: FSA = akkus, FSE = elektromos, FS = benzines). Ami nem sorolható be, a szülőben marad.
+     */
+    function power_types(){
+        global $wpdb;
+        $machines = 'Kerti és erdészeti gépek/';
+        $targets = [
+            $machines.'Fűnyírás és gyepápolás/További gépek/Fűkaszák és szegélynyírók' => [ 'akku' => 'Akkumulátoros fűkaszák és szegélynyírók', 'benz' => 'Benzinmotoros fűkaszák és szegélynyírók', 'elek' => 'Elektromos fűkaszák és szegélynyírók' ],
+            $machines.'Fa- és sövényápolás/Metszés és sövényápolás/Sövénynyírók és sövényvágók' => [ 'akku' => 'Akkumulátoros sövényvágók', 'benz' => 'Benzinmotoros sövényvágók', 'elek' => 'Elektromos sövényvágók', 'magas' => 'Magassági sövényvágók' ],
+            $machines.'Tisztítás, víz és energia/Terület- és kerttisztítás/Lombfúvók' => [ 'akku' => 'Akkumulátoros lombfúvók', 'benz' => 'Benzinmotoros lombfúvók', 'elek' => 'Elektromos lombfúvók' ],
+            $machines.'Tisztítás, víz és energia/Terület- és kerttisztítás/Lombszívók és aprítók' => [ 'akku' => 'Akkumulátoros lombszívók', 'benz' => 'Benzinmotoros lombszívók', 'elek' => 'Elektromos lombszívók' ],
+            $machines.'Fűnyírás és gyepápolás/További gépek/Gyepszellőztetők' => [ 'akku' => 'Akkumulátoros gyepszellőztetők', 'benz' => 'Benzinmotoros gyepszellőztetők', 'elek' => 'Elektromos gyepszellőztetők' ],
+            $machines.'Tisztítás, víz és energia/Gépi tisztítás/Magasnyomású mosók' => [ 'akku' => 'Akkumulátoros magasnyomású mosók', 'elek' => 'Elektromos magasnyomású mosók', 'benz' => 'Benzinmotoros magasnyomású mosók' ],
+            'Alkatrészek és karbantartás/Alkatrészek/Vágóelemek/Láncok és vezetőlemezek' => [ 'lanc' => 'Fűrészláncok', 'lemez' => 'Vezetőlemezek' ],
+        ];
+        $order = [ 'akku' => 0, 'benz' => 1, 'elek' => 2, 'magas' => 3, 'lanc' => 0, 'lemez' => 1 ];
+        $kind_of = function($text, $magas){
+            if ($magas && preg_match('/magassági/iu', $text)) return 'magas';
+            if (preg_match('/akku|\b(?:FSA|HSA|HLA|BGA|SHA|RLA|RMA|KMA|MSA|SGA|REA|RCA)\s?-?\d|\b(?:1[028]|2[04]|36|40|48|56|58|60|80|82)\s?V\b/iu', $text)) return 'akku';
+            if (preg_match('/elektrom|elektr\.|\b(?:FSE|HSE|BGE|SHE|RLE|RE|RME|MSE|HLE)\s?-?\d|\b\d{3,4}\s?W\b|230\s?V/iu', $text)) return 'elek';
+            if (preg_match('/benzin|motoros|cm³|ccm|cm3|\b\d+(?:[.,]\d+)?\s?LE\b|ütem|loncin|briggs|honda|\bB&S\b|kawasaki|\bLC\d|\b(?:FS|HS|HL|BG|BR|SH|RL|KM)\s?-?\d/iu', $text)) return 'benz';
+            return null;
+        };
+        // A régi webshop kategóriái termékenként (a tartozék-kategóriák nélkül).
+        $old_names = [];
+        if (MigrationData::prefix() !== '' && MigrationData::has('virtuemart_product_categories')){
+            $lang = MigrationData::lang_table('virtuemart_categories');
+            foreach((array)$wpdb->get_results('SELECT pc.virtuemart_product_id pid, c.category_name name FROM '.MigrationData::t('virtuemart_product_categories').' pc JOIN '.MigrationData::t($lang).' c ON c.virtuemart_category_id = pc.virtuemart_category_id') as $r){
+                if (!preg_match('/tartoz/iu', $r->name)) $old_names[(int)$r->pid][] = $r->name;
+            }
+        }
+        foreach($targets as $path => $names){
+            $parent = Catalog::category_by_path($path);
+            if (!$parent){ $this->log[] = $path.': nincs ilyen kategória.'; continue; }
+            $chains = isset($names['lanc']);
+            $products = get_posts([ 'post_type' => 'product', 'post_status' => 'any', 'numberposts' => -1, 'fields' => 'ids', 'tax_query' => [[ 'taxonomy' => 'product_cat', 'terms' => $parent->term_id, 'include_children' => false ]] ]);
+            $plan = [];
+            $left = [];
+            foreach($products as $product_id){
+                $title = html_entity_decode(get_the_title($product_id), ENT_QUOTES, 'UTF-8');
+                $kind = null;
+                if ($chains){
+                    $kind = preg_match('/vezetőlemez|lemez/iu', $title) ? 'lemez' : (preg_match('/lánc/iu', $title) ? 'lanc' : null);
+                } else {
+                    // A régi kategória akkor dönt, ha egyértelmű (a „Benzines és elektromos fúvógépek” nem az).
+                    $old = (int)get_post_meta($product_id, '_vk_old_id', true);
+                    foreach($old_names[$old] ?? [] as $name){
+                        $hits = array_filter([ isset($names['magas']) && preg_match('/magassági/iu', $name) ? 'magas' : null, preg_match('/akku/iu', $name) ? 'akku' : null, preg_match('/elektrom/iu', $name) ? 'elek' : null, preg_match('/benzin|motoros/iu', $name) ? 'benz' : null ]);
+                        if (count($hits) === 1 || (isset($hits[0]) && $hits[0] === 'magas')){ $kind = reset($hits); break; }
+                    }
+                    if ($kind === null) $kind = $kind_of($title, isset($names['magas']));
+                    // Bozótvágó / multifunkciós fűkasza: benzinmotoros (ha a név mást nem mond).
+                    if ($kind === null && isset($names['akku']) && strpos($path, 'Fűkaszák') !== false && preg_match('/bozótvágó|multifunkciós|többfunkciós/iu', $title)) $kind = 'benz';
+                }
+                if ($kind === null || !isset($names[$kind])){ $left[] = $title; continue; }
+                $plan[$kind][] = $product_id;
+            }
+            // Csak akkor bontjuk, ha legalább két fajta van benne.
+            if (count($plan) < 2){ $this->log[] = $path.': nem bontva ('.count($plan).' fajta).'; continue; }
+            $report = [];
+            foreach($plan as $kind => $ids){
+                $name = $names[$kind];
+                $found = get_terms([ 'taxonomy' => 'product_cat', 'name' => $name, 'parent' => $parent->term_id, 'hide_empty' => false, 'number' => 1 ]);
+                $term_id = !is_wp_error($found) && $found ? (int)$found[0]->term_id : 0;
+                if (!$term_id){ $made = wp_insert_term($name, 'product_cat', [ 'parent' => $parent->term_id ]); $term_id = is_wp_error($made) ? 0 : (int)$made['term_id']; }
+                if (!$term_id) continue;
+                if (!metadata_exists('term', $term_id, 'order')) update_term_meta($term_id, 'order', $order[$kind]);
+                foreach($ids as $product_id) wp_set_object_terms($product_id, $term_id, 'product_cat', true);
+                $report[] = $name.' '.count($ids);
+            }
+            $this->log[] = basename($path).': '.implode(', ', $report).($left ? '; nincs besorolva: '.implode(' | ', $left) : '').'.';
+        }
+        if (function_exists('_wc_term_recount')) _wc_term_recount(get_terms([ 'taxonomy' => 'product_cat', 'hide_empty' => false ]), get_taxonomy('product_cat'), true, false);
     }
 
 }

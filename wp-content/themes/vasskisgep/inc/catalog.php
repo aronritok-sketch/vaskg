@@ -176,7 +176,7 @@ class Catalog {
      * A csempe képe a márka egy terméke a csoportból (kiemelt, készleten lévő előnyben).
      */
     static function brand_categories($brand){
-        $key = 'vk_brand_tiles7_'.$brand->term_id.'_'.md5(wp_cache_get_last_changed('posts').wp_cache_get_last_changed('terms'));
+        $key = 'vk_brand_tiles8_'.$brand->term_id.'_'.md5(wp_cache_get_last_changed('posts').wp_cache_get_last_changed('terms'));
         $cached = get_transient($key);
         if (is_array($cached)) return $cached;
         $ids = get_posts([ 'post_type' => 'product', 'post_status' => 'publish', 'numberposts' => -1, 'fields' => 'ids',
@@ -192,7 +192,11 @@ class Catalog {
                 return $names[$id];
             };
             $seen = [];
-            foreach(wp_get_object_terms($ids, 'product_cat', [ 'fields' => 'all_with_object_id' ]) as $t){
+            $assigned = wp_get_object_terms($ids, 'product_cat', [ 'fields' => 'all_with_object_id' ]);
+            // Termékenként azok a kategóriák, amelyeknek a termék egy alkategóriájában is benne van (ezek nem típus-csempék).
+            $has_deeper = [];
+            foreach($assigned as $t) foreach(get_ancestors($t->term_id, 'product_cat') as $a) $has_deeper[(int)$t->object_id][(int)$a] = true;
+            foreach($assigned as $t){
                 $chain = array_reverse(array_map('intval', get_ancestors($t->term_id, 'product_cat')));
                 $chain[] = (int)$t->term_id;
                 $root = $name($chain[0]);
@@ -210,8 +214,9 @@ class Catalog {
                 // Gépeknél, ha a típus alatt még van finomabb csoport (pl. Akkumulátoros fűnyírók → STIHL AK rendszerű akkus
                 // fűnyírók), az is megjelenik a választóban (Dávid, 2026-11-09).
                 elseif ($root !== 'Alkatrészek és karbantartás' && $position !== false && count($chain) > $position + 2) $child = (int)end($chain);
-                // Akkumulátorok és töltők: a típus (akku, töltő) és a rendszer (pl. STIHL AK / AP) szintje a választóban.
-                elseif ($root === 'Alkatrészek és karbantartás' && $name($group) === 'Akkumulátorok és töltők' && isset($chain[3])) $child = $chain[3];
+                // Alkatrészeknél is a legfinomabb csoport (pl. Fűrészláncok, Vezetőlemezek, Szerviz csomagok, STIHL AK / AP
+                // akkurendszer), ahogy a régi webshopban (Dávid, 2026-11-09).
+                elseif ($root === 'Alkatrészek és karbantartás' && $position !== false && count($chain) > $position + 1) $child = isset($has_deeper[(int)$t->object_id][(int)$t->term_id]) ? 0 : (int)end($chain);
                 if (!isset($groups[$group])) $groups[$group] = [ 'count' => 0, 'image' => 0, 'score' => -1, 'kind' => $root === 'Tartozékok' ? 2 : ($root === 'Alkatrészek és karbantartás' ? 1 : 0), 'children' => [], 'child_images' => [] ];
                 $image = (int)get_post_meta($product, '_thumbnail_id', true);
                 $score = (isset($featured[$product]) ? 2 : 0) + (get_post_meta($product, '_stock_status', true) === 'instock' ? 1 : 0);
@@ -290,6 +295,12 @@ class Catalog {
         if (count($children) > 1 || ($active_group && !empty($groups[$active_group]['acc']) && $children)){
             $group_term = get_term($active_group, 'product_cat');
             $tiles = [];
+            // Ha a gép-kategóriának nincs típusa, csak tartozéka, maga a gép is csempe legyen (pl. Rönkhasítók +
+            // Rönkhasító-tartozékok; Dávid, 2026-11-09).
+            $acc_id = (int)($groups[$active_group]['acc'] ?? 0);
+            if ($acc_id && !array_diff_key($children, [ $acc_id => 1 ])){
+                $tiles[] = [ 'url' => $url($group_term, 'termekek'), 'image' => (int)$groups[$active_group]['image'], 'name' => $group_term->name, 'count' => (int)$groups[$active_group]['count'], 'active' => false ];
+            }
             foreach($children as $child_id => $count){
                 $child = get_term($child_id, 'product_cat');
                 if (!$child || is_wp_error($child)) continue;
@@ -324,7 +335,7 @@ class Catalog {
         $children = get_terms([ 'taxonomy' => 'product_cat', 'parent' => $term->term_id, 'hide_empty' => true, 'orderby' => 'meta_value_num', 'meta_key' => 'order' ]);
         if (is_wp_error($children)) $children = [];
         if (count($children) < 2 && !self::accessory_term($term->name)) return '';
-        $key = 'vk_cat_tiles3_'.$term->term_id.'_'.md5(wp_cache_get_last_changed('posts').wp_cache_get_last_changed('terms'));
+        $key = 'vk_cat_tiles4_'.$term->term_id.'_'.md5(wp_cache_get_last_changed('posts').wp_cache_get_last_changed('terms'));
         $tiles = get_transient($key);
         if (!is_array($tiles)){
             $tiles = [];
