@@ -172,6 +172,7 @@ class MigrationData {
         if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'barion') return Barion::find_old_pixel();
         if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'carts') return AbandonedCart::diagnose();
         if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'cron') return SelfCron::diagnose();
+        if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'oldcats') return self::oldcats();
         if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'barion-gateway'){
             $enable = $request->get_param('enable');
             return Barion::gateway($enable === null ? null : ($enable === '1'));
@@ -249,6 +250,36 @@ class MigrationData {
         $all = array_values(array_filter(self::tables(), function($t) use ($base){ return strpos($t, $base.'_') === 0 && preg_match('/_[a-z]{2}_[a-z]{2}$/', $t); }));
         if (in_array($base.'_hu_hu', $all, true)) return $base.'_hu_hu';
         return $all[0] ?? '';
+    }
+
+    /** Régi és új kategóriafa termékszámokkal (diag=oldcats) – a tartozék-kategóriák finomításához (Dávid, 2026-11-09). */
+    static function oldcats(){
+        global $wpdb;
+        $out = [ 'old' => [], 'new' => [] ];
+        $lang = self::lang_table('virtuemart_categories');
+        if ($lang !== '' && self::has('virtuemart_category_categories')){
+            $rows = $wpdb->get_results('SELECT c.virtuemart_category_id id, c.category_name name, cc.category_parent_id parent, (SELECT COUNT(*) FROM '.self::t('virtuemart_product_categories').' pc WHERE pc.virtuemart_category_id = c.virtuemart_category_id) n FROM '.self::t($lang).' c LEFT JOIN '.self::t('virtuemart_category_categories').' cc ON cc.category_child_id = c.virtuemart_category_id', ARRAY_A);
+            $by = [];
+            foreach((array)$rows as $r) $by[(int)$r['id']] = $r;
+            foreach($by as $id => $r){
+                $path = [];
+                for ($c = $id, $g = 0; $c && isset($by[$c]) && $g < 8; $c = (int)$by[$c]['parent'], $g++) array_unshift($path, trim(html_entity_decode((string)$by[$c]['name'], ENT_QUOTES, 'UTF-8')));
+                $out['old'][] = [ 'id' => $id, 'path' => implode(' > ', $path), 'n' => (int)$r['n'] ];
+            }
+            usort($out['old'], function($a, $b){ return strcmp($a['path'], $b['path']); });
+        }
+        $terms = get_terms([ 'taxonomy' => 'product_cat', 'hide_empty' => false ]);
+        if (!is_wp_error($terms)){
+            $by = [];
+            foreach($terms as $t) $by[$t->term_id] = $t;
+            foreach($terms as $t){
+                $path = [];
+                for ($c = $t->term_id, $g = 0; $c && isset($by[$c]) && $g < 8; $c = $by[$c]->parent, $g++) array_unshift($path, $by[$c]->name);
+                $out['new'][] = [ 'id' => $t->term_id, 'path' => implode(' > ', $path), 'n' => (int)$t->count ];
+            }
+            usort($out['new'], function($a, $b){ return strcmp($a['path'], $b['path']); });
+        }
+        return $out;
     }
 
     /** Számlálók a felülethez. */
