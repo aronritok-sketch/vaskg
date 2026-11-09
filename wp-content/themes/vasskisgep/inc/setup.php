@@ -62,6 +62,7 @@ class Setup {
         43 => 'aszf_shipping',
         44 => 'aszf_rates',
         45 => 'feed_refresh',
+        46 => 'stihl_battery_groups',
     ];
 
     /**
@@ -1800,6 +1801,45 @@ class Setup {
     function feed_refresh(){
         Feed::flush();
         $this->log[] = 'Árukereső feed: a következő lekéréskor újragenerálódik (kisbetűs delivery_time / delivery_cost, új díjak).';
+    }
+
+
+    /**
+     * 46. A régi webshop STIHL-csoportjai (Dávid, 2026-11-09): rendszer szerinti akkus tartozékok (AK / COMPACT, AP / PRO,
+     * AS) és akkus fűnyírók (AK, AP) alkategóriaként, a régi kategóriák termékeivel (a termék a mostani kategóriáiban is marad).
+     */
+    function stihl_battery_groups(){
+        global $wpdb;
+        if (MigrationData::prefix() === '' || !MigrationData::has('virtuemart_product_categories')){ $this->log[] = 'FIGYELEM: STIHL-csoportok: nincs meg a régi adatbázis.'; return; }
+        $lang = MigrationData::lang_table('virtuemart_categories');
+        $groups = [
+            [ 'Alkatrészek és karbantartás/Akkumulátorok és töltők/Energiaellátás', 'STIHL AK rendszer (COMPACT)', 'Tartozékok COMPACT akkumulátoros gépekhez' ],
+            [ 'Alkatrészek és karbantartás/Akkumulátorok és töltők/Energiaellátás', 'STIHL AP rendszer (PRO)', 'Tartozékok PRO akkumulátoros gépekhez' ],
+            [ 'Alkatrészek és karbantartás/Akkumulátorok és töltők/Energiaellátás', 'STIHL AS rendszer', 'AS 2 Akkumulátor és töltő' ],
+            [ 'Kerti és erdészeti gépek/Fűnyírás és gyepápolás/Fűnyírók/Akkumulátoros fűnyírók', 'STIHL AK rendszerű akkus fűnyírók', 'Akkumulátoros fűnyíró gépek AK Rendszer' ],
+            [ 'Kerti és erdészeti gépek/Fűnyírás és gyepápolás/Fűnyírók/Akkumulátoros fűnyírók', 'STIHL AP rendszerű profi akkus fűnyírók', 'Professzionális Akkumulátoros fűnyíró gépek AP Rendszer' ],
+        ];
+        foreach($groups as [ $parent_path, $name, $old_name ]){
+            $parent = Catalog::category_by_path($parent_path);
+            if (!$parent){ $this->log[] = 'FIGYELEM: STIHL-csoportok: nincs ilyen kategória: '.$parent_path; continue; }
+            $old_ids = array_map('intval', (array)$wpdb->get_col($wpdb->prepare('SELECT virtuemart_category_id FROM '.MigrationData::t($lang).' WHERE category_name = %s', $old_name)));
+            if (!$old_ids){ $this->log[] = 'FIGYELEM: STIHL-csoportok: a régi kategória nincs meg: '.$old_name; continue; }
+            $old_products = array_map('intval', (array)$wpdb->get_col('SELECT DISTINCT virtuemart_product_id FROM '.MigrationData::t('virtuemart_product_categories').' WHERE virtuemart_category_id IN ('.implode(',', $old_ids).')'));
+            if (!$old_products) continue;
+            $products = array_map('intval', (array)$wpdb->get_col("SELECT DISTINCT pm.post_id FROM {$wpdb->postmeta} pm JOIN {$wpdb->posts} p ON p.ID = pm.post_id AND p.post_type = 'product' WHERE pm.meta_key = '_vk_old_id' AND pm.meta_value IN ('".implode("','", $old_products)."')"));
+            if (!$products) continue;
+            $existing = get_terms([ 'taxonomy' => 'product_cat', 'name' => $name, 'parent' => $parent->term_id, 'hide_empty' => false, 'number' => 1 ]);
+            $term_id = !is_wp_error($existing) && $existing ? (int)$existing[0]->term_id : 0;
+            if (!$term_id){
+                $made = wp_insert_term($name, 'product_cat', [ 'parent' => $parent->term_id ]);
+                if (is_wp_error($made)){ $this->log[] = 'FIGYELEM: STIHL-csoportok: '.$made->get_error_message(); continue; }
+                $term_id = (int)$made['term_id'];
+            }
+            foreach($products as $product_id) wp_set_object_terms($product_id, $term_id, 'product_cat', true);
+            $this->log[] = 'STIHL-csoport: '.$name.' ('.count($products).' termék).';
+        }
+        delete_transient('wc_term_counts');
+        if (function_exists('_wc_term_recount')) _wc_term_recount(get_terms([ 'taxonomy' => 'product_cat', 'hide_empty' => false ]), get_taxonomy('product_cat'), true, false);
     }
 
 }

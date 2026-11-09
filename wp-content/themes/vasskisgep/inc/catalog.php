@@ -124,6 +124,50 @@ class Catalog {
      * állnak meg azok a csoportok, amelyek alcsoportjai csak változatok (pl. benzines / akkus fűnyírók);
      * a többi gyűjtőcsoport (pl. „További gépek”, „Gépi tisztítás”) a 4. szintre bomlik.
      */
+    /** Gép-kategória → a tartozékai (Tartozékok ág levele): a gép típusválasztójában is megjelenik (Dávid, 2026-11-09). */
+    const ACCESSORY_FOR = [
+        'Láncfűrészek és ágnyesők' => 'Motorfűrész-tartozékok',
+        'Fűnyírók' => 'Fűnyíró-tartozékok',
+        'Fűnyíró traktorok' => 'Fűnyíró traktor tartozékok',
+        'Robotfűnyírók' => 'Robotfűnyíró-tartozékok',
+        'Fűkaszák és szegélynyírók' => 'Fűkasza- és szegélynyíró-tartozékok',
+        'Kerekes és távirányítású bozótvágók' => 'Bozót- és magasfűvágó tartozékok',
+        'Gyepszellőztetők' => 'Gyepszellőztető-tartozékok',
+        'Sövénynyírók és sövényvágók' => 'Sövényvágó-tartozékok',
+        'Daraboló gépek' => 'Vágótárcsás gép tartozékok',
+        'Permetezés' => 'Permetező-tartozékok',
+        'Magasnyomású mosók' => 'Magasnyomású mosó tartozékok',
+        'Lombfúvók' => 'Fúvógép-tartozékok',
+        'Száraz-nedves porszívók' => 'Porszívó-tartozékok',
+        'Seprőgépek' => 'Seprőgép- és térkőtisztító tartozékok',
+        'Térkőtisztítók' => 'Seprőgép- és térkőtisztító tartozékok',
+        'Komposztaprítók' => 'Aprító-tartozékok',
+        'Ágaprítók és ágdarálók' => 'Aprító-tartozékok',
+        'Rönkhasítók' => 'Rönkhasító-tartozékok',
+        'Kapálógépek és rotációs kapák' => 'Kapálógép- és talajmaró-tartozékok',
+        'Talajmarók' => 'Kapálógép- és talajmaró-tartozékok',
+        'Multifunkciós művelőgépek' => 'Multifunkciós művelőgép tartozékok',
+        'Egytengelyes traktorok' => 'Egytengelyes traktor tartozékok',
+        'Talaj- és gödörfúrók' => 'Talajfúró-tartozékok',
+        'Áramfejlesztők és aggregátorok' => 'Áramfejlesztő-tartozékok',
+    ];
+
+    /** A tartozék-levél kategória (név szerint, a Tartozékok ágon belül), vagy null. */
+    static function accessory_term($machine_name){
+        static $cache = [];
+        if (!isset(self::ACCESSORY_FOR[$machine_name])) return null;
+        $name = self::ACCESSORY_FOR[$machine_name];
+        if (!array_key_exists($name, $cache)){
+            $cache[$name] = null;
+            foreach(get_terms([ 'taxonomy' => 'product_cat', 'name' => $name, 'hide_empty' => false ]) ?: [] as $t){
+                $root = get_ancestors($t->term_id, 'product_cat');
+                $top = $root ? get_term(end($root), 'product_cat') : $t;
+                if ($top && !is_wp_error($top) && $top->name === 'Tartozékok'){ $cache[$name] = $t; break; }
+            }
+        }
+        return $cache[$name];
+    }
+
     const BRAND_TILE_GROUPS = [ 'Fűnyírók', 'Fűnyíró traktorok', 'Láncfűrészek és ágnyesők', 'Permetezés', 'Kombi- és multirendszerek', 'Daraboló gépek', 'Tömörítő gépek' ];
 
     /**
@@ -132,7 +176,7 @@ class Catalog {
      * A csempe képe a márka egy terméke a csoportból (kiemelt, készleten lévő előnyben).
      */
     static function brand_categories($brand){
-        $key = 'vk_brand_tiles4_'.$brand->term_id.'_'.md5(wp_cache_get_last_changed('posts').wp_cache_get_last_changed('terms'));
+        $key = 'vk_brand_tiles5_'.$brand->term_id.'_'.md5(wp_cache_get_last_changed('posts').wp_cache_get_last_changed('terms'));
         $cached = get_transient($key);
         if (is_array($cached)) return $cached;
         $ids = get_posts([ 'post_type' => 'product', 'post_status' => 'publish', 'numberposts' => -1, 'fields' => 'ids',
@@ -163,6 +207,8 @@ class Catalog {
                 // Tartozékoknál a legfinomabb kategória (pl. „Fűnyíró traktor tartozékok”, „Robotfűnyíró-tartozékok”),
                 // nem a „Fűnyírás és gyepápolás” szint, ahol minden összekeveredik (ügyfélkérés, 2026-11-09).
                 if ($root === 'Tartozékok' && count($chain) > 1) $child = (int)end($chain);
+                // Akkumulátorok és töltők: a típus (akku, töltő) és a rendszer (pl. STIHL AK / AP) szintje a választóban.
+                elseif ($root === 'Alkatrészek és karbantartás' && $name($group) === 'Akkumulátorok és töltők' && isset($chain[3])) $child = $chain[3];
                 if (!isset($groups[$group])) $groups[$group] = [ 'count' => 0, 'image' => 0, 'score' => -1, 'kind' => $root === 'Tartozékok' ? 2 : ($root === 'Alkatrészek és karbantartás' ? 1 : 0), 'children' => [], 'child_images' => [] ];
                 $image = (int)get_post_meta($product, '_thumbnail_id', true);
                 $score = (isset($featured[$product]) ? 2 : 0) + (get_post_meta($product, '_stock_status', true) === 'instock' ? 1 : 0);
@@ -176,6 +222,19 @@ class Catalog {
                 $groups[$group]['count']++;
                 if (!$image) continue;
                 if ($score > $groups[$group]['score']){ $groups[$group]['image'] = $image; $groups[$group]['score'] = $score; }
+            }
+            // A gép-kategória típusválasztójában a hozzá tartozó tartozékok is (pl. Láncfűrészek → Motorfűrész-tartozékok).
+            $acc_group = 0;
+            foreach($groups as $gid => $g) if ($g['kind'] === 2){ $acc_group = $gid; break; }
+            if ($acc_group){
+                foreach($groups as $gid => &$g){
+                    if ($g['kind'] !== 0) continue;
+                    $acc = self::accessory_term($name($gid));
+                    if (!$acc || empty($groups[$acc_group]['children'][$acc->term_id])) continue;
+                    $g['children'][$acc->term_id] = $groups[$acc_group]['children'][$acc->term_id];
+                    if (isset($groups[$acc_group]['child_images'][$acc->term_id])) $g['child_images'][$acc->term_id] = $groups[$acc_group]['child_images'][$acc->term_id];
+                }
+                unset($g);
             }
             uasort($groups, function($a, $b){ return [ $a['kind'], -$a['count'] ] <=> [ $b['kind'], -$b['count'] ]; });
             foreach($groups as &$g){
@@ -256,8 +315,9 @@ class Catalog {
      */
     static function category_children_html($term){
         $children = get_terms([ 'taxonomy' => 'product_cat', 'parent' => $term->term_id, 'hide_empty' => true, 'orderby' => 'meta_value_num', 'meta_key' => 'order' ]);
-        if (is_wp_error($children) || count($children) < 2) return '';
-        $key = 'vk_cat_tiles2_'.$term->term_id.'_'.md5(wp_cache_get_last_changed('posts').wp_cache_get_last_changed('terms'));
+        if (is_wp_error($children)) $children = [];
+        if (count($children) < 2 && !self::accessory_term($term->name)) return '';
+        $key = 'vk_cat_tiles3_'.$term->term_id.'_'.md5(wp_cache_get_last_changed('posts').wp_cache_get_last_changed('terms'));
         $tiles = get_transient($key);
         if (!is_array($tiles)){
             $tiles = [];
@@ -277,10 +337,25 @@ class Catalog {
                 $link = get_term_link($child);
                 $tiles[] = [ 'url' => is_wp_error($link) ? '' : $link.(!is_wp_error($grandchildren) && count($grandchildren) > 1 ? '' : '#termekek'), 'image' => $image, 'name' => $child->name, 'count' => $count ];
             }
+            // A gép-kategóriánál a tartozékai is egy csempén (Dávid, 2026-11-09).
+            $acc = self::accessory_term($term->name);
+            $acc_count = $acc ? ((int)get_term_meta($acc->term_id, 'product_count_product_cat', true) ?: (int)$acc->count) : 0;
+            if ($acc && $acc_count){
+                $image = (int)get_term_meta($acc->term_id, 'thumbnail_id', true);
+                if (!$image){
+                    $ids = wc_get_products([ 'status' => 'publish', 'limit' => 1, 'return' => 'ids', 'category' => [ $acc->slug ], 'visibility' => 'catalog', 'stock_status' => 'instock' ]);
+                    $image = $ids ? (int)get_post_thumbnail_id($ids[0]) : 0;
+                }
+                $link = get_term_link($acc);
+                $tiles[] = [ 'url' => is_wp_error($link) ? '' : $link.'#termekek', 'image' => $image, 'name' => $acc->name, 'count' => $acc_count, 'acc' => 1 ];
+            }
             set_transient($key, $tiles, DAY_IN_SECONDS);
         }
-        if (count($tiles) < 2) return '';
-        return '<nav class="vk-brand-cats vk-cat-children" aria-label="'.esc_attr($term->name.' alkategóriák').'"><div class="vk-brand-cats-head"><span class="vk-brand-cats-label">Válasszon kategóriát</span>'
+        $machine_tiles = count(array_filter($tiles, function($t){ return empty($t['acc']); }));
+        if ($machine_tiles < 2 && count($tiles) === $machine_tiles) return '';
+        if (!$tiles) return '';
+        $label = $machine_tiles ? 'Válasszon kategóriát' : 'Tartozékok ehhez';
+        return '<nav class="vk-brand-cats vk-cat-children" aria-label="'.esc_attr($term->name.' alkategóriák').'"><div class="vk-brand-cats-head"><span class="vk-brand-cats-label">'.$label.'</span>'
             .'<a class="vk-brand-cats-all" href="#termekek">Összes termék <small>'.(int)(get_term_meta($term->term_id, 'product_count_product_cat', true) ?: $term->count).'</small></a></div>'
             .self::tiles_html($tiles).'</nav>';
     }
