@@ -558,7 +558,7 @@ class Gls {
     static function track(){
         if (!self::ready()) return;
         $s = self::settings();
-        $orders = wc_get_orders([ 'limit' => 100, 'status' => [ 'processing', 'on-hold', OrderStatuses::SHIPPED, OrderStatuses::PARTIAL ], 'meta_key' => '_vk_gls', 'meta_compare' => 'EXISTS', 'date_created' => '>'.(time() - 45 * DAY_IN_SECONDS) ]);
+        $orders = wc_get_orders([ 'limit' => 100, 'status' => [ OrderStatuses::NEW_ORDER, 'processing', 'on-hold', OrderStatuses::SHIPPED, OrderStatuses::PARTIAL ], 'meta_key' => '_vk_gls', 'meta_compare' => 'EXISTS', 'date_created' => '>'.(time() - 45 * DAY_IN_SECONDS) ]);
         $by = [];
         foreach($orders as $order){
             $parcel = (string)(self::info($order)['parcel'] ?? '');
@@ -583,7 +583,7 @@ class Gls {
             if (!$s['auto_status']) continue;
             if ($kind === 'delivered'){
                 $order->update_status('completed', 'GLS: kézbesítve ('.$latest['text'].').');
-            } elseif (in_array($kind, [ 'transit', 'out', 'waiting' ], true) && in_array($order->get_status(), [ 'processing', 'on-hold' ], true)){
+            } elseif (in_array($kind, [ 'transit', 'out', 'waiting' ], true) && in_array($order->get_status(), [ OrderStatuses::NEW_ORDER, 'processing', 'on-hold' ], true)){
                 $order->update_status(OrderStatuses::SHIPPED, 'GLS: a csomag úton van ('.$latest['text'].').');
             } elseif (in_array($kind, [ 'returned', 'expired' ], true) && (!is_array($prev) || ($prev['kind'] ?? '') !== $kind)){
                 $order->add_order_note('GLS: '.($kind === 'returned' ? 'a csomag visszafordult a feladóhoz' : 'lejárt a csomagponti tárolás').' ('.$latest['text'].'). Vedd fel a kapcsolatot a vásárlóval.');

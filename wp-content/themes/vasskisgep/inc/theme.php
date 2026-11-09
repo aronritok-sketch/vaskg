@@ -29,6 +29,7 @@ require_once(__DIR__.'/gls.php');
 require_once(__DIR__.'/aszf.php');
 require_once(__DIR__.'/barion.php');
 require_once(__DIR__.'/selfcron.php');
+require_once(__DIR__.'/staff-frontend.php');
 
 class Theme {
     private static $instance;
@@ -63,6 +64,7 @@ class Theme {
         Aszf::get_instance();
         Barion::get_instance();
         SelfCron::get_instance();
+        StaffFrontend::get_instance();
         Pages::get_instance();
         Search::get_instance();
         Cofidis::get_instance();

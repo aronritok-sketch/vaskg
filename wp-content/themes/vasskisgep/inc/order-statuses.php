@@ -14,6 +14,8 @@ namespace VasskisgepTheme;
 class OrderStatuses {
     const SHIPPED = 'shipped';
     const PARTIAL = 'partial';
+    /** „Új rendelés”: a webshopból jött, még senki nem nyúlt hozzá (Dávid, 2026-11-09). */
+    const NEW_ORDER = 'new-order';
     const CARRIERS = [
         'gls' => [ 'GLS', 'https://gls-group.com/HU/hu/csomagkovetes?match=%s' ],
         'kumi' => [ 'Kumi', '' ],
@@ -37,6 +39,10 @@ class OrderStatuses {
         add_filter('bulk_actions-edit-shop_order', [$this, 'bulk_actions'], 30);
         add_filter('woocommerce_email_classes', [$this, 'emails']);
         add_filter('woocommerce_email_actions', [$this, 'email_actions']);
+        // A webshopból érkező rendelés „Feldolgozás alatt” helyett „Új rendelés” (a levelek és a készletlevonás előtte
+        // a szokásos módon lefutnak; a váltás a kérés végén történik).
+        add_action('woocommerce_order_status_changed', [$this, 'queue_new'], 99, 4);
+        add_action('shutdown', [$this, 'apply_new'], 5);
 
         // Csomagkövetés és teljesítetlen tételek az admin rendelésoldalon.
         add_action('add_meta_boxes', [$this, 'meta_box'], 30);
@@ -50,7 +56,28 @@ class OrderStatuses {
         add_action('woocommerce_order_details_before_order_table', [$this, 'account_tracking']);
     }
 
+    private static $new_queue = [];
+
+    function queue_new($order_id, $from, $to, $order = null){
+        if ($from !== 'pending' || $to !== 'processing') return;
+        $order = $order instanceof \WC_Order ? $order : wc_get_order($order_id);
+        if (!$order || !in_array($order->get_created_via(), [ 'checkout', 'store-api' ], true)) return;
+        self::$new_queue[(int)$order_id] = true;
+    }
+
+    function apply_new(){
+        foreach(array_keys(self::$new_queue) as $order_id){
+            $order = wc_get_order($order_id);
+            if ($order && $order->get_status() === 'processing') $order->update_status(self::NEW_ORDER, 'Új rendelés – még senki nem kezelte.');
+        }
+        self::$new_queue = [];
+    }
+
     function register(){
+        register_post_status('wc-'.self::NEW_ORDER, [
+            'label' => 'Új rendelés', 'public' => false, 'exclude_from_search' => false, 'show_in_admin_all_list' => true, 'show_in_admin_status_list' => true,
+            'label_count' => _n_noop('Új rendelés <span class="count">(%s)</span>', 'Új rendelés <span class="count">(%s)</span>'),
+        ]);
         register_post_status('wc-'.self::SHIPPED, [
             'label' => 'Postázva', 'public' => false, 'exclude_from_search' => false, 'show_in_admin_all_list' => true, 'show_in_admin_status_list' => true,
             'label_count' => _n_noop('Postázva <span class="count">(%s)</span>', 'Postázva <span class="count">(%s)</span>'),
@@ -65,12 +92,14 @@ class OrderStatuses {
     function statuses($statuses){
         $out = [];
         foreach($statuses as $key => $label){
+            if ($key === 'wc-processing') $out['wc-'.self::NEW_ORDER] = 'Új rendelés';
             if ($key === 'wc-completed'){
                 $out['wc-'.self::PARTIAL] = 'Részben teljesítve';
                 $out['wc-'.self::SHIPPED] = 'Postázva';
             }
             $out[$key] = $label;
         }
+        if (!isset($out['wc-'.self::NEW_ORDER])) $out = [ 'wc-'.self::NEW_ORDER => 'Új rendelés' ] + $out;
         if (!isset($out['wc-'.self::SHIPPED])){
             $out['wc-'.self::PARTIAL] = 'Részben teljesítve';
             $out['wc-'.self::SHIPPED] = 'Postázva';
@@ -79,7 +108,7 @@ class OrderStatuses {
     }
 
     function paid($statuses){
-        return array_values(array_unique(array_merge((array)$statuses, [ self::SHIPPED, self::PARTIAL ])));
+        return array_values(array_unique(array_merge((array)$statuses, [ self::NEW_ORDER, self::SHIPPED, self::PARTIAL ])));
     }
 
     function bulk_actions($actions){

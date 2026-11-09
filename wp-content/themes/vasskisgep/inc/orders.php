@@ -35,7 +35,7 @@ class Orders {
         add_filter('wc_order_is_editable', [$this, 'editable'], 10, 2);
     }
 
-    const EDITABLE_STATUSES = [ 'pending', 'on-hold', 'processing', 'auto-draft', 'checkout-draft' ];
+    const EDITABLE_STATUSES = [ 'pending', 'on-hold', 'processing', 'new-order', 'auto-draft', 'checkout-draft' ];
 
     function editable($editable, $order){
         return $editable || ($order instanceof \WC_Order && in_array($order->get_status(), self::EDITABLE_STATUSES, true));
@@ -236,6 +236,8 @@ class Orders {
             .vk-notify-wrap input { margin: 0; }
             .vk-status-select { width: 100%; max-width: 12.5rem; font-size: 14px; border-radius: 4px; border-left-width: 5px; }
             .vk-status-select.status-processing { border-left-color: #2e7d32; background-color: #eef7ee; }
+            .vk-status-select.status-new-order { border-left-color: #dc2626; background-color: #fdecec; font-weight: 600; }
+            mark.order-status.status-new-order { background: #fdecec; color: #b91c1c; }
             .vk-status-select.status-completed { border-left-color: #1565c0; background-color: #eaf2fb; }
             .vk-status-select.status-on-hold { border-left-color: #f0a500; background-color: #fff7e6; }
             .vk-status-select.status-pending { border-left-color: #9e9e9e; }
