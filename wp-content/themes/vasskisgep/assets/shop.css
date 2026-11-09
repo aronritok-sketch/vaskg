@@ -4584,3 +4584,20 @@ body.admin-bar .iu-woocommerce-mini-cart__drawer {
 	font-size: .85rem;
 	white-space: nowrap;
 }
+
+/* Termékkártyán (kategória-lista): a készlet-felirat alatt, középen, közvetlenül alatta (Dávid, 2026-11-09). */
+.iu-woocommerce-loop-product .stock:has(+ .vk-stock-note),
+.iu-woocommerce-loop-product .stock:has(+ .vk-arrival),
+.iu-woocommerce-loop-product .vk-stock-note:has(+ .vk-arrival) {
+	margin-bottom: .2rem !important;
+}
+.iu-woocommerce-loop-product .vk-stock-note,
+.iu-woocommerce-loop-product .vk-arrival {
+	margin: 0 0 .9rem;
+	text-align: center;
+	font-size: .88rem;
+	line-height: 1.35;
+}
+.iu-woocommerce-loop-product .vk-stock-note:has(+ .vk-arrival) {
+	margin-bottom: .2rem;
+}
