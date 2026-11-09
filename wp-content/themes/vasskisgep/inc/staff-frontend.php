@@ -32,8 +32,22 @@ class StaffFrontend {
         if ($id && $this->frontend_user($id) === 0) wp_set_current_user(0);
     }
 
+    /** admin-ajax kérés (a WordPress a webshop oldalairól is ezt használja, pl. NAV-lekérdezés). */
+    private static function ajax_request(){
+        return (defined('DOING_AJAX') && DOING_AJAX) || strpos((string)($_SERVER['REQUEST_URI'] ?? ''), '/admin-ajax.php') !== false;
+    }
+
+    /** Az admin-ajax kérés az admin felületről jön-e (a hivatkozó oldal szerint; ha nincs hivatkozó: igen). */
+    private static function ajax_from_admin(){
+        $referer = (string)($_SERVER['HTTP_REFERER'] ?? '');
+        return $referer === '' || strpos($referer, '/wp-admin/') !== false;
+    }
+
     /** Admin-oldali kérés: itt a munkatárs bejelentkezve marad. */
     private static function backend_request(){
+        // A webshop oldalairól jövő admin-ajax (pl. NAV-lekérdezés a pénztárban) vendégként fut, mint maga az oldal:
+        // különben a biztonsági kód (nonce) nem egyezik, és a kosár munkamenete is összekeveredik (Dávid, 2026-11-09).
+        if (self::ajax_request()) return self::ajax_from_admin();
         if (is_admin() || (defined('WP_CLI') && WP_CLI) || (defined('DOING_CRON') && DOING_CRON)) return true;
         $uri = (string)($_SERVER['REQUEST_URI'] ?? '');
         if (strpos($uri, 'wp-login.php') !== false) return true;
@@ -46,9 +60,16 @@ class StaffFrontend {
     }
 
     function frontend_user($user_id){
-        if (!$user_id || self::backend_request()) return $user_id;
+        if (!$user_id) return $user_id;
         $user = get_userdata((int)$user_id);
-        if ($user && array_intersect(self::ROLES, (array)$user->roles)) return 0;
-        return $user_id;
+        $staff = $user && array_intersect(self::ROLES, (array)$user->roles);
+        if (!$staff) return $user_id;
+        if (self::backend_request()){
+            // Az admin háttérkérései (pl. heartbeat) ne vegyék át a webshopban vendégként használt kosarat: a WooCommerce
+            // a vendég-munkamenetet a felhasználóéba költöztetné (és törölné), a webshopban pedig kiürülne a kosár.
+            if (self::ajax_request() && defined('COOKIEHASH')) unset($_COOKIE['wp_woocommerce_session_'.COOKIEHASH]);
+            return $user_id;
+        }
+        return 0;
     }
 }
