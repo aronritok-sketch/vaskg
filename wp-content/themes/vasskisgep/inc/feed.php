@@ -149,7 +149,7 @@ class Feed {
         if ($shipping){
             // Ismeretlen súlynál a legkisebb (10 kg-ig) díj; ingyenesnél 0 (az Árukereső csak számot fogad el).
             $weight = Shipping::product_weight($product);
-            $value = Shipping::gross_cost($shipping, $weight > 0 ? $weight : 1, $gross);
+            $value = Shipping::is_free($product) ? 0.0 : Shipping::gross_cost($shipping, $weight > 0 ? $weight : 1, $gross);
             if ($value !== null) $cost = (string)max(0, round($value));
         }
         $ean = method_exists($product, 'get_global_unique_id') ? $product->get_global_unique_id() : '';

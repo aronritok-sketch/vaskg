@@ -32,7 +32,7 @@
 				} elseif ($method->id === \VasskisgepTheme\Shipping::METHOD){
 					// Súly szerint: ennek a terméknek (1 db) a díja.
 					if ($product){
-						$gross = \VasskisgepTheme\Shipping::gross_cost($method, \VasskisgepTheme\Shipping::product_weight($product), (float)wc_get_price_including_tax($product));
+						$gross = \VasskisgepTheme\Shipping::is_free($product) ? 0.0 : \VasskisgepTheme\Shipping::gross_cost($method, \VasskisgepTheme\Shipping::product_weight($product), (float)wc_get_price_including_tax($product));
 						$cost = $gross === null ? 'Egyedi egyeztetés' : ($gross > 0 ? wc_price($gross) : 'Ingyenes');
 					} else {
 						$cost = 'Súly szerint';

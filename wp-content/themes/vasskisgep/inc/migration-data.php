@@ -173,6 +173,7 @@ class MigrationData {
         if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'carts') return AbandonedCart::diagnose();
         if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'cron') return SelfCron::diagnose();
         if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'oldcats') return self::oldcats();
+        if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'promo-free') return Shipping::promo_free_diag(array_filter(array_map('intval', explode(',', (string)$request->get_param('set')))));
         if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'barion-gateway'){
             $enable = $request->get_param('enable');
             return Barion::gateway($enable === null ? null : ($enable === '1'));

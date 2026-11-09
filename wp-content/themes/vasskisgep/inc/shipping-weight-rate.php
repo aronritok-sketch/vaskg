@@ -34,13 +34,11 @@ class WeightRate extends \WC_Shipping_Method {
     }
 
     function calculate_shipping($package = []){
-        $weight = 0.0;
+        // Az ingyenes szállítású termékek (termék / kategória) súlya nem számít; ha csak ilyen van, a szállítás ingyenes.
+        [$weight, $paid] = Shipping::paid_weight($package['contents']);
         $total = 0.0;
-        foreach($package['contents'] as $item){
-            $weight += Shipping::product_weight($item['data']) * (float)$item['quantity'];
-            $total += (float)$item['line_total'] + (float)$item['line_tax'];
-        }
-        $gross = Shipping::gross_cost($this, $weight, $total);
+        foreach($package['contents'] as $item) $total += (float)$item['line_total'] + (float)$item['line_tax'];
+        $gross = $paid ? Shipping::gross_cost($this, $weight, $total) : 0.0;
         if ($gross === null) return; // a táblán kívül: nem kínáljuk fel (egyedi egyeztetés)
 
         $cost = $gross;

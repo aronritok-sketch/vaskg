@@ -135,16 +135,27 @@ li.product > .star-rating {
 /* Termékkártya: promóciós szöveg (a címen belül) és Cofidis jelvény (a képen). */
 /* Promóciós szöveg a design szerint: ritkított, normál vastagságú, narancspiros. */
 .vk-promo {
-	color: #f34a17;
+	display: flex;
+	flex-wrap: wrap;
+	gap: .3rem;
 	text-transform: uppercase;
-	letter-spacing: .16em;
-	font-size: .8rem;
-	font-weight: 400;
-	line-height: 1.5;
+	letter-spacing: .08em;
+	font-size: .78rem;
+	font-weight: 700;
+	line-height: 1.25;
+}
+/* Feltűnő címke (pl. „Ingyenes szállítás!”): narancs alapon fehér, a kártyán és a termékképen. */
+.vk-promo-tag {
+	display: inline-block;
+	padding: .32rem .75rem;
+	border-radius: 999px;
+	background: #f34a17;
+	color: #fff;
+	box-shadow: 0 2px 8px rgba(243, 74, 23, .28);
 }
 .vk-card-promo {
-	display: block;
-	margin-top: .35rem;
+	justify-content: center;
+	margin-top: .45rem;
 	font-family: var(--wp--preset--font-family--body, inherit);
 }
 .iu-woocommerce-loop-product:has(.vk-card-promo) {
@@ -290,10 +301,11 @@ ul.products:not(.columns-1) li.product .iu-group.brand:has(.vk-cofidis-badge) .i
 	pointer-events: auto;
 }
 .vk-gallery-promo {
-	margin: 0;
-	padding: .3rem .6rem;
-	background: var(--wp--preset--color--white);
-	border-radius: 0 .3rem .3rem 0;
+	margin: 0 0 0 .8rem;
+	font-size: .9rem;
+}
+.vk-gallery-promo .vk-promo-tag {
+	padding: .45rem 1rem;
 }
 .vk-gallery-brand {
 	margin: 0 0 0 auto;

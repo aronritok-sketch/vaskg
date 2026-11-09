@@ -69,6 +69,8 @@ class Setup {
         50 => 'old_availability',
         51 => 'power_types',
         52 => 'hedge_long_reach',
+        53 => 'chain_pitch',
+        54 => 'kasei_petrol',
     ];
 
     /**
@@ -2083,5 +2085,75 @@ class Setup {
         if (function_exists('_wc_term_recount')) _wc_term_recount(get_terms([ 'taxonomy' => 'product_cat', 'hide_empty' => false ]), get_taxonomy('product_cat'), true, false);
         $this->log[] = 'Magassági sövényvágók: '.count($done).' termék hozzáadva'.($done ? ' ('.implode(' | ', $done).')' : '').'.';
     }
+
+    /** Alkategória (név szerint a szülő alatt), szükség esetén létrehozva, sorrend-mezővel. */
+    private function child_term($parent_id, $name, $order){
+        $found = get_terms([ 'taxonomy' => 'product_cat', 'name' => $name, 'parent' => $parent_id, 'hide_empty' => false, 'number' => 1 ]);
+        $term_id = !is_wp_error($found) && $found ? (int)$found[0]->term_id : 0;
+        if (!$term_id){ $made = wp_insert_term($name, 'product_cat', [ 'parent' => $parent_id ]); $term_id = is_wp_error($made) ? 0 : (int)$made['term_id']; }
+        if ($term_id && !metadata_exists('term', $term_id, 'order')) update_term_meta($term_id, 'order', $order);
+        return $term_id;
+    }
+
+    /**
+     * 53. Fűrészláncok osztás szerint, mint a régi webshopban (Dávid, 2026-11-09): 1/4 Picco, 3/8 Picco, .325, 3/8, .404,
+     * Rapid Hexa, vídiás. Besorolás a terméknévből; a Fűrészláncok kategóriában is maradnak.
+     */
+    function chain_pitch(){
+        $parent = Catalog::category_by_path('Alkatrészek és karbantartás/Alkatrészek/Vágóelemek/Láncok és vezetőlemezek/Fűrészláncok');
+        if (!$parent){ $this->log[] = 'Fűrészláncok: nincs ilyen kategória.'; return; }
+        $groups = [ 'Vídiás fűrészláncok', 'Rapid Hexa fűrészláncok', '1/4 Picco osztású fűrészláncok', '3/8 Picco osztású fűrészláncok', '.325 osztású fűrészláncok', '3/8 osztású fűrészláncok', '.404 osztású fűrészláncok' ];
+        $order = [ '1/4 Picco osztású fűrészláncok' => 0, '3/8 Picco osztású fűrészláncok' => 1, '.325 osztású fűrészláncok' => 2, '3/8 osztású fűrészláncok' => 3, '.404 osztású fűrészláncok' => 4, 'Rapid Hexa fűrészláncok' => 5, 'Vídiás fűrészláncok' => 6 ];
+        $counts = [];
+        $left = [];
+        foreach(get_posts([ 'post_type' => 'product', 'post_status' => 'any', 'numberposts' => -1, 'fields' => 'ids', 'tax_query' => [[ 'taxonomy' => 'product_cat', 'terms' => $parent->term_id, 'include_children' => false ]] ]) as $product_id){
+            $title = html_entity_decode(get_the_title($product_id), ENT_QUOTES, 'UTF-8');
+            if (preg_match('/vídiá|vidia/iu', $title)) $group = $groups[0];
+            elseif (preg_match('/rapid\s*hexa/iu', $title)) $group = $groups[1];
+            elseif (preg_match('/1\/4/u', $title)) $group = $groups[2];
+            elseif (preg_match('/3\/8\W{0,3}\s*(?:Picco|P)\b/iu', $title)) $group = $groups[3];
+            elseif (preg_match('/\b325\b/u', $title)) $group = $groups[4];
+            elseif (preg_match('/3\/8/u', $title)) $group = $groups[5];
+            elseif (preg_match('/\b404\b/u', $title)) $group = $groups[6];
+            else { $left[] = $title; continue; }
+            $term_id = $this->child_term($parent->term_id, $group, $order[$group]);
+            if (!$term_id) continue;
+            wp_set_object_terms($product_id, $term_id, 'product_cat', true);
+            $counts[$group] = ($counts[$group] ?? 0) + 1;
+        }
+        if (function_exists('_wc_term_recount')) _wc_term_recount(get_terms([ 'taxonomy' => 'product_cat', 'hide_empty' => false ]), get_taxonomy('product_cat'), true, false);
+        $report = [];
+        foreach($counts as $group => $n) $report[] = $group.' '.$n;
+        $this->log[] = 'Fűrészláncok osztás szerint: '.implode(', ', $report).($left ? '; nincs besorolva: '.implode(' | ', $left) : '').'.';
+    }
+
+    /** 54. Kasei: a webshopon csak benzinmotoros gépek vannak (Dávid, 2026-11-09) – a hajtás szerint be nem sorolt Kasei gépek. */
+    function kasei_petrol(){
+        $machines = 'Kerti és erdészeti gépek/';
+        $targets = [
+            $machines.'Fűnyírás és gyepápolás/További gépek/Fűkaszák és szegélynyírók' => 'Benzinmotoros fűkaszák és szegélynyírók',
+            $machines.'Fa- és sövényápolás/Metszés és sövényápolás/Sövénynyírók és sövényvágók' => 'Benzinmotoros sövényvágók',
+            $machines.'Tisztítás, víz és energia/Terület- és kerttisztítás/Lombfúvók' => 'Benzinmotoros lombfúvók',
+            $machines.'Tisztítás, víz és energia/Terület- és kerttisztítás/Lombszívók és aprítók' => 'Benzinmotoros lombszívók',
+        ];
+        $done = [];
+        foreach($targets as $path => $name){
+            $parent = Catalog::category_by_path($path);
+            if (!$parent) continue;
+            $children = get_terms([ 'taxonomy' => 'product_cat', 'parent' => $parent->term_id, 'hide_empty' => false, 'fields' => 'ids' ]);
+            $term_id = $this->child_term($parent->term_id, $name, 1);
+            if (!$term_id) continue;
+            foreach(get_posts([ 'post_type' => 'product', 'post_status' => 'any', 'numberposts' => -1, 'fields' => 'ids', 'tax_query' => [[ 'taxonomy' => 'product_cat', 'terms' => $parent->term_id, 'include_children' => false ]] ]) as $product_id){
+                $title = html_entity_decode(get_the_title($product_id), ENT_QUOTES, 'UTF-8');
+                if (!preg_match('/^kasei\b/iu', $title)) continue;
+                if (!is_wp_error($children) && $children && has_term($children, 'product_cat', $product_id)) continue;
+                wp_set_object_terms($product_id, $term_id, 'product_cat', true);
+                $done[] = $title;
+            }
+        }
+        if (function_exists('_wc_term_recount')) _wc_term_recount(get_terms([ 'taxonomy' => 'product_cat', 'hide_empty' => false ]), get_taxonomy('product_cat'), true, false);
+        $this->log[] = 'Kasei benzinmotoros csoportba: '.count($done).($done ? ' ('.implode(' | ', $done).')' : '').'.';
+    }
+
 
 }

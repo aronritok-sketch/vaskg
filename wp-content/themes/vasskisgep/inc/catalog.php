@@ -176,7 +176,7 @@ class Catalog {
      * A csempe képe a márka egy terméke a csoportból (kiemelt, készleten lévő előnyben).
      */
     static function brand_categories($brand){
-        $key = 'vk_brand_tiles8_'.$brand->term_id.'_'.md5(wp_cache_get_last_changed('posts').wp_cache_get_last_changed('terms'));
+        $key = 'vk_brand_tiles9_'.$brand->term_id.'_'.md5(wp_cache_get_last_changed('posts').wp_cache_get_last_changed('terms'));
         $cached = get_transient($key);
         if (is_array($cached)) return $cached;
         $ids = get_posts([ 'post_type' => 'product', 'post_status' => 'publish', 'numberposts' => -1, 'fields' => 'ids',
@@ -197,11 +197,17 @@ class Catalog {
             $has_deeper = [];
             foreach($assigned as $t) foreach(get_ancestors($t->term_id, 'product_cat') as $a) $has_deeper[(int)$t->object_id][(int)$a] = true;
             foreach($assigned as $t){
+                // A termék szülő-kategóriáját kihagyjuk, ha egy alkategóriájában is benne van (azzal számít).
+                if (isset($has_deeper[(int)$t->object_id][(int)$t->term_id])) continue;
                 $chain = array_reverse(array_map('intval', get_ancestors($t->term_id, 'product_cat')));
                 $chain[] = (int)$t->term_id;
                 $root = $name($chain[0]);
                 if ($root === 'Tartozékok') $group = $chain[0];
-                elseif ($root === 'Alkatrészek és karbantartás') $group = $chain[1] ?? $chain[0];
+                elseif ($root === 'Alkatrészek és karbantartás'){
+                    $group = $chain[1] ?? $chain[0];
+                    // A fűrészláncok saját csoport (Dávid, 2026-11-09), az osztás szerinti típusokkal.
+                    foreach($chain as $cid) if ($name($cid) === 'Fűrészláncok'){ $group = $cid; break; }
+                }
                 elseif (isset($chain[2]) && !in_array($name($chain[2]), self::BRAND_TILE_GROUPS, true)) $group = $chain[3] ?? $chain[2];
                 else $group = $chain[2] ?? end($chain);
                 $product = (int)$t->object_id;
@@ -436,7 +442,8 @@ class Catalog {
         $promo = self::promo($product);
         if ($promo === '') return '';
         $lines = array_filter(array_map('trim', preg_split('/\R/', $promo)));
-        return '<'.$tag.' class="'.esc_attr($class).'">'.implode('<br>', array_map('esc_html', $lines)).'</'.$tag.'>';
+        // Soronként egy feltűnő címke (Dávid, 2026-11-09: „ki kellene emelni, hogy látható legyen”).
+        return '<'.$tag.' class="'.esc_attr($class).'">'.implode('', array_map(function($line){ return '<span class="vk-promo-tag">'.esc_html($line).'</span>'; }, $lines)).'</'.$tag.'>';
     }
 
     /** Cofidis jelvény: a „Cofidis expressz” logó (a design szerint; a lábléc logójából). */
@@ -577,7 +584,10 @@ class Catalog {
     }
 
     static function promo($product){
-        return trim((string)$product->get_meta('_vk_promo'));
+        $promo = trim((string)$product->get_meta('_vk_promo'));
+        // Ingyenes szállítású terméknél (termék / kategória) magától is kiírjuk, ha a promóciós szöveg nem említi.
+        if (Shipping::is_free($product) && !preg_match('/ingyenes\s+szállítás/iu', $promo)) $promo = trim('Ingyenes szállítás!'."\n".$promo);
+        return $promo;
     }
 
     static function has_cofidis($product){
