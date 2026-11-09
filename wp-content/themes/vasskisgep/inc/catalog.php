@@ -176,7 +176,7 @@ class Catalog {
      * A csempe képe a márka egy terméke a csoportból (kiemelt, készleten lévő előnyben).
      */
     static function brand_categories($brand){
-        $key = 'vk_brand_tiles5_'.$brand->term_id.'_'.md5(wp_cache_get_last_changed('posts').wp_cache_get_last_changed('terms'));
+        $key = 'vk_brand_tiles6_'.$brand->term_id.'_'.md5(wp_cache_get_last_changed('posts').wp_cache_get_last_changed('terms'));
         $cached = get_transient($key);
         if (is_array($cached)) return $cached;
         $ids = get_posts([ 'post_type' => 'product', 'post_status' => 'publish', 'numberposts' => -1, 'fields' => 'ids',
@@ -232,6 +232,7 @@ class Catalog {
                     $acc = self::accessory_term($name($gid));
                     if (!$acc || empty($groups[$acc_group]['children'][$acc->term_id])) continue;
                     $g['children'][$acc->term_id] = $groups[$acc_group]['children'][$acc->term_id];
+                    $g['acc'] = (int)$acc->term_id;
                     if (isset($groups[$acc_group]['child_images'][$acc->term_id])) $g['child_images'][$acc->term_id] = $groups[$acc_group]['child_images'][$acc->term_id];
                 }
                 unset($g);
@@ -239,7 +240,10 @@ class Catalog {
             uasort($groups, function($a, $b){ return [ $a['kind'], -$a['count'] ] <=> [ $b['kind'], -$b['count'] ]; });
             foreach($groups as &$g){
                 arsort($g['children']);
-                $g = [ 'count' => $g['count'], 'image' => $g['image'], 'children' => $g['children'], 'child_images' => array_map(function($i){ return $i[0]; }, $g['child_images']) ];
+                // A tartozék-csempe a típusok után, a sor végén.
+                $acc_id = (int)($g['acc'] ?? 0);
+                if ($acc_id && isset($g['children'][$acc_id])){ $n = $g['children'][$acc_id]; unset($g['children'][$acc_id]); $g['children'][$acc_id] = $n; }
+                $g = [ 'count' => $g['count'], 'image' => $g['image'], 'children' => $g['children'], 'acc' => $acc_id, 'child_images' => array_map(function($i){ return $i[0]; }, $g['child_images']) ];
             }
             unset($g);
         }
@@ -270,7 +274,7 @@ class Catalog {
             $image = $group['image'] ? wp_get_attachment_image($group['image'], 'medium', false, [ 'alt' => '', 'loading' => 'lazy' ]) : '';
             if ($image === '') $image = wc_placeholder_img('medium', [ 'alt' => '' ]);
             // A csempe a terméklistához visz (#termekek); ha vannak típusai (pl. akkus, benzines, elektromos), a típusválasztóhoz.
-            $anchor = count($group['children'] ?? []) > 1 ? 'tipusok' : 'termekek';
+            $anchor = count($group['children'] ?? []) > 1 || !empty($group['acc']) ? 'tipusok' : 'termekek';
             $html .= '<li><a class="vk-brand-tile'.($active_group === $term_id ? ' vk-active' : '').'" href="'.esc_url($url($term, $anchor)).'">'
                 .'<span class="vk-brand-tile-image">'.$image.'</span>'
                 .'<span class="vk-brand-tile-name">'.esc_html($term->name).'</span>'
@@ -280,7 +284,7 @@ class Catalog {
 
         // Típusválasztó (ügyfélkérés, 2026-10): a kiválasztott kategória alkategóriái ebben a márkában, képes csempékben.
         $children = $active_group ? ($groups[$active_group]['children'] ?? []) : [];
-        if (count($children) > 1){
+        if (count($children) > 1 || ($active_group && !empty($groups[$active_group]['acc']) && $children)){
             $group_term = get_term($active_group, 'product_cat');
             $tiles = [];
             foreach($children as $child_id => $count){

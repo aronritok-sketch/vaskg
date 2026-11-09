@@ -63,6 +63,7 @@ class Setup {
         44 => 'aszf_rates',
         45 => 'feed_refresh',
         46 => 'stihl_battery_groups',
+        47 => 'category_order_meta',
     ];
 
     /**
@@ -1840,6 +1841,18 @@ class Setup {
         }
         delete_transient('wc_term_counts');
         if (function_exists('_wc_term_recount')) _wc_term_recount(get_terms([ 'taxonomy' => 'product_cat', 'hide_empty' => false ]), get_taxonomy('product_cat'), true, false);
+    }
+
+
+    /** 47. A sorrend-mező (order) pótlása az új kategóriákon: e nélkül a kategóriaoldal csempéi közül kimaradnak. */
+    function category_order_meta(){
+        $done = 0;
+        foreach(get_terms([ 'taxonomy' => 'product_cat', 'hide_empty' => false ]) ?: [] as $term){
+            if (metadata_exists('term', $term->term_id, 'order')) continue;
+            update_term_meta($term->term_id, 'order', 0);
+            $done++;
+        }
+        $this->log[] = 'Kategóriák: sorrend-mező pótolva ('.$done.' kategória).';
     }
 
 }
