@@ -132,7 +132,7 @@ class Catalog {
      * A csempe képe a márka egy terméke a csoportból (kiemelt, készleten lévő előnyben).
      */
     static function brand_categories($brand){
-        $key = 'vk_brand_tiles3_'.$brand->term_id.'_'.md5(wp_cache_get_last_changed('posts').wp_cache_get_last_changed('terms'));
+        $key = 'vk_brand_tiles4_'.$brand->term_id.'_'.md5(wp_cache_get_last_changed('posts').wp_cache_get_last_changed('terms'));
         $cached = get_transient($key);
         if (is_array($cached)) return $cached;
         $ids = get_posts([ 'post_type' => 'product', 'post_status' => 'publish', 'numberposts' => -1, 'fields' => 'ids',
@@ -160,6 +160,9 @@ class Catalog {
                 // Alkategória (a csempe kategóriájának közvetlen gyereke): a márkaoldali típusválasztóhoz.
                 $position = array_search($group, $chain, true);
                 $child = $position !== false && isset($chain[$position + 1]) ? $chain[$position + 1] : 0;
+                // Tartozékoknál a legfinomabb kategória (pl. „Fűnyíró traktor tartozékok”, „Robotfűnyíró-tartozékok”),
+                // nem a „Fűnyírás és gyepápolás” szint, ahol minden összekeveredik (ügyfélkérés, 2026-11-09).
+                if ($root === 'Tartozékok' && count($chain) > 1) $child = (int)end($chain);
                 if (!isset($groups[$group])) $groups[$group] = [ 'count' => 0, 'image' => 0, 'score' => -1, 'kind' => $root === 'Tartozékok' ? 2 : ($root === 'Alkatrészek és karbantartás' ? 1 : 0), 'children' => [], 'child_images' => [] ];
                 $image = (int)get_post_meta($product, '_thumbnail_id', true);
                 $score = (isset($featured[$product]) ? 2 : 0) + (get_post_meta($product, '_stock_status', true) === 'instock' ? 1 : 0);
