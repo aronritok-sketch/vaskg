@@ -68,6 +68,7 @@ class Setup {
         49 => 'shredder_types',
         50 => 'old_availability',
         51 => 'power_types',
+        52 => 'hedge_long_reach',
     ];
 
     /**
@@ -2022,7 +2023,8 @@ class Setup {
                 } else {
                     // A régi kategória akkor dönt, ha egyértelmű (a „Benzines és elektromos fúvógépek” nem az).
                     $old = (int)get_post_meta($product_id, '_vk_old_id', true);
-                    foreach($old_names[$old] ?? [] as $name){
+                    if (isset($names['magas']) && preg_grep('/magassági/iu', $old_names[$old] ?? [])) $kind = 'magas';
+                    if ($kind === null) foreach($old_names[$old] ?? [] as $name){
                         $hits = array_filter([ isset($names['magas']) && preg_match('/magassági/iu', $name) ? 'magas' : null, preg_match('/akku/iu', $name) ? 'akku' : null, preg_match('/elektrom/iu', $name) ? 'elek' : null, preg_match('/benzin|motoros/iu', $name) ? 'benz' : null ]);
                         if (count($hits) === 1 || (isset($hits[0]) && $hits[0] === 'magas')){ $kind = reset($hits); break; }
                     }
@@ -2049,6 +2051,37 @@ class Setup {
             $this->log[] = basename($path).': '.implode(', ', $report).($left ? '; nincs besorolva: '.implode(' | ', $left) : '').'.';
         }
         if (function_exists('_wc_term_recount')) _wc_term_recount(get_terms([ 'taxonomy' => 'product_cat', 'hide_empty' => false ]), get_taxonomy('product_cat'), true, false);
+    }
+
+    /**
+     * 52. Magassági sövényvágók (STIHL HL / HLA): az 51. lépés az akkusokhoz tette őket; a régi webshop szerint a
+     * „Magassági sövényvágók” közé is tartoznak (az akkus / benzines csoportjukban is maradnak).
+     */
+    function hedge_long_reach(){
+        global $wpdb;
+        $parent = Catalog::category_by_path('Kerti és erdészeti gépek/Fa- és sövényápolás/Metszés és sövényápolás/Sövénynyírók és sövényvágók');
+        if (!$parent){ $this->log[] = 'Sövényvágók: nincs ilyen kategória.'; return; }
+        $old_magas = [];
+        if (MigrationData::prefix() !== '' && MigrationData::has('virtuemart_product_categories')){
+            $lang = MigrationData::lang_table('virtuemart_categories');
+            foreach((array)$wpdb->get_col('SELECT pc.virtuemart_product_id FROM '.MigrationData::t('virtuemart_product_categories').' pc JOIN '.MigrationData::t($lang).' c ON c.virtuemart_category_id = pc.virtuemart_category_id WHERE c.category_name LIKE \'%agassági sövény%\'') as $pid) $old_magas[(int)$pid] = true;
+        }
+        $found = get_terms([ 'taxonomy' => 'product_cat', 'name' => 'Magassági sövényvágók', 'parent' => $parent->term_id, 'hide_empty' => false, 'number' => 1 ]);
+        $term_id = !is_wp_error($found) && $found ? (int)$found[0]->term_id : 0;
+        if (!$term_id){ $made = wp_insert_term('Magassági sövényvágók', 'product_cat', [ 'parent' => $parent->term_id ]); $term_id = is_wp_error($made) ? 0 : (int)$made['term_id']; }
+        if (!$term_id) return;
+        if (!metadata_exists('term', $term_id, 'order')) update_term_meta($term_id, 'order', 3);
+        $done = [];
+        foreach(get_posts([ 'post_type' => 'product', 'post_status' => 'any', 'numberposts' => -1, 'fields' => 'ids', 'tax_query' => [[ 'taxonomy' => 'product_cat', 'terms' => $parent->term_id, 'include_children' => true ]] ]) as $product_id){
+            $title = html_entity_decode(get_the_title($product_id), ENT_QUOTES, 'UTF-8');
+            $old = (int)get_post_meta($product_id, '_vk_old_id', true);
+            if (!isset($old_magas[$old]) && !preg_match('/magassági|\bHLA?\s?\d/iu', $title)) continue;
+            if (has_term($term_id, 'product_cat', $product_id)) continue;
+            wp_set_object_terms($product_id, $term_id, 'product_cat', true);
+            $done[] = $title;
+        }
+        if (function_exists('_wc_term_recount')) _wc_term_recount(get_terms([ 'taxonomy' => 'product_cat', 'hide_empty' => false ]), get_taxonomy('product_cat'), true, false);
+        $this->log[] = 'Magassági sövényvágók: '.count($done).' termék hozzáadva'.($done ? ' ('.implode(' | ', $done).')' : '').'.';
     }
 
 }
