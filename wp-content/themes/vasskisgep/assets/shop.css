@@ -4566,3 +4566,21 @@ body.admin-bar .iu-woocommerce-mini-cart__drawer {
 .vk-arrival strong {
 	color: #1f2937;
 }
+/* A készletinfó sorában (flex, középre igazítva): ne lógjon lejjebb, kis címkeként a felirat mellett. */
+.vk-stock-rating .vk-stock-note,
+.vk-stock-rating .vk-arrival {
+	margin: 0;
+	line-height: 1.3;
+}
+.vk-stock-rating .vk-arrival {
+	display: inline-flex;
+	align-items: center;
+	gap: .3em;
+	padding: .2rem .6rem;
+	margin-bottom: .15rem;
+	border: 1px solid #e5e7eb;
+	border-radius: 999px;
+	background: #fff;
+	font-size: .85rem;
+	white-space: nowrap;
+}
