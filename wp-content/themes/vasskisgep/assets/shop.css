@@ -4613,3 +4613,9 @@ body.admin-bar .iu-woocommerce-mini-cart__drawer {
 .iu-woocommerce-loop-product .vk-stock-note:has(+ .vk-arrival) {
 	margin-bottom: .2rem;
 }
+
+/* Kosár: a termékkép ne vágódjon le (fekvő képek is egészben; Dávid, 2026-11-09). */
+.woocommerce-cart-form .product-thumbnail img {
+	object-fit: contain;
+	background: #fff;
+}
