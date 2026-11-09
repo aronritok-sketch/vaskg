@@ -18,6 +18,18 @@ class VK_Email_Cart extends \WC_Email {
         parent::__construct();
     }
 
+    function init_form_fields(){
+        parent::init_form_fields();
+        $url = wp_nonce_url(admin_url('admin-post.php?action=vk_cart_test'), 'vk_cart_test');
+        $msg = isset($_GET['vk_cart_test']) ? ($_GET['vk_cart_test'] === 'ok' ? ' <strong style="color:#2e7d32">Elküldve.</strong>' : ' <strong style="color:#b32d2e">Nem ment ki (be van kapcsolva a levél?).</strong>') : '';
+        $this->form_fields = [ 'vk_test' => [
+            'title' => 'Próbalevél',
+            'type' => 'title',
+            'description' => '<a class="button" href="'.esc_url($url).'">Próbalevél nekem</a> – a levél a te e-mail címedre megy, néhány mostani termékkel.'.$msg
+                .'<br>Élesben a levél <strong>naponta 20:00-kor</strong> megy ki annak, aki az előző 24 órában (legalább fél órája) termékeket hagyott a kosarában és nem rendelt – ha tudjuk az e-mail címét (belépett vásárló, vagy a pénztárban beírta).',
+        ] ] + $this->form_fields;
+    }
+
     function get_default_subject(){ return 'Kosaradban maradt néhány termék – Vass Kisgép'; }
     function get_default_heading(){ return 'Nézd át a kosaradban hagyott termékeket!'; }
 

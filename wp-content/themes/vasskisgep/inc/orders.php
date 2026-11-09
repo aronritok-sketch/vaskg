@@ -24,6 +24,9 @@ class Orders {
         add_filter('manage_edit-shop_order_columns', [$this, 'columns']);
         add_action('manage_shop_order_posts_custom_column', [$this, 'column'], 10, 2);
         add_action('admin_head', [$this, 'styles']);
+        // Rendelés szerkesztése: bruttó egységár és bruttó összeg a tételeknél (ügyfélkérés, 2026-11: „csak a nettót látjuk”).
+        add_action('woocommerce_admin_order_item_headers', [$this, 'gross_headers']);
+        add_action('woocommerce_admin_order_item_values', [$this, 'gross_values'], 10, 3);
         add_action('admin_footer', [$this, 'status_script']);
         add_action('wp_ajax_vk_orders_status', [$this, 'save_statuses']);
         add_action('init', [$this, 'analytics_import'], 99);
@@ -182,10 +185,35 @@ class Orders {
         <?php
     }
 
+    function gross_headers($order){
+        echo '<th class="vk-gross">Bruttó egységár</th><th class="vk-gross">Bruttó összeg</th>';
+    }
+
+    function gross_values($product, $item, $item_id = 0){
+        $unit = $total = '';
+        if ($item instanceof \WC_Order_Item_Product || $item instanceof \WC_Order_Item_Shipping || $item instanceof \WC_Order_Item_Fee){
+            $order = $item->get_order();
+            $args = [ 'currency' => $order ? $order->get_currency() : '' ];
+            $gross = (float)$item->get_total() + (float)$item->get_total_tax();
+            $qty = $item instanceof \WC_Order_Item_Product ? max(1, (float)$item->get_quantity()) : 1;
+            $total = wc_price($gross, $args);
+            $unit = $item instanceof \WC_Order_Item_Product ? wc_price($gross / $qty, $args) : '';
+        }
+        echo '<td class="vk-gross" width="1%">'.$unit.'</td><td class="vk-gross" width="1%"><strong>'.$total.'</strong></td>';
+    }
+
     function styles(){
         $screen = function_exists('get_current_screen') ? get_current_screen() : null;
-        if (!$screen || !in_array($screen->id, [ 'woocommerce_page_wc-orders', 'edit-shop_order' ], true)) return;
+        if (!$screen || !in_array($screen->id, [ 'woocommerce_page_wc-orders', 'edit-shop_order', 'shop_order' ], true)) return;
         echo '<style>
+            /* Rendelés szerkesztése: nagyobb kép és betű, bruttó oszlopok (ügyfélkérés, 2026-11). */
+            #woocommerce-order-items .woocommerce_order_items td, #woocommerce-order-items .woocommerce_order_items th { font-size: 14.5px; }
+            #woocommerce-order-items .woocommerce_order_items td.thumb { width: 84px; }
+            #woocommerce-order-items .woocommerce_order_items_wrapper table.woocommerce_order_items td.thumb .wc-order-item-thumbnail { width: 72px; height: 72px; background: #fff; }
+            #woocommerce-order-items .woocommerce_order_items_wrapper table.woocommerce_order_items td.thumb .wc-order-item-thumbnail img { object-fit: contain; }
+            #woocommerce-order-items .woocommerce_order_items td.name .wc-order-item-name { font-size: 15.5px; font-weight: 600; }
+            #woocommerce-order-items .woocommerce_order_items td.vk-gross, #woocommerce-order-items .woocommerce_order_items th.vk-gross { text-align: right; white-space: nowrap; padding-left: 14px; }
+            #woocommerce-order-items .woocommerce_order_items td.vk-gross strong { color: #1d2327; }
             .wp-list-table .column-vk_items { width: 32%; }
             .vk-order-items-count { margin-bottom: .2rem; color: #6b7280; font-size: 12px; }
             .vk-order-items { max-height: 7.6rem; overflow-y: auto; padding-right: .3rem; overscroll-behavior: contain; }

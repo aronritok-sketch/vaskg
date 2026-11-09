@@ -38,6 +38,38 @@ class AbandonedCart {
         add_action('woocommerce_store_api_checkout_order_processed', [$this, 'ordered']);
         add_action('template_redirect', [$this, 'links'], 1);
         add_filter('woocommerce_email_classes', [$this, 'email_class']);
+        add_action('admin_post_vk_cart_test', [$this, 'test_mail']);
+    }
+
+    /** „Próbalevél nekem”: a kosáremlékeztető a bejelentkezett munkatársnak, néhány mostani termékkel. */
+    function test_mail(){
+        if (!current_user_can('manage_woocommerce') || !check_admin_referer('vk_cart_test')) wp_die('', '', [ 'response' => 403 ]);
+        $user = wp_get_current_user();
+        $ids = wc_get_products([ 'status' => 'publish', 'limit' => 3, 'orderby' => 'date', 'order' => 'DESC', 'stock_status' => 'instock', 'return' => 'ids' ]);
+        $items = array_map(function($id){ return [ 'product_id' => (int)$id, 'variation_id' => 0, 'qty' => 1, 'variation' => [] ]; }, $ids);
+        $row = (object)[ 'email' => $user->user_email, 'items' => wp_json_encode($items), 'token' => 'proba', 'hash' => '' ];
+        $emails = WC()->mailer()->get_emails();
+        $email = $emails['VK_Email_Cart'] ?? null;
+        $ok = $email && $email->is_enabled() ? $email->trigger($row) : false;
+        wp_safe_redirect(add_query_arg([ 'vk_cart_test' => $ok ? 'ok' : 'hiba' ], wp_get_referer() ?: admin_url('admin.php?page=wc-settings&tab=email')));
+        exit;
+    }
+
+    /** Állapot a kulcsos státusz-végponthoz (diag=carts): darabszámok, a legutóbbi kosarak (e-mail címek kitakarva), a következő küldés. */
+    static function diagnose(){
+        global $wpdb;
+        $mask = function($email){ $at = strpos($email, '@'); return $at === false ? '?' : substr($email, 0, 2).'…'.substr($email, $at); };
+        $rows = (array)$wpdb->get_results('SELECT email, status, hash, sent_hash, updated, sent_at, items FROM '.self::table().' ORDER BY updated DESC LIMIT 8');
+        $emails = function_exists('WC') ? WC()->mailer()->get_emails() : [];
+        $next = wp_next_scheduled(self::HOOK);
+        return [
+            'table' => (bool)$wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', self::table())),
+            'counts' => $wpdb->get_results('SELECT status, COUNT(*) n FROM '.self::table().' GROUP BY status', ARRAY_A),
+            'email_enabled' => isset($emails['VK_Email_Cart']) ? $emails['VK_Email_Cart']->is_enabled() : null,
+            'next_run' => $next ? wp_date('Y-m-d H:i', $next) : null,
+            'now' => wp_date('Y-m-d H:i'),
+            'latest' => array_map(function($r) use ($mask){ return [ 'email' => $mask($r->email), 'status' => $r->status, 'items' => count((array)json_decode((string)$r->items, true)), 'pending' => $r->hash !== '' && $r->hash !== $r->sent_hash, 'updated_utc' => $r->updated, 'sent_utc' => $r->sent_at ]; }, $rows),
+        ];
     }
 
     static function table(){
