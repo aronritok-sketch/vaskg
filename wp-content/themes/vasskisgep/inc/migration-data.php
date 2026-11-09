@@ -171,6 +171,7 @@ class MigrationData {
         if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'gls') return Gls::diagnose();
         if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'barion') return Barion::find_old_pixel();
         if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'carts') return AbandonedCart::diagnose();
+        if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'cron') return SelfCron::diagnose();
         if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'barion-gateway'){
             $enable = $request->get_param('enable');
             return Barion::gateway($enable === null ? null : ($enable === '1'));
