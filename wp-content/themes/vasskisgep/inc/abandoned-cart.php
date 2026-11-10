@@ -8,7 +8,9 @@ namespace VasskisgepTheme;
  * a termékekkel, „Vissza a kosárhoz” gombbal (visszatölti a kosarat), „Miért minket” sávval és „Ez is érdekelhet”
  * ajánlatokkal. Ugyanarról a kosártartalomról csak egyszer; ha később más termékeket hagy benne, arról újra.
  *
- * Csak az kap ilyet, akinek tudjuk az e-mail címét: belépett vásárló, vagy aki a pénztárban beírta. Leiratkozó link
+ * Csak az kap ilyet, akinek tudjuk az e-mail címét: belépett vásárló, vagy aki a pénztárban beírta. A regisztrált
+ * vásárlóknál küldés előtt a fiókjukhoz mentett kosár (WooCommerce persistent cart) is számít, így akkor is kapnak
+ * levelet, ha a kosár rögzítése menet közben elcsúszott (Dávid, 2026-11-10). Leiratkozó link
  * minden levélben. A levél WooCommerce levél („Kosáremlékeztető”), a WooCommerce → Beállítások → E-mailek alatt
  * kikapcsolható.
  */
@@ -59,7 +61,9 @@ class AbandonedCart {
     static function diagnose(){
         global $wpdb;
         $mask = function($email){ $at = strpos($email, '@'); return $at === false ? '?' : substr($email, 0, 2).'…'.substr($email, $at); };
-        $rows = (array)$wpdb->get_results('SELECT email, status, hash, sent_hash, updated, sent_at, items FROM '.self::table().' ORDER BY updated DESC LIMIT 8');
+        $rows = (array)$wpdb->get_results('SELECT email, user_id, status, hash, sent_hash, updated, sent_at, items FROM '.self::table().' ORDER BY updated DESC LIMIT 8');
+        $pkey = '_woocommerce_persistent_cart_'.get_current_blog_id();
+        $persistent = (array)$wpdb->get_results($wpdb->prepare("SELECT pc.user_id, pc.meta_value cart, la.meta_value active FROM {$wpdb->usermeta} pc JOIN {$wpdb->usermeta} la ON la.user_id = pc.user_id AND la.meta_key = 'wc_last_active' WHERE pc.meta_key = %s AND CAST(la.meta_value AS UNSIGNED) > %d ORDER BY CAST(la.meta_value AS UNSIGNED) DESC LIMIT 8", $pkey, time() - 3 * DAY_IN_SECONDS));
         $emails = function_exists('WC') ? WC()->mailer()->get_emails() : [];
         $next = wp_next_scheduled(self::HOOK);
         return [
@@ -68,7 +72,9 @@ class AbandonedCart {
             'email_enabled' => isset($emails['VK_Email_Cart']) ? $emails['VK_Email_Cart']->is_enabled() : null,
             'next_run' => $next ? wp_date('Y-m-d H:i', $next) : null,
             'now' => wp_date('Y-m-d H:i'),
-            'latest' => array_map(function($r) use ($mask){ return [ 'email' => $mask($r->email), 'status' => $r->status, 'items' => count((array)json_decode((string)$r->items, true)), 'pending' => $r->hash !== '' && $r->hash !== $r->sent_hash, 'updated_utc' => $r->updated, 'sent_utc' => $r->sent_at ]; }, $rows),
+            'latest' => array_map(function($r) use ($mask){ return [ 'email' => $mask($r->email), 'status' => $r->status, 'items' => count((array)json_decode((string)$r->items, true)), 'pending' => $r->hash !== '' && $r->hash !== $r->sent_hash, 'updated_utc' => $r->updated, 'sent_utc' => $r->sent_at, 'user' => (int)$r->user_id ]; }, $rows),
+            // Regisztrált vásárlók mentett kosara (az elmúlt 3 nap aktívjai): user, szerep, tételek, utolsó aktivitás.
+            'persistent' => array_map(function($r){ $u = get_userdata((int)$r->user_id); $c = maybe_unserialize($r->cart); return [ 'user' => (int)$r->user_id, 'roles' => $u ? array_values((array)$u->roles) : [], 'items' => is_array($c) && !empty($c['cart']) ? count((array)$c['cart']) : 0, 'active_utc' => gmdate('Y-m-d H:i:s', (int)$r->active) ]; }, $persistent),
         ];
     }
 
@@ -201,6 +207,7 @@ class AbandonedCart {
         $emails = $mailer->get_emails();
         $email = $emails['VK_Email_Cart'] ?? null;
         if (!$email || !$email->is_enabled()) return 0;
+        self::collect_persistent();
         $since = gmdate('Y-m-d H:i:s', time() - DAY_IN_SECONDS);
         $until = gmdate('Y-m-d H:i:s', time() - self::MIN_AGE);
         $rows = $wpdb->get_results($wpdb->prepare('SELECT * FROM '.self::table()." WHERE status = 'open' AND hash <> '' AND hash <> sent_hash AND updated BETWEEN %s AND %s LIMIT 200", $since, $until));
@@ -218,6 +225,48 @@ class AbandonedCart {
             }
         }
         return $sent;
+    }
+
+    /**
+     * Regisztrált vásárlók: a fiókhoz mentett kosár (WooCommerce persistent cart) azoknál, akik az elmúlt napban aktívak
+     * voltak (legalább MIN_AGE-dzsel ezelőtt). Ha a mi sorunk üres vagy régebbi, a mentett kosárral frissül.
+     * Munkatársi fiókra nem vonatkozik. Visszaadja a frissített sorok számát.
+     */
+    static function collect_persistent(){
+        global $wpdb;
+        $since = time() - DAY_IN_SECONDS;
+        $until = time() - self::MIN_AGE;
+        $users = $wpdb->get_results($wpdb->prepare(
+            "SELECT pc.user_id, pc.meta_value cart, la.meta_value active FROM {$wpdb->usermeta} pc
+             JOIN {$wpdb->usermeta} la ON la.user_id = pc.user_id AND la.meta_key = 'wc_last_active'
+             WHERE pc.meta_key = %s AND CAST(la.meta_value AS UNSIGNED) BETWEEN %d AND %d",
+            '_woocommerce_persistent_cart_'.get_current_blog_id(), $since, $until));
+        $done = 0;
+        foreach((array)$users as $u){
+            $user = get_userdata((int)$u->user_id);
+            if (!$user || !is_email($user->user_email) || array_intersect(StaffFrontend::ROLES, (array)$user->roles)) continue;
+            $cart = maybe_unserialize($u->cart);
+            $lines = is_array($cart) && !empty($cart['cart']) && is_array($cart['cart']) ? $cart['cart'] : [];
+            $items = [];
+            foreach($lines as $line){
+                if (empty($line['product_id'])) continue;
+                $items[] = [ 'product_id' => (int)$line['product_id'], 'variation_id' => (int)($line['variation_id'] ?? 0), 'qty' => (int)($line['quantity'] ?? 1), 'variation' => (array)($line['variation'] ?? []) ];
+            }
+            if (!$items) continue;
+            $email = strtolower($user->user_email);
+            $hash = md5(wp_json_encode($items));
+            $updated = gmdate('Y-m-d H:i:s', (int)$u->active);
+            $row = $wpdb->get_row($wpdb->prepare('SELECT id, hash, status, updated FROM '.self::table().' WHERE email = %s', $email));
+            if ($row && in_array($row->status, [ 'unsub' ], true)) continue;
+            // Rendelt az utolsó aktivitása óta? Akkor nem hagyott kosár.
+            if (wc_get_orders([ 'customer_id' => (int)$u->user_id, 'date_created' => '>'.((int)$u->active - HOUR_IN_SECONDS), 'limit' => 1, 'return' => 'ids' ])) continue;
+            if ($row && $row->hash === $hash && $row->status === 'open') continue;
+            $data = [ 'email' => $email, 'user_id' => (int)$u->user_id, 'items' => wp_json_encode($items), 'hash' => $hash, 'status' => 'open', 'updated' => $updated ];
+            if ($row) $wpdb->update(self::table(), $data, [ 'id' => $row->id ]);
+            else $wpdb->insert(self::table(), $data + [ 'token' => wp_generate_password(32, false), 'sent_hash' => '' ]);
+            $done++;
+        }
+        return $done;
     }
 
     function email_class($emails){
