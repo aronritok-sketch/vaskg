@@ -26,6 +26,11 @@ class AdminLists {
         add_filter('get_terms_args', [$this, 'category_filter_args'], 10, 2);
         add_action('admin_footer-edit-tags.php', [$this, 'category_filter_form']);
         add_action('load-edit.php', [$this, 'remember_or_restore_list']);
+        // Kategóriák sorrendje számmal (Dávid, 2026-11-10: mint a régi adminban; a főág az alkategóriáival együtt mozog).
+        add_filter('manage_edit-product_cat_columns', [$this, 'category_columns'], 20);
+        add_filter('manage_product_cat_custom_column', [$this, 'category_column'], 10, 3);
+        add_action('wp_ajax_vk_cat_order', [$this, 'ajax_category_order']);
+        add_filter('edit_product_cat_per_page', function($n){ return (int)$n === 20 ? 400 : $n; });
         add_action('edit_form_top', [$this, 'back_button']);
     }
 
@@ -110,6 +115,10 @@ class AdminLists {
         $form = ob_get_clean();
         ?>
         <style>
+            .column-vk_order { width: 7rem; }
+            .vk-cat-order { width: 4.2rem; }
+            .vk-cat-order-of { margin-left: 4px; color: #646970; }
+            .vk-cat-order.is-busy { opacity: .5; }
             .vk-cat-filter { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 8px; }
             .vk-cat-filter-free { display: inline-flex; align-items: center; gap: 4px; }
         </style>
@@ -122,8 +131,78 @@ class AdminLists {
             box.innerHTML = html;
             target.parentNode.insertBefore(box.firstChild, target);
         })();
+        (function(){
+            var nonce = <?php echo wp_json_encode(wp_create_nonce('vk_cat_order')); ?>;
+            function save(input){
+                var pos = parseInt(input.value, 10), old = parseInt(input.getAttribute('data-old'), 10);
+                if (!pos || pos === old || input.classList.contains('is-busy')) return;
+                input.classList.add('is-busy'); input.disabled = true;
+                var body = new URLSearchParams({ action: 'vk_cat_order', nonce: nonce, term: input.getAttribute('data-term'), pos: pos });
+                fetch(ajaxurl, { method: 'POST', credentials: 'same-origin', body: body }).then(function(r){ return r.json(); }).then(function(r){
+                    if (!r || !r.success){ alert((r && r.data && r.data.message) || 'Nem sikerült menteni.'); input.value = old; input.disabled = false; input.classList.remove('is-busy'); return; }
+                    location.reload();
+                }).catch(function(){ alert('Nem sikerült menteni (kapcsolati hiba).'); input.value = old; input.disabled = false; input.classList.remove('is-busy'); });
+            }
+            document.addEventListener('keydown', function(e){
+                if (e.key === 'Enter' && e.target.classList && e.target.classList.contains('vk-cat-order')){ e.preventDefault(); save(e.target); }
+            });
+            document.addEventListener('change', function(e){ if (e.target.classList && e.target.classList.contains('vk-cat-order')) save(e.target); });
+            // A sorban kattintás (Gyors szerkesztés stb.) ne nyíljon meg a mezőre kattintva.
+            document.addEventListener('click', function(e){ if (e.target.classList && e.target.classList.contains('vk-cat-order')) e.stopPropagation(); }, true);
+        })();
         </script>
         <?php
+    }
+
+    /* ---------- Kategóriák sorrendje ---------- */
+
+    /** A szülő alatti kategóriák a megjelenítési sorrendben (a WooCommerce „order” mezője, azonosnál név szerint). */
+    static function siblings($parent){
+        $terms = get_terms([ 'taxonomy' => 'product_cat', 'parent' => (int)$parent, 'hide_empty' => false, 'vk_unfiltered' => 1 ]);
+        if (is_wp_error($terms)) return [];
+        usort($terms, function($a, $b){
+            return [ (int)get_term_meta($a->term_id, 'order', true), $a->name ] <=> [ (int)get_term_meta($b->term_id, 'order', true), $b->name ];
+        });
+        return $terms;
+    }
+
+    function category_columns($columns){
+        $out = [];
+        foreach($columns as $key => $label){
+            if ($key === 'name') $out['vk_order'] = 'Sorrend';
+            $out[$key] = $label;
+        }
+        return $out;
+    }
+
+    function category_column($content, $column, $term_id){
+        if ($column !== 'vk_order') return $content;
+        static $positions = [];
+        $term = get_term($term_id, 'product_cat');
+        if (!$term || is_wp_error($term)) return $content;
+        if (!isset($positions[$term->parent])){
+            $positions[$term->parent] = [];
+            foreach(self::siblings($term->parent) as $i => $t) $positions[$term->parent][(int)$t->term_id] = $i + 1;
+        }
+        $pos = $positions[$term->parent][(int)$term_id] ?? 0;
+        $max = count($positions[$term->parent]);
+        return '<input type="number" class="vk-cat-order" min="1" max="'.(int)$max.'" value="'.(int)$pos.'" data-term="'.(int)$term_id.'" data-old="'.(int)$pos.'" title="Sorszám a '.($term->parent ? 'szülő kategórián belül' : 'főágak között').' (1–'.(int)$max.'). Átírás után Enter: az alkategóriák vele együtt mozognak.">'
+            .'<span class="vk-cat-order-of">/ '.(int)$max.'</span>';
+    }
+
+    function ajax_category_order(){
+        $term_id = (int)($_POST['term'] ?? 0);
+        $pos = (int)($_POST['pos'] ?? 0);
+        if (!check_ajax_referer('vk_cat_order', 'nonce', false) || !current_user_can('manage_product_terms')) wp_send_json_error([ 'message' => 'Nincs jogosultság.' ], 403);
+        $term = get_term($term_id, 'product_cat');
+        if (!$term || is_wp_error($term) || $pos < 1) wp_send_json_error([ 'message' => 'Hibás adat.' ], 400);
+        $ids = array_map(function($t){ return (int)$t->term_id; }, self::siblings($term->parent));
+        $ids = array_values(array_diff($ids, [ $term_id ]));
+        array_splice($ids, min($pos, count($ids) + 1) - 1, 0, [ $term_id ]);
+        // A testvérek újraszámozása 0-tól (a WooCommerce húzásos rendezése is így tárolja).
+        foreach($ids as $i => $id) update_term_meta($id, 'order', $i);
+        if (function_exists('wc_delete_product_transients')) wc_delete_product_transients();
+        wp_send_json_success([ 'position' => array_search($term_id, $ids, true) + 1 ]);
     }
 
     /* ---------- Terméklista: a szűrés megmarad ---------- */
