@@ -31,6 +31,11 @@ class AdminLists {
         add_filter('manage_product_cat_custom_column', [$this, 'category_column'], 10, 3);
         add_action('wp_ajax_vk_cat_order', [$this, 'ajax_category_order']);
         add_filter('edit_product_cat_per_page', function($n){ return (int)$n === 20 ? 400 : $n; });
+        // Gyártói oldal csempéinek sorrendje gyártónként (a márka szerkesztésénél).
+        add_action('product_brand_edit_form_fields', [$this, 'brand_order_fields'], 20);
+        add_action('edited_product_brand', [$this, 'save_brand_order']);
+        // Rendelés: telefonszám másolása a futárszolgálatokhoz (+36 nélkül, egybeírva).
+        add_action('admin_footer', [$this, 'phone_copy_script']);
         add_action('edit_form_top', [$this, 'back_button']);
     }
 
@@ -203,6 +208,103 @@ class AdminLists {
         foreach($ids as $i => $id) update_term_meta($id, 'order', $i);
         if (function_exists('wc_delete_product_transients')) wc_delete_product_transients();
         wp_send_json_success([ 'position' => array_search($term_id, $ids, true) + 1 ]);
+    }
+
+    /* ---------- Gyártói oldal: csempék sorrendje gyártónként ---------- */
+
+    function brand_order_fields($term){
+        $groups = Catalog::brand_categories($term);
+        if (count($groups) < 2) return;
+        $mode = (string)get_term_meta($term->term_id, Catalog::TILE_MODE, true);
+        echo '<tr class="form-field"><th scope="row">Kategória-csempék sorrendje<br><small style="font-weight:400">a gyártó oldalán</small></th><td>';
+        wp_nonce_field('vk_tile_order', 'vk_tile_nonce');
+        echo '<p><select name="vk_tile_mode" id="vk-tile-mode">'
+            .'<option value=""'.selected($mode, '', false).'>A kategóriák sorrendje szerint (Termékek → Kategóriák)</option>'
+            .'<option value="count"'.selected($mode, 'count', false).'>Termékszám szerint (a legtöbb terméket tartalmazó elöl)</option>'
+            .'<option value="custom"'.selected($mode, 'custom', false).'>Egyedi sorrend (lent, számokkal)</option>'
+            .'</select></p>';
+        echo '<table class="widefat striped" style="max-width:560px"><thead><tr><th style="width:90px">Sorrend</th><th>Csempe</th><th style="width:90px">Termék</th></tr></thead><tbody>';
+        $i = 0;
+        foreach($groups as $gid => $g){
+            $cat = get_term($gid, 'product_cat');
+            if (!$cat || is_wp_error($cat)) continue;
+            $i++;
+            echo '<tr><td><input type="number" min="1" name="vk_tile_order['.(int)$gid.']" value="'.$i.'" class="vk-tile-pos" style="width:70px"><input type="hidden" name="vk_tile_old['.(int)$gid.']" value="'.$i.'"></td><td>'.esc_html($cat->name).'</td><td>'.(int)$g['count'].'</td></tr>';
+        }
+        echo '</tbody></table><p class="description">A mostani sorrend látszik. Ha átírod a számokat, a sorrend „Egyedi” lesz; mentés: „Frissítés” lent. Ez csak ennél a gyártónál számít, a többi gyártó és a kategóriák sorrendje nem változik.</p>';
+        echo '<script>document.addEventListener("input",function(e){if(e.target.classList&&e.target.classList.contains("vk-tile-pos")){var s=document.getElementById("vk-tile-mode");if(s)s.value="custom";}});</script>';
+        echo '</td></tr>';
+    }
+
+    function save_brand_order($term_id){
+        if (!isset($_POST['vk_tile_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['vk_tile_nonce'])), 'vk_tile_order') || !current_user_can('manage_product_terms')) return;
+        $mode = sanitize_key(wp_unslash($_POST['vk_tile_mode'] ?? ''));
+        if (!in_array($mode, [ '', 'count', 'custom' ], true)) $mode = '';
+        if ($mode === '') delete_term_meta($term_id, Catalog::TILE_MODE);
+        else update_term_meta($term_id, Catalog::TILE_MODE, $mode);
+        if ($mode === 'custom'){
+            $positions = [];
+            $i = 0;
+            $old = (array)($_POST['vk_tile_old'] ?? []);
+            foreach((array)($_POST['vk_tile_order'] ?? []) as $gid => $pos){
+                $pos = max(1, (int)$pos);
+                $was = (int)($old[$gid] ?? $pos);
+                // Azonos számnál: a hátrébb tett elem a helyén lévő mögé, az előrébb tett elé kerül.
+                $tie = $pos === $was ? 1 : ($pos > $was ? 2 : 0);
+                $positions[(int)$gid] = [ $pos, $tie, $i++ ];
+            }
+            uasort($positions, function($a, $b){ return $a <=> $b; });
+            update_term_meta($term_id, Catalog::TILE_ORDER, array_keys($positions));
+        }
+    }
+
+    /* ---------- Rendelés: telefonszám másolása ---------- */
+
+    function phone_copy_script(){
+        $screen = function_exists('get_current_screen') ? get_current_screen() : null;
+        if (!$screen || !in_array($screen->id, [ 'shop_order', 'edit-shop_order', 'woocommerce_page_wc-orders' ], true)) return;
+        ?>
+        <style>
+            .vk-phone-copy { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; margin-left: 6px; padding: 0; border: 1px solid #c3c4c7; border-radius: 4px; background: #fff; color: #2271b1; cursor: pointer; vertical-align: middle; }
+            .vk-phone-copy:hover { border-color: #2271b1; }
+            .vk-phone-copy.is-done { border-color: #00a32a; color: #00a32a; }
+            .vk-phone-copy svg { width: 13px; height: 13px; }
+        </style>
+        <script>
+        (function(){
+            // +36 után egybeírva (pl. +36 30 304 1524 → 303041524); 06-tal kezdődőnél a 06 nélkül; külföldi számnál + és a számjegyek.
+            function courierNumber(raw){
+                var d = String(raw || '').replace(/[^\d+]/g, '');
+                if (/^\+36/.test(d)) return d.slice(3);
+                if (/^0036/.test(d)) return d.slice(4);
+                if (/^36\d{8,9}$/.test(d)) return d.slice(2);
+                if (/^06/.test(d)) return d.slice(2);
+                return d;
+            }
+            var icon = '<svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 11V3a1 1 0 0 1 1-1h7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+            function copy(text, btn){
+                var done = function(){ btn.classList.add('is-done'); btn.title = 'Másolva: ' + text; setTimeout(function(){ btn.classList.remove('is-done'); btn.title = 'Telefonszám másolása (+36 nélkül, egybeírva): ' + text; }, 1500); };
+                if (navigator.clipboard && window.isSecureContext){ navigator.clipboard.writeText(text).then(done); return; }
+                var t = document.createElement('textarea'); t.value = text; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); done(); } catch(e){} t.remove();
+            }
+            function add(root){
+                (root || document).querySelectorAll('a[href^="tel:"]').forEach(function(a){
+                    if (a.dataset.vkCopy) return;
+                    a.dataset.vkCopy = '1';
+                    var num = courierNumber(a.getAttribute('href').slice(4) || a.textContent);
+                    if (!num) return;
+                    var b = document.createElement('button');
+                    b.type = 'button'; b.className = 'vk-phone-copy'; b.innerHTML = icon;
+                    b.title = 'Telefonszám másolása (+36 nélkül, egybeírva): ' + num;
+                    b.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); copy(num, b); });
+                    a.insertAdjacentElement('afterend', b);
+                });
+            }
+            add();
+            new MutationObserver(function(){ add(); }).observe(document.body, { childList: true, subtree: true });
+        })();
+        </script>
+        <?php
     }
 
     /* ---------- Terméklista: a szűrés megmarad ---------- */

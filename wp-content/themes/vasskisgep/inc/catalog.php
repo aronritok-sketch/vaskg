@@ -168,6 +168,10 @@ class Catalog {
         return $cache[$name];
     }
 
+    /** Gyártói oldal csempéinek sorrendje gyártónként: '' (kategóriák sorrendje), 'count' (termékszám), 'custom' (egyedi). */
+    const TILE_MODE = 'vk_tile_mode';
+    const TILE_ORDER = 'vk_tile_order';
+
     const BRAND_TILE_GROUPS = [ 'Fűnyírók', 'Fűnyíró traktorok', 'Láncfűrészek és ágnyesők', 'Permetezés', 'Kombi- és multirendszerek', 'Daraboló gépek', 'Tömörítő gépek' ];
 
     /**
@@ -176,7 +180,7 @@ class Catalog {
      * A csempe képe a márka egy terméke a csoportból (kiemelt, készleten lévő előnyben).
      */
     static function brand_categories($brand){
-        $key = 'vk_brand_tiles10_'.$brand->term_id.'_'.md5(wp_cache_get_last_changed('posts').wp_cache_get_last_changed('terms'));
+        $key = 'vk_brand_tiles11_'.$brand->term_id.'_'.md5(wp_cache_get_last_changed('posts').wp_cache_get_last_changed('terms'));
         $cached = get_transient($key);
         if (is_array($cached)) return $cached;
         $ids = get_posts([ 'post_type' => 'product', 'post_status' => 'publish', 'numberposts' => -1, 'fields' => 'ids',
@@ -260,6 +264,17 @@ class Catalog {
             $keys = [];
             foreach(array_keys($groups) as $gid) $keys[$gid] = $tree_key($gid);
             uksort($groups, function($a, $b) use ($groups, $keys){ return [ $groups[$a]['kind'], $keys[$a] ] <=> [ $groups[$b]['kind'], $keys[$b] ]; });
+            // Gyártónként külön sorrend (Dávid, 2026-11-10; a márka szerkesztésénél): termékszám szerint vagy egyedi.
+            $mode = (string)get_term_meta($brand->term_id, self::TILE_MODE, true);
+            if ($mode === 'count'){
+                uksort($groups, function($a, $b) use ($groups, $keys){ return [ $groups[$a]['kind'], -$groups[$a]['count'], $keys[$a] ] <=> [ $groups[$b]['kind'], -$groups[$b]['count'], $keys[$b] ]; });
+            } elseif ($mode === 'custom'){
+                $custom = array_flip(array_map('intval', (array)get_term_meta($brand->term_id, self::TILE_ORDER, true)));
+                $base = array_flip(array_keys($groups));
+                uksort($groups, function($a, $b) use ($custom, $base){
+                    return [ $custom[$a] ?? PHP_INT_MAX, $base[$a] ] <=> [ $custom[$b] ?? PHP_INT_MAX, $base[$b] ];
+                });
+            }
             foreach($groups as &$g){
                 $ck = [];
                 foreach(array_keys($g['children']) as $cid) $ck[$cid] = $tree_key($cid);
