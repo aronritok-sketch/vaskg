@@ -176,7 +176,7 @@ class Catalog {
      * A csempe képe a márka egy terméke a csoportból (kiemelt, készleten lévő előnyben).
      */
     static function brand_categories($brand){
-        $key = 'vk_brand_tiles9_'.$brand->term_id.'_'.md5(wp_cache_get_last_changed('posts').wp_cache_get_last_changed('terms'));
+        $key = 'vk_brand_tiles10_'.$brand->term_id.'_'.md5(wp_cache_get_last_changed('posts').wp_cache_get_last_changed('terms'));
         $cached = get_transient($key);
         if (is_array($cached)) return $cached;
         $ids = get_posts([ 'post_type' => 'product', 'post_status' => 'publish', 'numberposts' => -1, 'fields' => 'ids',
@@ -251,9 +251,19 @@ class Catalog {
                 }
                 unset($g);
             }
-            uasort($groups, function($a, $b){ return [ $a['kind'], -$a['count'] ] <=> [ $b['kind'], -$b['count'] ]; });
+            // Sorrend: a kategóriafa sorrendje (Termékek → Kategóriák „Sorrend” oszlop; Dávid, 2026-11-10), nem a termékszám.
+            $tree_key = function($term_id) use ($name){
+                $chain = array_reverse(array_map('intval', get_ancestors($term_id, 'product_cat')));
+                $chain[] = (int)$term_id;
+                return implode("\x01", array_map(function($id) use ($name){ return sprintf('%06d:%s', (int)get_term_meta($id, 'order', true), $name($id)); }, $chain));
+            };
+            $keys = [];
+            foreach(array_keys($groups) as $gid) $keys[$gid] = $tree_key($gid);
+            uksort($groups, function($a, $b) use ($groups, $keys){ return [ $groups[$a]['kind'], $keys[$a] ] <=> [ $groups[$b]['kind'], $keys[$b] ]; });
             foreach($groups as &$g){
-                arsort($g['children']);
+                $ck = [];
+                foreach(array_keys($g['children']) as $cid) $ck[$cid] = $tree_key($cid);
+                uksort($g['children'], function($a, $b) use ($ck){ return strcmp($ck[$a], $ck[$b]); });
                 // A tartozék-csempe a típusok után, a sor végén.
                 $acc_id = (int)($g['acc'] ?? 0);
                 if ($acc_id && isset($g['children'][$acc_id])){ $n = $g['children'][$acc_id]; unset($g['children'][$acc_id]); $g['children'][$acc_id] = $n; }
