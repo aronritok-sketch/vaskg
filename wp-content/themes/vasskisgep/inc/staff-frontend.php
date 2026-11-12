@@ -52,7 +52,16 @@ class StaffFrontend {
         $uri = (string)($_SERVER['REQUEST_URI'] ?? '');
         if (strpos($uri, 'wp-login.php') !== false) return true;
         // REST: az admin (blokkszerkesztő, WooCommerce admin) igen, a webshop kosara (wc/store) nem.
-        $rest = strpos($uri, '/wp-json/') !== false ? substr($uri, strpos($uri, '/wp-json/') + 9) : (isset($_GET['rest_route']) ? ltrim((string)$_GET['rest_route'], '/') : null);
+        // A REST előtagot az iu_theme átnevezi (rest_url_prefix), ezért nem csak a /wp-json/ számít (különben az Analitika
+        // és a WooCommerce admin REST-kérései vendégként futnának és elutasulnának; Dávid, 2026-11-12).
+        $rest = null;
+        $prefixes = array_unique(array_filter([ 'wp-json', function_exists('rest_get_url_prefix') ? trim((string)rest_get_url_prefix(), '/') : '' ]));
+        $path = (string)parse_url($uri, PHP_URL_PATH);
+        foreach($prefixes as $prefix){
+            $pos = strpos($path, '/'.$prefix.'/');
+            if ($pos !== false){ $rest = substr($path, $pos + strlen($prefix) + 2); break; }
+        }
+        if ($rest === null && isset($_GET['rest_route'])) $rest = ltrim((string)$_GET['rest_route'], '/');
         if ($rest !== null) return strpos($rest, 'wc/store') !== 0;
         // Előnézet és testreszabó.
         if (isset($_GET['preview']) || isset($_GET['preview_id']) || isset($_GET['customize_changeset_uuid']) || isset($_GET['elementor-preview'])) return true;

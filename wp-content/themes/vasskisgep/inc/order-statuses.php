@@ -144,9 +144,19 @@ class OrderStatuses {
     /* ---------- Csomagkövetés ---------- */
 
     /** [ 'carrier' => kulcs, 'name' => „GLS”, 'number' => …, 'url' => követési link vagy '' ], vagy null. */
+    /** A csomagszám: a beírt, különben a GLS-címke csomagszáma (Dávid, 2026-11-12: címke után nem látszott). */
+    static function tracking_number($order){
+        $number = trim((string)$order->get_meta('_vk_tracking_number'));
+        if ($number === ''){
+            $gls = $order->get_meta('_vk_gls');
+            if (is_array($gls) && !empty($gls['parcel'])) $number = (string)$gls['parcel'];
+        }
+        return $number;
+    }
+
     static function tracking($order){
         if (!$order instanceof \WC_Order) return null;
-        $number = trim((string)$order->get_meta('_vk_tracking_number'));
+        $number = self::tracking_number($order);
         if ($number === '') return null;
         $carrier = (string)$order->get_meta('_vk_tracking_carrier') ?: 'gls';
         $def = self::CARRIERS[$carrier] ?? self::CARRIERS['other'];
@@ -175,7 +185,7 @@ class OrderStatuses {
         echo '<p><label for="vk_tracking_carrier"><strong>Futár</strong></label><br><select id="vk_tracking_carrier" name="vk_tracking_carrier" style="width:100%">';
         foreach(self::CARRIERS as $key => $def) echo '<option value="'.esc_attr($key).'"'.selected($key, $carrier, false).'>'.esc_html($def[0]).'</option>';
         echo '</select></p>';
-        echo '<p><label for="vk_tracking_number"><strong>Csomagszám (tracking)</strong></label><br><input type="text" id="vk_tracking_number" name="vk_tracking_number" value="'.esc_attr($order->get_meta('_vk_tracking_number')).'" style="width:100%" placeholder="pl. 12345678901"></p>';
+        echo '<p><label for="vk_tracking_number"><strong>Csomagszám (tracking)</strong></label><br><input type="text" id="vk_tracking_number" name="vk_tracking_number" value="'.esc_attr(self::tracking_number($order)).'" style="width:100%" placeholder="pl. 12345678901"></p>';
         echo '<p class="description">A „Postázva” státusz levelében és a vásárló fiókjában megjelenik (GLS-nél követési linkkel).</p>';
         $survey = $order->get_meta('_vk_survey');
         echo '<p><label><input type="checkbox" name="vk_survey" value="1"'.checked($survey === 'yes' || $survey === 'sent', true, false).'> <strong>Elégedettségi kérdőív</strong> küldése teljesítéskor</label>'.($survey === 'sent' ? '<br><span class="description">Elküldve.</span>' : '').'</p>';
@@ -188,7 +198,10 @@ class OrderStatuses {
         if (!$order) return;
         $carrier = sanitize_key(wp_unslash($_POST['vk_tracking_carrier'] ?? 'gls'));
         $order->update_meta_data('_vk_tracking_carrier', isset(self::CARRIERS[$carrier]) ? $carrier : 'gls');
-        $order->update_meta_data('_vk_tracking_number', sanitize_text_field(wp_unslash($_POST['vk_tracking_number'] ?? '')));
+        // Üres mezővel ne vesszen el a közben (pl. GLS-címkével) beírt csomagszám: az oldal még a címke előtt töltődött be.
+        $number = sanitize_text_field(wp_unslash($_POST['vk_tracking_number'] ?? ''));
+        if ($number === '') $number = self::tracking_number($order);
+        $order->update_meta_data('_vk_tracking_number', $number);
         if ($order->get_meta('_vk_survey') !== 'sent') $order->update_meta_data('_vk_survey', !empty($_POST['vk_survey']) ? 'yes' : '');
         // Teljesítetlen tételek.
         $pending = array_map('intval', array_keys((array)($_POST['vk_item_pending'] ?? [])));
