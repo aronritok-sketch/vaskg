@@ -31,11 +31,33 @@ class AdminLists {
         add_filter('manage_product_cat_custom_column', [$this, 'category_column'], 10, 3);
         add_action('wp_ajax_vk_cat_order', [$this, 'ajax_category_order']);
         add_filter('edit_product_cat_per_page', function($n){ return (int)$n === 20 ? 400 : $n; });
+        // Gép-kategória tartozékai (több is; a gyártói oldal típusválasztójában és a kategóriaoldalon látszanak).
+        add_action('product_cat_edit_form_fields', [$this, 'accessory_fields'], 30);
+        add_action('edited_product_cat', [$this, 'save_accessories']);
         // Gyártói oldal csempéinek sorrendje gyártónként (a márka szerkesztésénél).
         add_action('product_brand_edit_form_fields', [$this, 'brand_order_fields'], 20);
         add_action('edited_product_brand', [$this, 'save_brand_order']);
         // Rendelés: telefonszám másolása a futárszolgálatokhoz (+36 nélkül, egybeírva).
         add_action('admin_footer', [$this, 'phone_copy_script']);
+        // Táblázat a klasszikus szerkesztőben (termékleírás; Dávid, 2026-11-10): a TinyMCE 4 hivatalos table bővítménye
+        // (assets/tinymce-table, LGPL, a WordPress TinyMCE 4.9.11-ével egyező verzió).
+        add_filter('mce_external_plugins', function($plugins){
+            $plugins['table'] = get_stylesheet_directory_uri().'/assets/tinymce-table/plugin.min.js';
+            return $plugins;
+        });
+        add_filter('mce_buttons_2', function($buttons){
+            if (!in_array('table', $buttons, true)) $buttons[] = 'table';
+            return $buttons;
+        });
+        add_filter('tiny_mce_before_init', function($init){
+            // A táblázat menü a sor végén magyarul is érthető legyen; új táblázat szegéllyel, teljes szélességben.
+            $init['table_default_attributes'] = wp_json_encode([ 'border' => '1' ]);
+            $init['table_default_styles'] = wp_json_encode([ 'width' => '100%', 'border-collapse' => 'collapse' ]);
+            return $init;
+        });
+        // Termék szerkesztése: kereső a kategória-listában (Dávid, 2026-11-10).
+        add_action('admin_footer-post.php', [$this, 'category_search_script']);
+        add_action('admin_footer-post-new.php', [$this, 'category_search_script']);
         add_action('edit_form_top', [$this, 'back_button']);
     }
 
@@ -210,6 +232,50 @@ class AdminLists {
         wp_send_json_success([ 'position' => array_search($term_id, $ids, true) + 1 ]);
     }
 
+    /* ---------- Gép-kategória tartozékai ---------- */
+
+    /** A Tartozékok ág kategóriái (a legfinomabb szintig), behúzással. [term_id => címke] */
+    private static function accessory_options(){
+        $root = null;
+        foreach(get_terms([ 'taxonomy' => 'product_cat', 'parent' => 0, 'hide_empty' => false, 'vk_unfiltered' => 1 ]) ?: [] as $t) if ($t->name === 'Tartozékok') $root = $t;
+        if (!$root) return [];
+        $out = [];
+        $walk = function($parent, $depth) use (&$walk, &$out){
+            foreach(self::siblings($parent) as $t){
+                $out[(int)$t->term_id] = str_repeat('— ', $depth).$t->name;
+                $walk($t->term_id, $depth + 1);
+            }
+        };
+        $walk($root->term_id, 0);
+        return $out;
+    }
+
+    function accessory_fields($term){
+        $chain = array_reverse(get_ancestors($term->term_id, 'product_cat'));
+        $root = $chain ? get_term($chain[0], 'product_cat') : $term;
+        if ($root && !is_wp_error($root) && in_array($root->name, [ 'Tartozékok', 'Alkatrészek és karbantartás' ], true)) return;
+        $current = array_map(function($t){ return (int)$t->term_id; }, Catalog::accessory_terms($term));
+        $options = self::accessory_options();
+        if (!$options) return;
+        wp_nonce_field('vk_accessories', 'vk_accessories_nonce');
+        echo '<tr class="form-field"><th scope="row">Tartozékok ehhez a géphez</th><td>';
+        echo '<input type="search" class="vk-acc-search" placeholder="Keresés a tartozék-kategóriák között…" style="width:100%;max-width:420px;margin-bottom:6px">';
+        echo '<div class="vk-acc-list" style="max-height:260px;overflow:auto;border:1px solid #dcdcde;padding:6px 10px;background:#fff;max-width:520px">';
+        foreach($options as $id => $label){
+            echo '<label style="display:block;margin:2px 0"><input type="checkbox" name="vk_accessories[]" value="'.(int)$id.'"'.checked(in_array($id, $current, true), true, false).'> '.esc_html($label).'</label>';
+        }
+        echo '</div><p class="description">A kiválasztott tartozék-kategóriák a gyártói oldalon ennek a gépnek a típusválasztójában és a kategória oldalán is csempeként látszanak (a sor végén). Egy tartozék-kategória több géphez is hozzáadható.</p>';
+        echo '<input type="hidden" name="vk_accessories_present" value="1">';
+        echo '<script>(function(){var i=document.querySelector(".vk-acc-search");if(!i)return;i.addEventListener("keydown",function(e){if(e.key==="Enter")e.preventDefault();});i.addEventListener("input",function(){var q=i.value.trim().toLowerCase();document.querySelectorAll(".vk-acc-list label").forEach(function(l){l.style.display=!q||l.textContent.toLowerCase().indexOf(q)!==-1||l.querySelector("input").checked?"block":"none";});});})();</script>';
+        echo '</td></tr>';
+    }
+
+    function save_accessories($term_id){
+        if (empty($_POST['vk_accessories_present']) || !isset($_POST['vk_accessories_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['vk_accessories_nonce'])), 'vk_accessories') || !current_user_can('manage_product_terms')) return;
+        $ids = array_values(array_unique(array_filter(array_map('intval', (array)($_POST['vk_accessories'] ?? [])))));
+        update_term_meta($term_id, Catalog::ACCESSORIES, $ids);
+    }
+
     /* ---------- Gyártói oldal: csempék sorrendje gyártónként ---------- */
 
     function brand_order_fields($term){
@@ -258,6 +324,50 @@ class AdminLists {
         }
     }
 
+    /* ---------- Termék szerkesztése: kategória-kereső ---------- */
+
+    function category_search_script(){
+        $screen = function_exists('get_current_screen') ? get_current_screen() : null;
+        if (!$screen || $screen->id !== 'product') return;
+        ?>
+        <style>
+            .vk-cat-search { width: 100%; margin: 4px 0 8px; }
+            #product_catchecklist li.vk-hide { display: none; }
+            #product_catchecklist li.vk-hit > label { background: #fff3c4; }
+            #product_cat-all { max-height: 420px; }
+        </style>
+        <script>
+        (function(){
+            var box = document.getElementById('product_cat-all');
+            var list = document.getElementById('product_catchecklist');
+            if (!box || !list) return;
+            var input = document.createElement('input');
+            input.type = 'search'; input.className = 'vk-cat-search'; input.placeholder = 'Kategória keresése…';
+            box.parentNode.insertBefore(input, box);
+            var norm = function(t){ return (t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); };
+            input.addEventListener('keydown', function(e){ if (e.key === 'Enter') e.preventDefault(); });
+            input.addEventListener('input', function(){
+                var q = norm(input.value.trim());
+                var items = list.querySelectorAll('li');
+                items.forEach(function(li){ li.classList.remove('vk-hide', 'vk-hit'); });
+                if (!q) return;
+                items.forEach(function(li){ li.classList.add('vk-hide'); });
+                items.forEach(function(li){
+                    var label = li.querySelector(':scope > label');
+                    if (!label || norm(label.textContent).indexOf(q) === -1) return;
+                    li.classList.add('vk-hit');
+                    // A találat, a szülei és az alkategóriái látszanak.
+                    li.classList.remove('vk-hide');
+                    li.querySelectorAll('li').forEach(function(c){ c.classList.remove('vk-hide'); });
+                    var p = li.parentElement;
+                    while (p && p !== list){ if (p.tagName === 'LI') p.classList.remove('vk-hide'); p = p.parentElement; }
+                });
+            });
+        })();
+        </script>
+        <?php
+    }
+
     /* ---------- Rendelés: telefonszám másolása ---------- */
 
     function phone_copy_script(){
@@ -300,8 +410,22 @@ class AdminLists {
                     a.insertAdjacentElement('afterend', b);
                 });
             }
-            add();
-            new MutationObserver(function(){ add(); }).observe(document.body, { childList: true, subtree: true });
+            // E-mail cím másolása is (Dávid, 2026-11-11).
+            function addMail(){
+                document.querySelectorAll('a[href^="mailto:"]').forEach(function(a){
+                    if (a.dataset.vkCopy || a.closest('#wpadminbar, .order_notes, .woocommerce-order-data__meta')) return;
+                    a.dataset.vkCopy = '1';
+                    var mail = decodeURIComponent(a.getAttribute('href').slice(7).split('?')[0]).trim();
+                    if (!mail) return;
+                    var b = document.createElement('button');
+                    b.type = 'button'; b.className = 'vk-phone-copy'; b.innerHTML = icon;
+                    b.title = 'E-mail cím másolása: ' + mail;
+                    b.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); copy(mail, b); setTimeout(function(){ b.title = 'E-mail cím másolása: ' + mail; }, 1600); });
+                    a.insertAdjacentElement('afterend', b);
+                });
+            }
+            add(); addMail();
+            new MutationObserver(function(){ add(); addMail(); }).observe(document.body, { childList: true, subtree: true });
         })();
         </script>
         <?php

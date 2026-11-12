@@ -173,6 +173,8 @@ class MigrationData {
         if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'carts') return AbandonedCart::diagnose();
         if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'cron') return SelfCron::diagnose();
         if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'oldcats') return self::oldcats();
+        if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'oldprices') return self::oldprices();
+        if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'oldship') return self::oldship();
         if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'promo-free') return Shipping::promo_free_diag(array_filter(array_map('intval', explode(',', (string)$request->get_param('set')))));
         if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'barion-gateway'){
             $enable = $request->get_param('enable');
@@ -251,6 +253,51 @@ class MigrationData {
         $all = array_values(array_filter(self::tables(), function($t) use ($base){ return strpos($t, $base.'_') === 0 && preg_match('/_[a-z]{2}_[a-z]{2}$/', $t); }));
         if (in_array($base.'_hu_hu', $all, true)) return $base.'_hu_hu';
         return $all[0] ?? '';
+    }
+
+    /** Régi árak vásárlói csoportonként (diag=oldprices): csoportok, darabszám, néhány Cedrus-minta (Dávid, 2026-11-10: nagyker árak). */
+    static function oldprices(){
+        global $wpdb;
+        if (self::prefix() === '' || !self::has('virtuemart_product_prices')) return [ 'error' => 'nincs régi ártábla' ];
+        $out = [ 'price_columns' => self::columns('virtuemart_product_prices') ];
+        $groups = [];
+        if (self::has('virtuemart_shoppergroups')){
+            foreach((array)$wpdb->get_results('SELECT * FROM '.self::t('virtuemart_shoppergroups'), ARRAY_A) as $g){
+                $groups[(int)$g['virtuemart_shoppergroup_id']] = [ 'name' => $g['shopper_group_name'] ?? '', 'desc' => wp_strip_all_tags((string)($g['shopper_group_desc'] ?? '')), 'default' => $g['default'] ?? '', 'published' => $g['published'] ?? '' ];
+            }
+        }
+        $out['groups'] = $groups;
+        $out['per_group'] = $wpdb->get_results('SELECT virtuemart_shoppergroup_id g, COUNT(*) n, COUNT(DISTINCT virtuemart_product_id) products, SUM(product_override_price > 0) overrides FROM '.self::t('virtuemart_product_prices').' GROUP BY virtuemart_shoppergroup_id', ARRAY_A);
+        if (self::has('virtuemart_vmuser_shoppergroups')) $out['users_per_group'] = $wpdb->get_results('SELECT virtuemart_shoppergroup_id g, COUNT(*) n FROM '.self::t('virtuemart_vmuser_shoppergroups').' GROUP BY virtuemart_shoppergroup_id', ARRAY_A);
+        $lang = self::lang_table('virtuemart_products');
+        if ($lang !== ''){
+            $out['cedrus_sample'] = $wpdb->get_results('SELECT pp.virtuemart_product_id id, p.product_name name, pp.virtuemart_shoppergroup_id g, pp.product_price price, pp.product_override_price override, pp.override, pp.product_tax_id tax, pp.price_quantity_start qs FROM '.self::t('virtuemart_product_prices').' pp JOIN '.self::t($lang).' p ON p.virtuemart_product_id = pp.virtuemart_product_id WHERE p.product_name LIKE \'%Cedrus%\' ORDER BY pp.virtuemart_product_id, pp.virtuemart_shoppergroup_id LIMIT 30', ARRAY_A);
+        }
+        // Egyéb régi ár-/nagyker-mezők a terméktáblában (pl. beszerzési ár).
+        $out['product_columns'] = array_values(array_filter(self::columns('virtuemart_products'), function($c){ return preg_match('/price|nagyker|whole|cost|beszer/i', $c); }));
+        $cf = array_values(array_filter(self::tables(), function($t){ return strpos($t, 'customfield') !== false || strpos($t, 'shoppergroup') !== false; }));
+        $out['tables'] = $cf;
+        return $out;
+    }
+
+    /** Régi szállítási módok és szabályaik (diag=oldship): a súlyhatárok értelmezéséhez (álsúlyok: 1001, 2001, 5001, 49999 kg). */
+    static function oldship(){
+        global $wpdb;
+        if (self::prefix() === '' || !self::has('virtuemart_shipmentmethods')) return [ 'error' => 'nincs régi szállítási tábla' ];
+        $lang = self::lang_table('virtuemart_shipmentmethods');
+        $rows = $wpdb->get_results('SELECT s.virtuemart_shipmentmethod_id id, s.shipment_element element, s.published, s.ordering, '.($lang !== '' ? 'l.shipment_name name, ' : '').'s.shipment_params params FROM '.self::t('virtuemart_shipmentmethods').' s'.($lang !== '' ? ' LEFT JOIN '.self::t($lang).' l ON l.virtuemart_shipmentmethod_id = s.virtuemart_shipmentmethod_id' : '').' ORDER BY s.ordering', ARRAY_A);
+        foreach((array)$rows as &$r){
+            // Csak a szabály-paraméterek (súly, összeg, díj, irányítószám), titok nélkül.
+            $params = [];
+            foreach(explode('|', (string)$r['params']) as $part){
+                if (!preg_match('/^(\w+)=(.*)$/s', $part, $m)) continue;
+                if (preg_match('/weight|orderamount|cost|free|zip|nbproducts|countries|package|tax/i', $m[1])) $params[$m[1]] = trim($m[2], '"');
+            }
+            $r['params'] = $params;
+        }
+        unset($r);
+        $weights = $wpdb->get_results('SELECT ROUND(product_weight) w, product_weight_uom uom, COUNT(*) n FROM '.self::t('virtuemart_products').' WHERE product_weight >= 1000 GROUP BY ROUND(product_weight), product_weight_uom ORDER BY n DESC LIMIT 20', ARRAY_A);
+        return [ 'methods' => $rows, 'heavy_weights' => $weights ];
     }
 
     /** Régi és új kategóriafa termékszámokkal (diag=oldcats) – a tartozék-kategóriák finomításához (Dávid, 2026-11-09). */

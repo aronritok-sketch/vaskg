@@ -35,7 +35,7 @@ class Orders {
         add_filter('wc_order_is_editable', [$this, 'editable'], 10, 2);
     }
 
-    const EDITABLE_STATUSES = [ 'pending', 'on-hold', 'processing', 'new-order', 'auto-draft', 'checkout-draft' ];
+    const EDITABLE_STATUSES = [ 'pending', 'on-hold', 'processing', 'new-order', 'supplier-ordered', 'auto-draft', 'checkout-draft' ];
 
     function editable($editable, $order){
         return $editable || ($order instanceof \WC_Order && in_array($order->get_status(), self::EDITABLE_STATUSES, true));
@@ -241,6 +241,8 @@ class Orders {
             .vk-status-select.status-completed { border-left-color: #1565c0; background-color: #eaf2fb; }
             .vk-status-select.status-on-hold { border-left-color: #f0a500; background-color: #fff7e6; }
             .vk-status-select.status-pending { border-left-color: #9e9e9e; }
+            .vk-status-select.status-supplier-ordered { border-left-color: #0e7490; background-color: #e6f6f8; }
+            mark.order-status.status-supplier-ordered { background: #e6f6f8; color: #0e7490; }
             .vk-status-select.status-shipped { border-left-color: #6d28d9; background-color: #f3eefe; }
             .vk-status-select.status-partial { border-left-color: #d97706; background-color: #fff4e5; }
             .vk-status-select.status-cancelled, .vk-status-select.status-failed, .vk-status-select.status-refunded { border-left-color: #c62828; background-color: #fbeeee; }

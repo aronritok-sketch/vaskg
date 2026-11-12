@@ -16,6 +16,8 @@ class OrderStatuses {
     const PARTIAL = 'partial';
     /** „Új rendelés”: a webshopból jött, még senki nem nyúlt hozzá (Dávid, 2026-11-09). */
     const NEW_ORDER = 'new-order';
+    /** „Beszállítótól rendelve” (Dávid, 2026-11-12): a termék a beszállítótól rendelve, arra várunk. Fizetettnek számít. */
+    const SUPPLIER = 'supplier-ordered';
     const CARRIERS = [
         'gls' => [ 'GLS', 'https://gls-group.com/HU/hu/csomagkovetes?match=%s' ],
         'kumi' => [ 'Kumi', '' ],
@@ -78,6 +80,10 @@ class OrderStatuses {
             'label' => 'Új rendelés', 'public' => false, 'exclude_from_search' => false, 'show_in_admin_all_list' => true, 'show_in_admin_status_list' => true,
             'label_count' => _n_noop('Új rendelés <span class="count">(%s)</span>', 'Új rendelés <span class="count">(%s)</span>'),
         ]);
+        register_post_status('wc-'.self::SUPPLIER, [
+            'label' => 'Beszállítótól rendelve', 'public' => false, 'exclude_from_search' => false, 'show_in_admin_all_list' => true, 'show_in_admin_status_list' => true,
+            'label_count' => _n_noop('Beszállítótól rendelve <span class="count">(%s)</span>', 'Beszállítótól rendelve <span class="count">(%s)</span>'),
+        ]);
         register_post_status('wc-'.self::SHIPPED, [
             'label' => 'Postázva', 'public' => false, 'exclude_from_search' => false, 'show_in_admin_all_list' => true, 'show_in_admin_status_list' => true,
             'label_count' => _n_noop('Postázva <span class="count">(%s)</span>', 'Postázva <span class="count">(%s)</span>'),
@@ -98,7 +104,9 @@ class OrderStatuses {
                 $out['wc-'.self::SHIPPED] = 'Postázva';
             }
             $out[$key] = $label;
+            if ($key === 'wc-processing') $out['wc-'.self::SUPPLIER] = 'Beszállítótól rendelve';
         }
+        if (!isset($out['wc-'.self::SUPPLIER])) $out['wc-'.self::SUPPLIER] = 'Beszállítótól rendelve';
         if (!isset($out['wc-'.self::NEW_ORDER])) $out = [ 'wc-'.self::NEW_ORDER => 'Új rendelés' ] + $out;
         if (!isset($out['wc-'.self::SHIPPED])){
             $out['wc-'.self::PARTIAL] = 'Részben teljesítve';
@@ -108,10 +116,11 @@ class OrderStatuses {
     }
 
     function paid($statuses){
-        return array_values(array_unique(array_merge((array)$statuses, [ self::NEW_ORDER, self::SHIPPED, self::PARTIAL ])));
+        return array_values(array_unique(array_merge((array)$statuses, [ self::NEW_ORDER, self::SUPPLIER, self::SHIPPED, self::PARTIAL ])));
     }
 
     function bulk_actions($actions){
+        $actions['mark_'.self::SUPPLIER] = 'Állapot módosítása: beszállítótól rendelve';
         $actions['mark_'.self::SHIPPED] = 'Állapot módosítása: postázva';
         $actions['mark_'.self::PARTIAL] = 'Állapot módosítása: részben teljesítve';
         return $actions;

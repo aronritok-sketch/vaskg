@@ -54,6 +54,12 @@ class Catalog {
         add_action('woocommerce_product_options_general_product_data', [$this, 'product_fields']);
         add_action('woocommerce_admin_process_product_object', [$this, 'save_product_fields']);
         add_action('admin_enqueue_scripts', [$this, 'admin_scripts']);
+        // Másolással („Másolás új piszkozatba”) készült termék új termék: a régi webshop azonosítója nem jön vele
+        // (különben nem kapna „Új termék” jelvényt és régi termékként kezelnénk; Dávid, 2026-11-11).
+        add_action('woocommerce_product_duplicate', function($duplicate){
+            $duplicate->delete_meta_data('_vk_old_id');
+            $duplicate->save();
+        });
 
         // A keretrendszer tulajdonság-blokkja taxonómia-attribútumnál az azonosítót írná ki.
         add_filter('render_block_iu-woocommerce/product-attributes', [$this, 'render_attributes'], 10, 2);
@@ -168,6 +174,28 @@ class Catalog {
         return $cache[$name];
     }
 
+    /** A gép-kategória tartozék-kategóriái (azonosítóval, a kategória szerkesztésénél állítható). */
+    const ACCESSORIES = 'vk_accessories';
+
+    /**
+     * A gép-kategória tartozék-kategóriái: a kategória „Tartozékok ehhez a géphez” beállítása (azonosítóval, így
+     * átnevezés után is megmarad; több is lehet – Dávid, 2026-11-10), ha nincs beállítva, a név szerinti alapértelmezés.
+     */
+    static function accessory_terms($term){
+        $term = is_object($term) ? $term : get_term((int)$term, 'product_cat');
+        if (!$term || is_wp_error($term)) return [];
+        if (metadata_exists('term', $term->term_id, self::ACCESSORIES)){
+            $out = [];
+            foreach(array_filter(array_map('intval', (array)get_term_meta($term->term_id, self::ACCESSORIES, true))) as $id){
+                $t = get_term($id, 'product_cat');
+                if ($t && !is_wp_error($t)) $out[] = $t;
+            }
+            return $out;
+        }
+        $acc = self::accessory_term($term->name);
+        return $acc ? [ $acc ] : [];
+    }
+
     /** Gyártói oldal csempéinek sorrendje gyártónként: '' (kategóriák sorrendje), 'count' (termékszám), 'custom' (egyedi). */
     const TILE_MODE = 'vk_tile_mode';
     const TILE_ORDER = 'vk_tile_order';
@@ -180,7 +208,7 @@ class Catalog {
      * A csempe képe a márka egy terméke a csoportból (kiemelt, készleten lévő előnyben).
      */
     static function brand_categories($brand){
-        $key = 'vk_brand_tiles11_'.$brand->term_id.'_'.md5(wp_cache_get_last_changed('posts').wp_cache_get_last_changed('terms'));
+        $key = 'vk_brand_tiles12_'.$brand->term_id.'_'.md5(wp_cache_get_last_changed('posts').wp_cache_get_last_changed('terms'));
         $cached = get_transient($key);
         if (is_array($cached)) return $cached;
         $ids = get_posts([ 'post_type' => 'product', 'post_status' => 'publish', 'numberposts' => -1, 'fields' => 'ids',
@@ -247,11 +275,12 @@ class Catalog {
             if ($acc_group){
                 foreach($groups as $gid => &$g){
                     if ($g['kind'] !== 0) continue;
-                    $acc = self::accessory_term($name($gid));
-                    if (!$acc || empty($groups[$acc_group]['children'][$acc->term_id])) continue;
-                    $g['children'][$acc->term_id] = $groups[$acc_group]['children'][$acc->term_id];
-                    $g['acc'] = (int)$acc->term_id;
-                    if (isset($groups[$acc_group]['child_images'][$acc->term_id])) $g['child_images'][$acc->term_id] = $groups[$acc_group]['child_images'][$acc->term_id];
+                    foreach(self::accessory_terms($gid) as $acc){
+                        if (empty($groups[$acc_group]['children'][$acc->term_id])) continue;
+                        $g['children'][$acc->term_id] = $groups[$acc_group]['children'][$acc->term_id];
+                        $g['acc'][] = (int)$acc->term_id;
+                        if (isset($groups[$acc_group]['child_images'][$acc->term_id])) $g['child_images'][$acc->term_id] = $groups[$acc_group]['child_images'][$acc->term_id];
+                    }
                 }
                 unset($g);
             }
@@ -280,9 +309,9 @@ class Catalog {
                 foreach(array_keys($g['children']) as $cid) $ck[$cid] = $tree_key($cid);
                 uksort($g['children'], function($a, $b) use ($ck){ return strcmp($ck[$a], $ck[$b]); });
                 // A tartozék-csempe a típusok után, a sor végén.
-                $acc_id = (int)($g['acc'] ?? 0);
-                if ($acc_id && isset($g['children'][$acc_id])){ $n = $g['children'][$acc_id]; unset($g['children'][$acc_id]); $g['children'][$acc_id] = $n; }
-                $g = [ 'count' => $g['count'], 'image' => $g['image'], 'children' => $g['children'], 'acc' => $acc_id, 'child_images' => array_map(function($i){ return $i[0]; }, $g['child_images']) ];
+                $acc_ids = array_values(array_unique(array_map('intval', (array)($g['acc'] ?? []))));
+                foreach($acc_ids as $acc_id) if (isset($g['children'][$acc_id])){ $n = $g['children'][$acc_id]; unset($g['children'][$acc_id]); $g['children'][$acc_id] = $n; }
+                $g = [ 'count' => $g['count'], 'image' => $g['image'], 'children' => $g['children'], 'acc' => $acc_ids, 'child_images' => array_map(function($i){ return $i[0]; }, $g['child_images']) ];
             }
             unset($g);
         }
@@ -328,8 +357,8 @@ class Catalog {
             $tiles = [];
             // Ha a gép-kategóriának nincs típusa, csak tartozéka, maga a gép is csempe legyen (pl. Rönkhasítók +
             // Rönkhasító-tartozékok; Dávid, 2026-11-09).
-            $acc_id = (int)($groups[$active_group]['acc'] ?? 0);
-            if ($acc_id && !array_diff_key($children, [ $acc_id => 1 ])){
+            $acc_ids = array_map('intval', (array)($groups[$active_group]['acc'] ?? []));
+            if ($acc_ids && !array_diff_key($children, array_flip($acc_ids))){
                 $tiles[] = [ 'url' => $url($group_term, 'termekek'), 'image' => (int)$groups[$active_group]['image'], 'name' => $group_term->name, 'count' => (int)$groups[$active_group]['count'], 'active' => false ];
             }
             foreach($children as $child_id => $count){
@@ -365,8 +394,8 @@ class Catalog {
     static function category_children_html($term){
         $children = get_terms([ 'taxonomy' => 'product_cat', 'parent' => $term->term_id, 'hide_empty' => true, 'orderby' => 'meta_value_num', 'meta_key' => 'order' ]);
         if (is_wp_error($children)) $children = [];
-        if (count($children) < 2 && !self::accessory_term($term->name)) return '';
-        $key = 'vk_cat_tiles4_'.$term->term_id.'_'.md5(wp_cache_get_last_changed('posts').wp_cache_get_last_changed('terms'));
+        if (count($children) < 2 && !self::accessory_terms($term)) return '';
+        $key = 'vk_cat_tiles5_'.$term->term_id.'_'.md5(wp_cache_get_last_changed('posts').wp_cache_get_last_changed('terms'));
         $tiles = get_transient($key);
         if (!is_array($tiles)){
             $tiles = [];
@@ -387,9 +416,9 @@ class Catalog {
                 $tiles[] = [ 'url' => is_wp_error($link) ? '' : $link.(!is_wp_error($grandchildren) && count($grandchildren) > 1 ? '' : '#termekek'), 'image' => $image, 'name' => $child->name, 'count' => $count ];
             }
             // A gép-kategóriánál a tartozékai is egy csempén (Dávid, 2026-11-09).
-            $acc = self::accessory_term($term->name);
-            $acc_count = $acc ? ((int)get_term_meta($acc->term_id, 'product_count_product_cat', true) ?: (int)$acc->count) : 0;
-            if ($acc && $acc_count){
+            foreach(self::accessory_terms($term) as $acc){
+                $acc_count = (int)get_term_meta($acc->term_id, 'product_count_product_cat', true) ?: (int)$acc->count;
+                if (!$acc_count) continue;
                 $image = (int)get_term_meta($acc->term_id, 'thumbnail_id', true);
                 if (!$image){
                     $ids = wc_get_products([ 'status' => 'publish', 'limit' => 1, 'return' => 'ids', 'category' => [ $acc->slug ], 'visibility' => 'catalog', 'stock_status' => 'instock' ]);
@@ -672,15 +701,19 @@ class Catalog {
             'description' => 'Cofidis áruhitellel is megvásárolható (jelvény + kalkulátor a termékoldalon)',
             'value' => $product_object && $product_object->get_meta('_vk_cofidis') === 'yes' ? 'yes' : 'no'
         ]);
-        woocommerce_wp_text_input([
-            'id' => '_vk_documents',
-            'label' => 'Dokumentumok',
-            'description' => 'Letölthető dokumentumok (pl. használati utasítás PDF) a termékoldal Dokumentumok fülén.',
-            'desc_tip' => true,
-            'value' => $product_object ? $product_object->get_meta('_vk_documents') : '',
-            'custom_attributes' => [ 'readonly' => 'readonly' ]
-        ]);
-        echo '<p class="form-field"><label></label><button type="button" class="button vk-documents-select">Dokumentumok kiválasztása</button> <button type="button" class="button-link vk-documents-clear">Törlés</button></p>';
+        // Dokumentumok: a fájlok nevével, egyenként törölhetők, több is hozzáadható (Dávid, 2026-11-10).
+        $value = $product_object ? (string)$product_object->get_meta('_vk_documents') : '';
+        $ids = array_filter(array_map('absint', explode(',', $value)));
+        echo '<p class="form-field _vk_documents_field"><label>Dokumentumok</label>'
+            .'<input type="hidden" id="_vk_documents" name="_vk_documents" value="'.esc_attr(implode(',', $ids)).'">'
+            .'<span class="vk-documents-list" style="display:block;margin-bottom:6px">';
+        foreach($ids as $id){
+            if (get_post_type($id) !== 'attachment') continue;
+            $file = basename((string)get_attached_file($id));
+            echo self::document_row($id, get_the_title($id), $file);
+        }
+        echo '</span><button type="button" class="button vk-documents-select">Dokumentum hozzáadása</button>'
+            .' <span class="description">Letölthető fájlok (pl. használati utasítás PDF) a termékoldal Dokumentumok fülén. A feltöltőben egyszerre több fájl is kijelölhető.</span></p>';
         echo '</div>';
     }
 
@@ -691,19 +724,36 @@ class Catalog {
         $product->update_meta_data('_vk_documents', $documents);
     }
 
+    /** Egy dokumentum sora a termékszerkesztőben (cím, fájlnév, eltávolítás). */
+    static function document_row($id, $title, $file){
+        return '<span class="vk-document" data-id="'.(int)$id.'" style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid #f0f0f1">'
+            .'<span class="dashicons dashicons-media-document" aria-hidden="true"></span>'
+            .'<span><strong>'.esc_html($title).'</strong>'.($file !== '' && $file !== $title ? ' <small style="color:#646970">'.esc_html($file).'</small>' : '').'</span>'
+            .'<button type="button" class="button-link vk-document-remove" style="margin-left:auto;color:#b32d2e" title="Eltávolítás a termékről (a fájl a Médiatárban marad)">Eltávolítás</button></span>';
+    }
+
     function admin_scripts($hook){
         if (!in_array($hook, ['post.php', 'post-new.php'], true) || get_post_type() !== 'product') return;
         wp_enqueue_media();
         wp_add_inline_script('jquery-core', "jQuery(function($){
+            function vkDocIds(){ return $('.vk-documents-list .vk-document').map(function(){ return $(this).data('id'); }).get(); }
+            function vkDocSync(){ $('#_vk_documents').val(vkDocIds().join(',')); }
+            function vkEsc(t){ return $('<div>').text(t || '').html(); }
             $(document).on('click', '.vk-documents-select', function(e){
                 e.preventDefault();
-                const frame = wp.media({ title: 'Dokumentumok', multiple: true, library: { type: ['application', 'text'] } });
+                const frame = wp.media({ title: 'Dokumentumok hozzáadása', button: { text: 'Hozzáadás a termékhez' }, multiple: 'add', library: { type: ['application', 'text'] } });
                 frame.on('select', function(){
-                    $('#_vk_documents').val(frame.state().get('selection').map(function(a){ return a.id; }).join(','));
+                    const have = vkDocIds();
+                    frame.state().get('selection').each(function(a){
+                        if (have.indexOf(a.id) !== -1) return;
+                        const t = a.get('title') || a.get('filename'), f = a.get('filename') || '';
+                        $('.vk-documents-list').append('<span class=\"vk-document\" data-id=\"' + a.id + '\" style=\"display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid #f0f0f1\"><span class=\"dashicons dashicons-media-document\" aria-hidden=\"true\"></span><span><strong>' + vkEsc(t) + '</strong>' + (f && f !== t ? ' <small style=\"color:#646970\">' + vkEsc(f) + '</small>' : '') + '</span><button type=\"button\" class=\"button-link vk-document-remove\" style=\"margin-left:auto;color:#b32d2e\">Eltávolítás</button></span>');
+                    });
+                    vkDocSync();
                 });
                 frame.open();
             });
-            $(document).on('click', '.vk-documents-clear', function(e){ e.preventDefault(); $('#_vk_documents').val(''); });
+            $(document).on('click', '.vk-document-remove', function(e){ e.preventDefault(); $(this).closest('.vk-document').remove(); vkDocSync(); });
         });");
     }
 }

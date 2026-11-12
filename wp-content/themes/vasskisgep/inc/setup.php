@@ -71,6 +71,9 @@ class Setup {
         52 => 'hedge_long_reach',
         53 => 'chain_pitch',
         54 => 'kasei_petrol',
+        55 => 'duplicate_old_ids',
+        56 => 'accessory_links',
+        57 => 'fake_weights',
     ];
 
     /**
@@ -2155,5 +2158,70 @@ class Setup {
         $this->log[] = 'Kasei benzinmotoros csoportba: '.count($done).($done ? ' ('.implode(' | ', $done).')' : '').'.';
     }
 
+    /** 55. Másolással készült termékek: a régi webshop azonosítója csak az eredetin maradjon („Új termék” jelvény). */
+    function duplicate_old_ids(){
+        global $wpdb;
+        $rows = $wpdb->get_results("SELECT pm.meta_value old_id, GROUP_CONCAT(pm.post_id ORDER BY pm.post_id) ids FROM {$wpdb->postmeta} pm JOIN {$wpdb->posts} p ON p.ID = pm.post_id AND p.post_type = 'product' WHERE pm.meta_key = '_vk_old_id' AND pm.meta_value <> '' GROUP BY pm.meta_value HAVING COUNT(*) > 1");
+        $done = [];
+        foreach((array)$rows as $row){
+            $ids = array_map('intval', explode(',', $row->ids));
+            // Az eredeti a legkorábban létrehozott (a legkisebb azonosító); a többi másolat.
+            foreach(array_slice($ids, 1) as $id){
+                delete_post_meta($id, '_vk_old_id');
+                wc_delete_product_transients($id);
+                $done[] = get_the_title($id);
+            }
+        }
+        $this->log[] = 'Másolt termékek régi azonosító nélkül: '.count($done).($done ? ' ('.implode(' | ', array_slice($done, 0, 30)).')' : '').'.';
+    }
+
+    /**
+     * 56. A gép → tartozék kapcsolatok azonosítóval (a név szerinti alapból), hogy átnevezés után is megmaradjanak;
+     * a „Traktorok és Multifunkciós művelőgépek” (átnevezett Multifunkciós művelőgépek) a saját tartozékaival.
+     */
+    function accessory_links(){
+        $find = function($name, $root = null){
+            foreach(get_terms([ 'taxonomy' => 'product_cat', 'name' => $name, 'hide_empty' => false ]) ?: [] as $t){
+                if ($root === null) return $t;
+                $chain = get_ancestors($t->term_id, 'product_cat');
+                $top = $chain ? get_term(end($chain), 'product_cat') : $t;
+                if ($top && !is_wp_error($top) && $top->name === $root) return $t;
+            }
+            return null;
+        };
+        $done = [];
+        foreach(Catalog::ACCESSORY_FOR as $machine => $acc_name){
+            $m = $find($machine, 'Kerti és erdészeti gépek') ?: $find($machine, 'Építőipari gépek');
+            $a = $find($acc_name, 'Tartozékok');
+            if (!$m || !$a || metadata_exists('term', $m->term_id, Catalog::ACCESSORIES)) continue;
+            update_term_meta($m->term_id, Catalog::ACCESSORIES, [ (int)$a->term_id ]);
+            $done[] = $m->name.' → '.$a->name;
+        }
+        $m = $find('Traktorok és Multifunkciós művelőgépek');
+        $a = $find('Traktorok és Multifunkciós művelőgép tartozékok', 'Tartozékok');
+        if ($m && $a){
+            $ids = array_map('intval', (array)get_term_meta($m->term_id, Catalog::ACCESSORIES, true));
+            if (!in_array((int)$a->term_id, $ids, true)){ $ids[] = (int)$a->term_id; update_term_meta($m->term_id, Catalog::ACCESSORIES, array_values(array_filter($ids))); $done[] = $m->name.' → '.$a->name; }
+        }
+        $this->log[] = 'Gép → tartozék kapcsolatok: '.count($done).($done ? ' ('.implode(' | ', $done).')' : '').'.';
+    }
+
+    /**
+     * 57. A régi webshop álsúlyai (1001, 1002, 2001, 5001, 49999 kg – a régi szállítási szabályokhoz voltak) nem valódi
+     * súlyok: a 48. lépés átvette őket, ettől pl. a STIHL RM fűnyírók szállítása 24 990 Ft lett és az Árukereső 5001 kg-ot
+     * látott. Törlöm őket; a súly ilyenkor a „Tömeg” tulajdonságból jön, ha van.
+     */
+    function fake_weights(){
+        global $wpdb;
+        $ids = $wpdb->get_col("SELECT pm.post_id FROM {$wpdb->postmeta} pm JOIN {$wpdb->posts} p ON p.ID = pm.post_id AND p.post_type IN ('product','product_variation') WHERE pm.meta_key = '_weight' AND pm.meta_value <> '' AND ROUND(pm.meta_value + 0, 3) IN (1001, 1002, 2001, 5001, 49999)");
+        $titles = [];
+        foreach(array_map('intval', (array)$ids) as $id){
+            update_post_meta($id, '_weight', '');
+            wc_delete_product_transients($id);
+            $titles[] = get_the_title($id);
+        }
+        if ($titles && class_exists(__NAMESPACE__.'\\Feed')) Feed::flush();
+        $this->log[] = 'Álsúly törölve: '.count($titles).' termék'.($titles ? ' ('.implode(' | ', array_slice($titles, 0, 15)).( count($titles) > 15 ? ' …' : '').')' : '').'.';
+    }
 
 }
