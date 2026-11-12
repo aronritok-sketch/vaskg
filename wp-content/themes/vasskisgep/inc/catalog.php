@@ -53,6 +53,8 @@ class Catalog {
     function __construct(){
         add_action('woocommerce_product_options_general_product_data', [$this, 'product_fields']);
         add_action('woocommerce_admin_process_product_object', [$this, 'save_product_fields']);
+        // Nagyker ár (a régi webshop „Nagyker” vásárlói csoportjának ára; Dávid, 2026-11-10): az ár mellett, csak az adminban.
+        add_action('woocommerce_product_options_pricing', [$this, 'wholesale_field']);
         add_action('admin_enqueue_scripts', [$this, 'admin_scripts']);
         // Másolással („Másolás új piszkozatba”) készült termék új termék: a régi webshop azonosítója nem jön vele
         // (különben nem kapna „Új termék” jelvényt és régi termékként kezelnénk; Dávid, 2026-11-11).
@@ -718,10 +720,25 @@ class Catalog {
     }
 
     function save_product_fields($product){
+        if (isset($_POST[self::WHOLESALE])) $product->update_meta_data(self::WHOLESALE, wc_format_decimal(wp_unslash($_POST[self::WHOLESALE])));
         $product->update_meta_data('_vk_promo', isset($_POST['_vk_promo']) ? sanitize_textarea_field(wp_unslash($_POST['_vk_promo'])) : '');
         $product->update_meta_data('_vk_cofidis', !empty($_POST['_vk_cofidis']) ? 'yes' : 'no');
         $documents = isset($_POST['_vk_documents']) ? implode(',', array_filter(array_map('absint', explode(',', wp_unslash($_POST['_vk_documents']))))) : '';
         $product->update_meta_data('_vk_documents', $documents);
+    }
+
+    const WHOLESALE = '_vk_wholesale_price';
+
+    function wholesale_field(){
+        global $product_object;
+        woocommerce_wp_text_input([
+            'id' => self::WHOLESALE,
+            'label' => 'Nagyker ár (bruttó, Ft)',
+            'data_type' => 'price',
+            'desc_tip' => true,
+            'description' => 'A nagyker (viszonteladói) ár, a régi webshop „Nagyker” csoportjából átvéve. Csak itt, az adminban látszik.',
+            'value' => $product_object ? $product_object->get_meta(self::WHOLESALE) : '',
+        ]);
     }
 
     /** Egy dokumentum sora a termékszerkesztőben (cím, fájlnév, eltávolítás). */

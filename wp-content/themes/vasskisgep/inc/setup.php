@@ -74,6 +74,8 @@ class Setup {
         55 => 'duplicate_old_ids',
         56 => 'accessory_links',
         57 => 'fake_weights',
+        58 => 'old_shipping_rules',
+        59 => 'old_wholesale_prices',
     ];
 
     /**
@@ -2222,6 +2224,60 @@ class Setup {
         }
         if ($titles && class_exists(__NAMESPACE__.'\\Feed')) Feed::flush();
         $this->log[] = 'Álsúly törölve: '.count($titles).' termék'.($titles ? ' ('.implode(' | ', array_slice($titles, 0, 15)).( count($titles) > 15 ? ' …' : '').')' : '').'.';
+    }
+
+    /**
+     * 58. A régi webshop szállítási szabályai a régi álsúlyokból (diag=oldship): 5001 kg = „Ingyenes házhozszállítás STIHL
+     * termékekre”, 1001–2000 kg = „Saját teherautóval” (0 Ft), 49999 kg = „Kumi futár (ingyenes)” → „Ingyenes szállítás”
+     * jelölés; 2001 kg = „Fűnyíró traktor saját teherautóval” (19 990 Ft) → ahol nincs 100–300 kg közötti súly, 200 kg
+     * (a díjtábla ugyanígy 19 990 Ft-ot ad).
+     */
+    function old_shipping_rules(){
+        global $wpdb;
+        if (MigrationData::prefix() === '' || !MigrationData::has('virtuemart_products')){ $this->log[] = 'Régi szállítási szabályok: nincs régi adatbázis.'; return; }
+        $old = [];
+        foreach((array)$wpdb->get_results('SELECT virtuemart_product_id id, ROUND(product_weight) w FROM '.MigrationData::t('virtuemart_products').' WHERE ROUND(product_weight) IN (1001, 1002, 2001, 5001, 49999)') as $r) $old[(int)$r->id] = (int)$r->w;
+        if (!$old){ $this->log[] = 'Régi szállítási szabályok: nincs ilyen termék.'; return; }
+        $free = $truck = 0;
+        $names = [];
+        foreach($wpdb->get_results("SELECT pm.post_id, pm.meta_value FROM {$wpdb->postmeta} pm JOIN {$wpdb->posts} p ON p.ID = pm.post_id AND p.post_type = 'product' WHERE pm.meta_key = '_vk_old_id'") as $row){
+            $w = $old[(int)$row->meta_value] ?? 0;
+            if (!$w) continue;
+            $id = (int)$row->post_id;
+            if ($w === 2001){
+                $product = wc_get_product($id);
+                $kg = $product ? Shipping::product_weight($product) : 0;
+                if ($kg <= 100 || $kg > 300){ update_post_meta($id, '_weight', '200'); $truck++; $names[] = get_the_title($id).' (200 kg)'; }
+            } else {
+                if (get_post_meta($id, Shipping::FREE, true) !== 'yes'){ update_post_meta($id, Shipping::FREE, 'yes'); $free++; }
+            }
+            wc_delete_product_transients($id);
+        }
+        if (class_exists(__NAMESPACE__.'\\Feed')) Feed::flush();
+        $this->log[] = 'Régi szállítási szabályok: ingyenes szállítás bekapcsolva '.$free.' terméknél (STIHL 5001, saját teherautó 1001–2000, Kumi ingyenes 49999); fűnyíró traktor 19 990 Ft-hoz 200 kg: '.$truck.($names ? ' ('.implode(' | ', array_slice($names, 0, 12)).')' : '').'.';
+    }
+
+    /** 59. Nagyker árak a régi webshopból („Nagyker” vásárlói csoport ára, nettó → bruttó az áfakulccsal), ahol még üres. */
+    function old_wholesale_prices(){
+        global $wpdb;
+        if (MigrationData::prefix() === '' || !MigrationData::has('virtuemart_product_prices') || !MigrationData::has('virtuemart_shoppergroups')){ $this->log[] = 'Nagyker árak: nincs régi ártábla.'; return; }
+        $group = (int)$wpdb->get_var('SELECT virtuemart_shoppergroup_id FROM '.MigrationData::t('virtuemart_shoppergroups')." WHERE shopper_group_name LIKE '%agyker%' LIMIT 1");
+        if (!$group){ $this->log[] = 'Nagyker árak: nincs „Nagyker” csoport.'; return; }
+        $rates = [];
+        if (MigrationData::has('virtuemart_calcs')) foreach((array)$wpdb->get_results('SELECT virtuemart_calc_id id, calc_value v FROM '.MigrationData::t('virtuemart_calcs')) as $c) $rates[(int)$c->id] = (float)$c->v;
+        $prices = [];
+        foreach((array)$wpdb->get_results($wpdb->prepare('SELECT virtuemart_product_id id, product_price price, product_tax_id tax FROM '.MigrationData::t('virtuemart_product_prices').' WHERE virtuemart_shoppergroup_id = %d AND product_price > 0', $group)) as $r){
+            $rate = isset($rates[(int)$r->tax]) ? $rates[(int)$r->tax] : 27.0;
+            $prices[(int)$r->id] = round((float)$r->price * (1 + $rate / 100));
+        }
+        $done = 0;
+        foreach($wpdb->get_results("SELECT pm.post_id, pm.meta_value FROM {$wpdb->postmeta} pm JOIN {$wpdb->posts} p ON p.ID = pm.post_id AND p.post_type = 'product' WHERE pm.meta_key = '_vk_old_id'") as $row){
+            $price = $prices[(int)$row->meta_value] ?? 0;
+            if (!$price || get_post_meta((int)$row->post_id, Catalog::WHOLESALE, true) !== '') continue;
+            update_post_meta((int)$row->post_id, Catalog::WHOLESALE, (string)$price);
+            $done++;
+        }
+        $this->log[] = 'Nagyker árak a régi webshopból: '.$done.' termék (a régiben '.count($prices).' nagyker ár volt).';
     }
 
 }
