@@ -78,11 +78,12 @@ class CofidisGateway extends \WC_Payment_Gateway {
         $description = parent::get_description();
         $config = ProductPage::cofidis_config();
         if ($config && function_exists('WC') && WC()->cart){
-            $months = in_array(12, $config['terms'], true) ? 12 : $config['terms'][0];
-            $monthly = ProductPage::cofidis_installment((float)WC()->cart->get_total('edit'), $months, $config);
+            $option = $config['options'][ProductPage::cofidis_default_option($config)];
+            $months = (int)$option['months'];
+            $monthly = ProductPage::cofidis_installment((float)WC()->cart->get_total('edit'), $months, $option);
             if ($monthly > 0){
-                $description .= "\n\n".sprintf('Várható havi törlesztőrészlet: %s / hó (%d hónap, THM: %s %%). A kalkuláció tájékoztató jellegű.',
-                    number_format($monthly, 0, ',', '.').' Ft', $months, number_format($config['thm'], 2, ',', ' '));
+                $description .= "\n\n".sprintf('Várható havi törlesztőrészlet: %s / hó (%d hónap, THM: %s %%%s). A kalkuláció tájékoztató jellegű.',
+                    number_format($monthly, 0, ',', '.').' Ft', $months, number_format($option['thm'], 2, ',', ' '), $option['name'] !== '' ? ', '.$option['name'] : '');
             }
         }
         return $description;

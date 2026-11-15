@@ -76,6 +76,7 @@ class Setup {
         57 => 'fake_weights',
         58 => 'old_shipping_rules',
         59 => 'old_wholesale_prices',
+        60 => 'cofidis_constructions',
     ];
 
     /**
@@ -2278,6 +2279,22 @@ class Setup {
             $done++;
         }
         $this->log[] = 'Nagyker árak a régi webshopból: '.$done.' termék (a régiben '.count($prices).' nagyker ár volt).';
+    }
+
+    /** 60. Cofidis konstrukciók a szerződés szerint (Dávid, 2026-11-14), ha még nincs megadva. */
+    function cofidis_constructions(){
+        $theme = get_option('iu_theme', []);
+        $theme = is_array($theme) ? $theme : [];
+        if (!empty($theme['cofidis_constructions'])){ $this->log[] = 'Cofidis konstrukciók: már meg vannak adva.'; return; }
+        $theme['cofidis_constructions'] = implode("\n", [
+            '717; 4 hó ingyen hitel; 0; 4',
+            '265; 6 hó ingyen hitel; 0; 6',
+            '600; 10 hó ingyen hitel; 0; 10',
+            '223; 20 hó ingyen hitel; 0; 20',
+            '176; THM 19,9% (II); 19,9; 12,24,36',
+        ]);
+        $this->set_option('iu_theme', $theme);
+        $this->log[] = 'Cofidis konstrukciók beállítva (4 ingyenhitel + THM 19,9%).';
     }
 
 }

@@ -35,6 +35,8 @@ require_once(__DIR__.'/publish-admin.php');
 require_once(__DIR__.'/admin-lists.php');
 require_once(__DIR__.'/price-import.php');
 require_once(__DIR__.'/brand-report.php');
+require_once(__DIR__.'/profiler.php');
+Profiler::start();
 
 class Theme {
     private static $instance;

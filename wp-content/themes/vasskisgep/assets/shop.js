@@ -191,7 +191,10 @@
 	};
 	const cofidis = function($box){
 		const config = $box.data('config');
-		const months = parseInt($box.find('input[name="vk-cof-term"]:checked').val(), 10) || 12;
+		// Konstrukció (futamidő + THM); régi formában a gomb értéke maga a hónap.
+		const picked = parseInt($box.find('input[name="vk-cof-term"]:checked').val(), 10) || 0;
+		const option = (config.options && config.options[picked]) || { months: picked || 12, thm: config.thm, interest: config.interest, name: '' };
+		const months = option.months;
 		const $down = $box.find('#vk-cof-down');
 		let down = Math.max(0, Math.min(config.price, parseInt($down.val(), 10) || 0));
 		let loan = config.price - down;
@@ -199,15 +202,17 @@
 			loan = config.max;
 			down = config.price - loan;
 		}
-		const rate = config.interest !== null && config.interest !== undefined
-			? config.interest / 100 / 12
-			: Math.pow(1 + config.thm / 100, 1 / 12) - 1;
+		const rate = option.interest !== null && option.interest !== undefined
+			? option.interest / 100 / 12
+			: Math.pow(1 + option.thm / 100, 1 / 12) - 1;
 		let monthly = 0;
 		if (loan > 0) monthly = rate > 0 ? Math.ceil(loan * rate / (1 - Math.pow(1 + rate, -months))) : Math.ceil(loan / months);
 		const tooSmall = config.min > 0 && loan < config.min;
 
 		$box.find('.vk-cof-loan').text(format(loan));
 		$box.find('.vk-cof-months').text(months + ' hó');
+		$box.find('.vk-cof-thm').text(option.thm.toFixed(2).replace('.', ',') + ' %');
+		if (option.name) $box.find('.vk-cof-name').text(option.name);
 		$box.find('.vk-cof-monthly').text(tooSmall ? '–' : format(monthly));
 		$box.find('.vk-cof-total').text(tooSmall ? '–' : format(monthly * months + down));
 	};

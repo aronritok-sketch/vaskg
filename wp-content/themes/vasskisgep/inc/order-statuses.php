@@ -32,6 +32,13 @@ class OrderStatuses {
         return self::$instance;
     }
 
+    const OFFLINE_GATEWAYS = [ 'bacs', 'cod', 'cheque', '' ];
+
+    function cancel_unpaid($cancel, $order){
+        if (!$cancel || !$order instanceof \WC_Order) return $cancel;
+        return !in_array((string)$order->get_payment_method(), self::OFFLINE_GATEWAYS, true);
+    }
+
     function __construct(){
         add_action('init', [$this, 'register']);
         add_filter('wc_order_statuses', [$this, 'statuses']);
@@ -45,6 +52,10 @@ class OrderStatuses {
         // a szokásos módon lefutnak; a váltás a kérés végén történik).
         add_action('woocommerce_order_status_changed', [$this, 'queue_new'], 99, 4);
         add_action('shutdown', [$this, 'apply_new'], 5);
+        // A WooCommerce a „Fizetés függőben” rendelést a készlet-foglalási idő után magától visszamondja (és levelet küld
+        // róla). Ez csak az online fizetésnél (Barion, Cofidis) jó: utalásra, utánvétre váró rendelést nem mondunk vissza
+        // (Dávid, 2026-11-13: egy utalásra váró rendelés magától „Visszamondva” lett).
+        add_filter('woocommerce_cancel_unpaid_order', [$this, 'cancel_unpaid'], 20, 2);
 
         // Csomagkövetés és teljesítetlen tételek az admin rendelésoldalon.
         add_action('add_meta_boxes', [$this, 'meta_box'], 30);

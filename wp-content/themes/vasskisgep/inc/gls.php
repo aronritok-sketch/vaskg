@@ -216,6 +216,9 @@ class Gls {
             'count' => max(1, min(20, (int)($opt['count'] ?? 1))),
             'email' => array_key_exists('email', $opt) ? (bool)$opt['email'] : !empty($s['notify']),
             'sms' => array_key_exists('sms', $opt) ? (bool)$opt['sms'] : !empty($s['notify']),
+            // Utánvét: alapból a fizetési mód szerint; a címkénél kikapcsolható (Dávid, 2026-11-13: utánvéttel rendelt,
+            // de előre kifizetett rendelés).
+            'cod' => array_key_exists('cod', $opt) ? (bool)$opt['cod'] : null,
         ];
     }
 
@@ -245,7 +248,15 @@ class Gls {
             'DeliveryAddress' => self::address($ship),
             'ServiceList' => [],
         ];
-        if ($order->get_payment_method() === 'cod'){
+        $cod = $opt['cod'];
+        if ($cod === null){
+            $cod = self::default_cod($order);
+        } else {
+            // A címkénél választott utánvét megmarad (újrakészítés, tömeges címke).
+            $order->update_meta_data('_vk_gls_cod', $cod ? 'yes' : 'no');
+            $order->save_meta_data();
+        }
+        if ($cod){
             $p['CODAmount'] = round((float)$order->get_total());
             // Utánvét-hivatkozás: a számla száma (Dávid, 2026-11), ha még nincs számla, a rendelésszám.
             $p['CODReference'] = mb_substr(self::invoice_number($order) ?: (string)$order->get_order_number(), 0, 40);
@@ -263,6 +274,13 @@ class Gls {
     }
 
     /** Személyes átvételnél nem kell GLS-címke. */
+    /** Utánvétes-e a címke: a címkénél utoljára választott, különben a fizetési mód szerint. */
+    static function default_cod(\WC_Order $order){
+        $saved = (string)$order->get_meta('_vk_gls_cod');
+        if ($saved !== '') return $saved === 'yes';
+        return $order->get_payment_method() === 'cod';
+    }
+
     static function needs_label(\WC_Order $order){
         foreach($order->get_shipping_methods() as $method){
             $id = (string)$method->get_method_id();
@@ -454,13 +472,15 @@ class Gls {
             $o = self::options();
             echo '<p><label for="vk-gls-count">Dobozok száma:</label> <input type="number" id="vk-gls-count" min="1" max="20" value="1" style="width:4.5em"></p>';
             echo '<p><label><input type="checkbox" id="vk-gls-email"'.checked($o['email'], true, false).'> E-mail értesítés a vásárlónak</label><br><label><input type="checkbox" id="vk-gls-sms"'.checked($o['sms'], true, false).'> SMS értesítés a vásárlónak</label></p>';
-            $js = "var g=function(i){return document.getElementById(i)};var n=parseInt(g('vk-gls-count').value,10)||1;this.href=this.href.replace(/&(count|email|sms)=[^&]*/g,'')+'&count='+Math.max(1,Math.min(20,n))+'&email='+(g('vk-gls-email').checked?1:0)+'&sms='+(g('vk-gls-sms').checked?1:0);";
+            $cod = self::default_cod($order);
+            echo '<p><label><input type="checkbox" id="vk-gls-cod"'.checked($cod, true, false).'> Utánvét ('.esc_html(wp_strip_all_tags(wc_price($order->get_total()))).')</label><br><span class="description">'.($order->get_payment_method() === 'cod' ? 'Ha a vásárló előre fizetett, vedd ki a pipát.' : 'A rendelés nem utánvétes; pipáld be, ha a futár szedje be az összeget.').'</span></p>';
+            $js = "var g=function(i){return document.getElementById(i)};var n=parseInt(g('vk-gls-count').value,10)||1;this.href=this.href.replace(/&(count|email|sms|cod)=[^&]*/g,'')+'&count='+Math.max(1,Math.min(20,n))+'&email='+(g('vk-gls-email').checked?1:0)+'&sms='+(g('vk-gls-sms').checked?1:0)+'&cod='+(g('vk-gls-cod').checked?1:0);";
             echo '<p><a class="button button-primary" target="_blank" href="'.esc_url($label_url).'" onclick="'.esc_attr($js).'">GLS-címke készítése</a></p>';
             if ($order->get_payment_method() === 'cod'){
                 $inv = self::invoice_number($order);
                 echo '<p class="description">Utánvét-hivatkozás: '.($inv !== '' ? '<strong>'.esc_html($inv).'</strong> (a számla száma)' : 'még nincs számla – a rendelésszám megy; a számla elkészülte után készítsd a címkét, ha a számlaszám kell').'.</p>';
             }
-            echo '<p class="description">'.($order->get_payment_method() === 'cod' ? 'Utánvét: '.wp_strip_all_tags(wc_price($order->get_total())).'. ' : '').'A csomagszám magától a rendelésbe kerül.</p>';
+            echo '<p class="description">A csomagszám magától a rendelésbe kerül.</p>';
         }
     }
 
@@ -469,7 +489,7 @@ class Gls {
         if (!current_user_can('edit_shop_orders') || !check_admin_referer('vk_gls_label_'.$id)) wp_die('', '', [ 'response' => 403 ]);
         $order = wc_get_order($id);
         if (!$order) wp_die('Nincs ilyen rendelés.');
-        $res = self::labels([ $order ], [ $order->get_id() => [ 'count' => (int)($_GET['count'] ?? 1), 'email' => !empty($_GET['email']), 'sms' => !empty($_GET['sms']) ] ]);
+        $res = self::labels([ $order ], [ $order->get_id() => [ 'count' => (int)($_GET['count'] ?? 1), 'email' => !empty($_GET['email']), 'sms' => !empty($_GET['sms']), 'cod' => isset($_GET['cod']) ? !empty($_GET['cod']) : null ] ]);
         if (is_wp_error($res)) wp_die('<p>'.esc_html($res->get_error_message()).'</p><p><a href="javascript:history.back()">Vissza</a></p>', 'GLS-címke', [ 'response' => 200 ]);
         self::send_pdf($res['pdf'], 'gls-'.$order->get_order_number().'.pdf');
     }

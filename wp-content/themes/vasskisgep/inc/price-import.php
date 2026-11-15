@@ -10,9 +10,22 @@ namespace VasskisgepTheme;
  * talált cikkszámok → 3. alkalmazás. Akciónál kezdő- és záró dátum adható (a WooCommerce a végén magától leveszi).
  * „Akció törlése” mód: a listában szereplő termékekről leveszi az akciós árat (kampány vége).
  * A cikkszám a termék vagy változat „Cikkszám” (SKU) mezője; szóköz / kötőjel nélkül is egyezik.
+ *
+ * Saját ár (zárolás, Dávid, 2026-11-13): a terméknél (Általános fül, az áraknál) vagy a terméklistában tömegesen
+ * bekapcsolható, és az import is bekapcsolhatja az átírt termékeken. A zárolt termék árát a gyártói / automatikus
+ * árfrissítés nem írja át, amíg ki nem kapcsolják (`PriceImport::locked()` – a későbbi gyártói API ezt nézi).
  */
 class PriceImport {
     const PAGE = 'vk-price-import';
+    const LOCK = '_vk_price_lock';
+
+    /** Saját ár: az automatikus (gyártói) árfrissítés nem írja át. Változatnál a szülő zárolása is számít. */
+    static function locked($product_id){
+        $product_id = (int)$product_id;
+        if (get_post_meta($product_id, self::LOCK, true) === 'yes') return true;
+        $parent = (int)wp_get_post_parent_id($product_id);
+        return $parent && get_post_meta($parent, self::LOCK, true) === 'yes';
+    }
 
     private static $instance;
     static function get_instance(){
@@ -24,6 +37,47 @@ class PriceImport {
 
     function __construct(){
         add_action('admin_menu', [$this, 'menu'], 60);
+        add_action('woocommerce_product_options_pricing', [$this, 'lock_field'], 30);
+        add_action('woocommerce_admin_process_product_object', [$this, 'save_lock']);
+        add_filter('bulk_actions-edit-product', [$this, 'bulk_actions'], 40);
+        add_filter('handle_bulk_actions-edit-product', [$this, 'handle_bulk'], 10, 3);
+        add_action('manage_product_posts_custom_column', [$this, 'price_column_mark'], 20, 2);
+        add_action('admin_notices', [$this, 'bulk_notice']);
+    }
+
+    function lock_field(){
+        global $post;
+        woocommerce_wp_checkbox([
+            'id' => self::LOCK,
+            'value' => get_post_meta($post->ID, self::LOCK, true) === 'yes' ? 'yes' : 'no',
+            'label' => 'Saját ár (zárolva)',
+            'description' => 'Az automatikus / gyártói árfrissítés nem írja át ennek a terméknek az árát, amíg ki nem veszed a pipát.',
+        ]);
+    }
+
+    function save_lock($product){
+        $product->update_meta_data(self::LOCK, !empty($_POST[self::LOCK]) ? 'yes' : 'no');
+    }
+
+    function bulk_actions($actions){
+        $actions['vk_lock_on'] = 'Saját ár: zárolás be (az automatikus árfrissítés nem írja át)';
+        $actions['vk_lock_off'] = 'Saját ár: zárolás ki (az automatikus árfrissítés frissítheti)';
+        return $actions;
+    }
+
+    function handle_bulk($redirect, $action, $ids){
+        if (!in_array($action, [ 'vk_lock_on', 'vk_lock_off' ], true) || !current_user_can('edit_products')) return $redirect;
+        foreach((array)$ids as $id) update_post_meta((int)$id, self::LOCK, $action === 'vk_lock_on' ? 'yes' : 'no');
+        return add_query_arg([ 'vk_lock_done' => count((array)$ids), 'vk_lock_on' => $action === 'vk_lock_on' ? 1 : 0 ], $redirect);
+    }
+
+    function bulk_notice(){
+        if (!isset($_GET['vk_lock_done'])) return;
+        echo '<div class="notice notice-success is-dismissible"><p>'.(int)$_GET['vk_lock_done'].' terméken a saját ár zárolása '.(!empty($_GET['vk_lock_on']) ? 'bekapcsolva' : 'kikapcsolva').'.</p></div>';
+    }
+
+    function price_column_mark($column, $post_id){
+        if ($column === 'price' && get_post_meta((int)$post_id, self::LOCK, true) === 'yes') echo '<br><span class="description" title="Az automatikus árfrissítés nem írja át">🔒 saját ár</span>';
     }
 
     function menu(){
@@ -168,6 +222,7 @@ class PriceImport {
             $item['link'] = get_edit_post_link($product->get_parent_id() ?: $product->get_id(), 'raw');
             $item['cur_regular'] = $product->get_regular_price();
             $item['cur_sale'] = $product->get_sale_price();
+            $item['locked'] = self::locked($product->get_id());
             $regular = $item['regular'] !== null ? $item['regular'] : (float)$item['cur_regular'];
             if ($mode === 'clear'){
                 $item['ok'] = $item['cur_sale'] !== '';
@@ -183,7 +238,7 @@ class PriceImport {
         return $out;
     }
 
-    private static function apply(array $plan, $mode, $from, $to){
+    private static function apply(array $plan, $mode, $from, $to, $lock = false){
         $done = 0;
         foreach($plan as $item){
             if (empty($item['ok'])) continue;
@@ -201,6 +256,7 @@ class PriceImport {
                     $product->set_date_on_sale_to($to !== '' ? $to.' 23:59:59' : null);
                 }
             }
+            if ($lock) $product->update_meta_data(self::LOCK, 'yes');
             $product->save();
             $done++;
         }
@@ -248,9 +304,10 @@ class PriceImport {
             }
             $plan = $cols['sku'] >= 0 ? self::plan($rows, $cols, $mode) : [];
             if ($step === 'apply' && $plan){
-                $done = self::apply($plan, $mode, $from, $to);
+                $lock = !empty($_POST['vk_lock']) && $mode === 'sale';
+                $done = self::apply($plan, $mode, $from, $to, $lock);
                 delete_transient($key);
-                echo '<div class="notice notice-success"><p><strong>Kész: '.(int)$done.' termék ára frissült.</strong> '.($mode === 'clear' ? '(akciós ár törölve)' : '').'</p></div>';
+                echo '<div class="notice notice-success"><p><strong>Kész: '.(int)$done.' termék ára frissült.</strong> '.($mode === 'clear' ? '(akciós ár törölve)' : '').($lock ? ' A saját ár zárolása bekapcsolva rajtuk.' : '').'</p></div>';
                 echo '<p><a class="button" href="'.esc_url(admin_url('edit.php?post_type=product&page='.self::PAGE)).'">Új fájl feltöltése</a></p></div>';
                 return;
             }
@@ -268,7 +325,8 @@ class PriceImport {
             echo '<tr><th>Cikkszám oszlop</th><td>'.$select('vk_col_sku', $cols['sku'], false).'</td></tr>';
             echo '<tr><th>Akciós ár oszlop</th><td>'.$select('vk_col_sale', $cols['sale'], true).' <span class="description">bruttó, Ft (pl. „Javasolt végfelhasználói bruttó kampányár”)</span></td></tr>';
             echo '<tr><th>Rendes ár oszlop</th><td>'.$select('vk_col_regular', $cols['regular'], true).' <span class="description">csak ha a rendes (lista) árat is frissíteni akarod – bruttó végfelhasználói ár, NEM a partner ár</span></td></tr>';
-            echo '<tr><th>Akció időszaka</th><td><input type="date" name="vk_from" value="'.esc_attr($from).'"> – <input type="date" name="vk_to" value="'.esc_attr($to).'"> <span class="description">nem kötelező; a záró nap után a WooCommerce magától visszaállítja a rendes árat</span></td></tr></table>';
+            echo '<tr><th>Akció időszaka</th><td><input type="date" name="vk_from" value="'.esc_attr($from).'"> – <input type="date" name="vk_to" value="'.esc_attr($to).'"> <span class="description">nem kötelező; a záró nap után a WooCommerce magától visszaállítja a rendes árat</span></td></tr>';
+            echo '<tr><th>Saját ár</th><td><label><input type="checkbox" name="vk_lock" value="1"'.checked(!empty($_POST['vk_lock']), true, false).'> Az átírt termékeken kapcsold be a saját ár zárolását</label><br><span class="description">pl. ha a gyártói ár alá viszitek: így az automatikus / gyártói árfrissítés nem írja vissza, amíg a terméknél ki nem kapcsoljátok</span></td></tr></table>';
             echo '<p><button class="button" name="vk_step" value="preview">Előnézet frissítése</button></p>';
             echo '<h2>Előnézet</h2><p><strong>'.(int)$ok.'</strong> termék változik, '.(int)$missing.' cikkszám nincs a webshopban.</p>';
             echo '<table class="widefat striped"><thead><tr><th>Cikkszám</th><th>Termék</th><th>Jelenlegi rendes ár</th><th>Jelenlegi akciós ár</th><th>Új rendes ár</th><th>Új akciós ár</th><th>Megjegyzés</th></tr></thead><tbody>';
@@ -277,7 +335,7 @@ class PriceImport {
                 $fmt = function($v){ return $v === null || $v === '' ? '–' : number_format((float)$v, 0, ',', ' ').' Ft'; };
                 echo '<tr'.(empty($p['ok']) ? ' style="opacity:.6"' : '').'><td>'.esc_html($p['sku']).'</td><td>'.($p['id'] ? '<a href="'.esc_url($p['link']).'" target="_blank">'.esc_html($p['product']).'</a>' : esc_html($p['name'])).'</td>'
                     .'<td>'.$fmt($p['cur_regular'] ?? null).'</td><td>'.$fmt($p['cur_sale'] ?? null).'</td>'
-                    .'<td>'.($mode === 'clear' ? '–' : $fmt($p['regular'])).'</td><td>'.($mode === 'clear' ? 'törlés' : $fmt($p['sale'])).'</td><td>'.esc_html($p['note']).'</td></tr>';
+                    .'<td>'.($mode === 'clear' ? '–' : $fmt($p['regular'])).'</td><td>'.($mode === 'clear' ? 'törlés' : $fmt($p['sale'])).'</td><td>'.esc_html($p['note']).(!empty($p['locked']) ? ' 🔒 saját ár' : '').'</td></tr>';
             }
             echo '</tbody></table>';
             if ($ok) echo '<p><button class="button button-primary" name="vk_step" value="apply" onclick="return confirm(\'Biztosan frissíted '.(int)$ok.' termék árát?\')">Árak frissítése ('.(int)$ok.' termék)</button></p>';

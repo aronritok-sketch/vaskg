@@ -8,6 +8,11 @@ namespace VasskisgepTheme;
  * háttérkéréseinél) az adminisztrátor, boltkezelő, szerkesztő és szerző fiók vendégként látszik. Az admin felület, az
  * admin háttérkérései (admin-ajax, admin-post), a REST (blokkszerkesztő, WooCommerce admin), a belépés és az előnézet
  * változatlan. Vásárlói fiókra nem vonatkozik.
+ *
+ * Ha a munkatárs a webshop saját belépő űrlapján (Fiókom, pénztár) lép be, a webshopban is bejelentkezve marad
+ * (Levi, 2026-11-13: „nem tudok belépni a saját fiókomba, nem az adminba, hanem a sima weboldalra”). Ezt egy külön
+ * süti jelzi, ami az adott belépéshez (munkamenet-tokenhez) kötött: az admin-belépés (wp-login.php) továbbra sem
+ * viszi át a fiókot a webshopba, kilépéskor pedig érvényét veszti.
  */
 class StaffFrontend {
     const ROLES = [ 'administrator', 'shop_manager', 'editor', 'author' ];
@@ -20,8 +25,12 @@ class StaffFrontend {
         return self::$instance;
     }
 
+    const FRONT_COOKIE = 'vk_front_login';
+
     function __construct(){
         add_filter('determine_current_user', [$this, 'frontend_user'], 99);
+        add_action('set_logged_in_cookie', [$this, 'remember_front_login'], 10, 6);
+        add_action('clear_auth_cookie', [$this, 'forget_front_login']);
         // Ha egy bővítmény már a téma előtt megállapította a felhasználót, induláskor (az admin-sáv és a kosár előtt) kiléptetjük.
         add_action('init', [$this, 'reset'], -1000);
         if (did_action('init')) $this->reset();
@@ -68,11 +77,56 @@ class StaffFrontend {
         return false;
     }
 
+    /** A webshop belépő űrlapjáról (WooCommerce Fiókom / pénztár) jövő belépés-e. */
+    private static function front_login_request(){
+        return isset($_POST['woocommerce-login-nonce']);
+    }
+
+    private static function cookie_name(){
+        return self::FRONT_COOKIE.'_'.(defined('COOKIEHASH') ? COOKIEHASH : md5(home_url()));
+    }
+
+    private static function sign($user_id, $token){
+        return hash_hmac('sha256', (int)$user_id.'|'.$token, wp_salt('logged_in'));
+    }
+
+    function remember_front_login($cookie, $expire, $expiration, $user_id, $scheme, $token){
+        $name = self::cookie_name();
+        if (!self::front_login_request()){
+            // Admin-belépés: a korábbi webshop-belépés jelzése nem vihető át az új munkamenetre.
+            if (isset($_COOKIE[$name]) && !headers_sent()) setcookie($name, '', time() - YEAR_IN_SECONDS, COOKIEPATH ?: '/', COOKIE_DOMAIN, is_ssl(), true);
+            return;
+        }
+        $user = get_userdata((int)$user_id);
+        if (!$user || !array_intersect(self::ROLES, (array)$user->roles) || headers_sent()) return;
+        $value = (int)$user_id.'|'.self::sign($user_id, $token);
+        setcookie($name, $value, $expire, COOKIEPATH ?: '/', COOKIE_DOMAIN, is_ssl(), true);
+        $_COOKIE[$name] = $value;
+    }
+
+    function forget_front_login(){
+        $name = self::cookie_name();
+        if (!headers_sent()) setcookie($name, '', time() - YEAR_IN_SECONDS, COOKIEPATH ?: '/', COOKIE_DOMAIN, is_ssl(), true);
+        unset($_COOKIE[$name]);
+    }
+
+    /** A munkatárs a webshopban lépett be (érvényes, a mostani munkamenethez kötött jelzés). */
+    private static function front_login_valid($user_id){
+        $raw = (string)($_COOKIE[self::cookie_name()] ?? '');
+        if ($raw === '' || !defined('LOGGED_IN_COOKIE') || empty($_COOKIE[LOGGED_IN_COOKIE])) return false;
+        [$id, $sig] = array_pad(explode('|', $raw, 2), 2, '');
+        if ((int)$id !== (int)$user_id) return false;
+        $parts = wp_parse_auth_cookie($_COOKIE[LOGGED_IN_COOKIE], 'logged_in');
+        if (!$parts || empty($parts['token'])) return false;
+        return hash_equals(self::sign($user_id, $parts['token']), $sig);
+    }
+
     function frontend_user($user_id){
         if (!$user_id) return $user_id;
         $user = get_userdata((int)$user_id);
         $staff = $user && array_intersect(self::ROLES, (array)$user->roles);
         if (!$staff) return $user_id;
+        if (self::front_login_valid($user_id)) return $user_id;
         if (self::backend_request()){
             // Az admin háttérkérései (pl. heartbeat) ne vegyék át a webshopban vendégként használt kosarat: a WooCommerce
             // a vendég-munkamenetet a felhasználóéba költöztetné (és törölné), a webshopban pedig kiürülne a kosár.

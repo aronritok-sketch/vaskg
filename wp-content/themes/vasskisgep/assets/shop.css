@@ -4619,3 +4619,48 @@ body.admin-bar .iu-woocommerce-mini-cart__drawer {
 	object-fit: contain;
 	background: #fff;
 }
+
+/* Kapcsolódó termékek táblagépen (iPad, 768–1199 px) is függőleges listában, mint gépen (Levi, 2026-11-13);
+   a vízszintes, lapozható sáv csak telefonon marad. */
+@media (min-width: 768px) and (max-width: 1199.8px) {
+	.vk-xs-list {
+		flex-direction: column;
+		gap: .5rem;
+		max-height: 29.5rem;
+		padding-bottom: 0;
+		overflow: hidden;
+		scroll-snap-type: none;
+	}
+	.vk-xs-item {
+		flex: 0 0 auto;
+		flex-direction: row;
+		gap: .6rem;
+		padding: .5rem;
+	}
+	.vk-xs-image,
+	.vk-xs-image img {
+		flex: 0 0 4rem;
+		width: 4rem;
+		height: 5.6rem;
+		aspect-ratio: auto;
+	}
+	.vk-xs-body {
+		gap: .2rem;
+	}
+	.vk-xs-title {
+		font-size: .72rem;
+	}
+	.vk-xs-stock {
+		font-size: .66rem;
+	}
+	.vk-xs-price {
+		font-size: 1rem;
+	}
+	.vk-xs-cart {
+		width: 2.1rem;
+		height: 2.1rem;
+	}
+	.vk-xs-nav {
+		display: flex;
+	}
+}

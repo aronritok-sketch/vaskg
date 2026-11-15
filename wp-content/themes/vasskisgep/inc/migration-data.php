@@ -172,6 +172,17 @@ class MigrationData {
         if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'barion') return Barion::find_old_pixel();
         if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'carts') return AbandonedCart::diagnose();
         if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'cron') return SelfCron::diagnose();
+        if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'user'){
+            // Egy fiók szerepköre és kosár-állapota (belépési / kosáremlékeztető hibához); jelszó, cím nélkül.
+            $u = get_user_by('login', sanitize_user((string)$request->get_param('login')));
+            if (!$u) return [ 'found' => false ];
+            $email = (string)$u->user_email;
+            $cart = get_user_meta($u->ID, '_woocommerce_persistent_cart_'.get_current_blog_id(), true);
+            return [ 'found' => true, 'id' => $u->ID, 'roles' => array_values((array)$u->roles), 'email' => mb_substr($email, 0, 2).'…'.strstr($email, '@'),
+                'registered' => $u->user_registered, 'last_active' => get_user_meta($u->ID, 'wc_last_active', true) ? gmdate('Y-m-d H:i', (int)get_user_meta($u->ID, 'wc_last_active', true)) : null,
+                'persistent_cart_items' => is_array($cart) && isset($cart['cart']) ? count((array)$cart['cart']) : 0,
+                'hash_kind' => strpos($u->user_pass, '$wp$') === 0 ? 'wp-bcrypt' : (strpos($u->user_pass, '$P$') === 0 ? 'phpass' : (strpos($u->user_pass, '$2y$') === 0 ? 'bcrypt' : 'egyéb')) ];
+        }
         if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'oldcats') return self::oldcats();
         if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'oldprices') return self::oldprices();
         if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'oldship') return self::oldship();

@@ -218,6 +218,10 @@ class ProductPage {
             'type' => 'tab',
             'title' => 'Cofidis áruhitel',
             'fields' => [
+                'cofidis_constructions' => [
+                    'type' => 'textarea',
+                    'label' => 'Konstrukciók (a Cofidis-szerződés szerint), soronként: kód; megnevezés; THM %; futamidők hónapban vesszővel. Pl. „717; 4 hó ingyen hitel; 0; 4” vagy „176; THM 19,9%; 19,9; 12,24,36”. Ha ki van töltve, a kalkulátor ezeket kínálja (a THM / kamat / futamidő mező helyett), és csak akkor jelenik meg, ha a reprezentatív példa is ki van töltve.'
+                ],
                 'cofidis_thm' => [
                     'type' => 'text',
                     'label' => 'THM (%) – a Cofidistól kapott érvényes érték, pl. 14,6. Üresen a kalkulátor nem jelenik meg.'
@@ -247,23 +251,77 @@ class ProductPage {
         return $fields;
     }
 
+    /** Konstrukciók a beállításból (kód; megnevezés; THM; futamidők) – Dávid, 2026-11-14. */
+    static function cofidis_constructions(){
+        $out = [];
+        foreach(preg_split('/\R/', (string)Reviews::setting('cofidis_constructions')) as $line){
+            $parts = array_map('trim', explode(';', $line));
+            if (count($parts) < 4) continue;
+            $thm = str_replace([' ', ',', '%'], ['', '.', ''], $parts[2]);
+            if (!is_numeric($thm) || (float)$thm < 0) continue;
+            $months = array_values(array_filter(array_map('absint', preg_split('/[,\s]+/', $parts[3]))));
+            foreach($months as $m){
+                $out[] = [ 'code' => $parts[0], 'name' => $parts[1], 'thm' => (float)$thm, 'interest' => (float)$thm == 0.0 ? 0.0 : null, 'months' => $m ];
+            }
+        }
+        // Kamatmentes elöl, aztán futamidő szerint.
+        usort($out, function($a, $b){ return [ $a['thm'] > 0, $a['months'] ] <=> [ $b['thm'] > 0, $b['months'] ]; });
+        return $out;
+    }
+
     static function cofidis_config(){
         $number = function($name){
             $value = str_replace([' ', ','], ['', '.'], Reviews::setting($name));
             return is_numeric($value) ? (float)$value : null;
         };
-        $thm = $number('cofidis_thm');
-        if ($thm === null || $thm < 0) return null;
-
-        $terms = array_filter(array_map('absint', explode(',', Reviews::setting('cofidis_terms'))));
-        return [
-            'thm' => $thm,
-            'interest' => $number('cofidis_interest'),
-            'terms' => !empty($terms) ? array_values($terms) : self::COFIDIS_TERMS,
+        $base = [
             'min' => (int)($number('cofidis_min_amount') ?? 0),
             'max' => (int)($number('cofidis_max_amount') ?? 0),
             'disclaimer' => Reviews::setting('cofidis_disclaimer')
         ];
+        $options = self::cofidis_constructions();
+        if ($options){
+            // Hitelreklám csak reprezentatív példával (a Cofidis által előírt szöveg) jelenhet meg.
+            if (trim((string)$base['disclaimer']) === '') return null;
+            $thms = array_filter(array_column($options, 'thm'));
+            return $base + [
+                'thm' => $thms ? max($thms) : 0.0,
+                'interest' => null,
+                'terms' => array_values(array_unique(array_column($options, 'months'))),
+                'options' => $options,
+            ];
+        }
+        $thm = $number('cofidis_thm');
+        if ($thm === null || $thm < 0) return null;
+
+        $terms = array_filter(array_map('absint', explode(',', Reviews::setting('cofidis_terms'))));
+        $terms = !empty($terms) ? array_values($terms) : self::COFIDIS_TERMS;
+        $interest = $number('cofidis_interest');
+        $options = [];
+        foreach($terms as $m) $options[] = [ 'code' => '', 'name' => '', 'thm' => $thm, 'interest' => $interest, 'months' => $m ];
+        return $base + [
+            'thm' => $thm,
+            'interest' => $interest,
+            'terms' => $terms,
+            'options' => $options,
+        ];
+    }
+
+    /** Az alapból kiválasztott konstrukció: a leghosszabb kamatmentes, ha van; különben a 12 hónapos; különben az első. */
+    static function cofidis_default_option($config){
+        $best = null;
+        foreach($config['options'] as $i => $o){
+            if ($o['thm'] == 0 && ($best === null || $o['months'] > $config['options'][$best]['months'])) $best = $i;
+        }
+        if ($best !== null) return $best;
+        foreach($config['options'] as $i => $o) if ($o['months'] === 12) return $i;
+        return 0;
+    }
+
+    /** Egy konstrukció rövid neve a gombon: „20 hó · 0%” (ha több THM van), különben „12 hó”. */
+    static function cofidis_option_label($option, $config){
+        $mixed = count(array_unique(array_map('strval', array_column($config['options'], 'thm')))) > 1;
+        return (int)$option['months'].' hó'.($mixed ? ' · '.str_replace('.', ',', (string)round($option['thm'], 2)).'%' : '');
     }
 
     /**
