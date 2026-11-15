@@ -77,6 +77,7 @@ class Setup {
         58 => 'old_shipping_rules',
         59 => 'old_wholesale_prices',
         60 => 'cofidis_constructions',
+        61 => 'cofidis_info_page',
     ];
 
     /**
@@ -2295,6 +2296,36 @@ class Setup {
         ]);
         $this->set_option('iu_theme', $theme);
         $this->log[] = 'Cofidis konstrukciók beállítva (4 ingyenhitel + THM 19,9%).';
+    }
+
+    /**
+     * 61. „Cofidis expressz online áruhitel” tájékoztató oldal a bank által küldött forráskóddal (Katona Zoltán,
+     * Cofidis Bank, 2026-11-06), a hirdetmény és az ügynöki tájékoztató PDF-jével (médiatárba feltöltve, belinkelve).
+     * Élesítésig nem indexelhető (CofidisBank::noindex_page), menüpont az élesítéskor.
+     */
+    function cofidis_info_page(){
+        $notice = self::media('cofidis-hirdetmeny-thm-19-9-II-176.pdf');
+        $agent = self::media('cofidis-ugynoki-tajekoztato-vass-kisgep.pdf');
+        $notice_url = $notice ? wp_get_attachment_url($notice) : '';
+        $agent_url = $agent ? wp_get_attachment_url($agent) : '';
+        $html = '<div style="max-width: 820px !important; margin: auto !important;">
+<h1 style="color: rgb(208, 16, 58) !important;"><strong>Cofidis expressz online áruhitel</strong></h1><br>
+<p><strong>Gyors és kényelmes online hiteligénylési folyamatunkkal egyszerűen intézheti vásárlását, teljesen digitális módon.</strong></p><br>
+<p>Az alábbi linkeken részletes tájékoztatást talál a hiteligénylés menetéről, a kapcsolódó dokumentumokról, valamint a hitelkártyával kapcsolatos tudnivalókról.</p>
+<p>Kérjük, a hiteligénylés megkezdése előtt tekintse át az Ön számára releváns információkat.</p><br>
+<p>A hiteligényléssel kapcsolatos információkat itt találja: <a target="_blank" href="https://www.cofidisbank.hu/aruhitel/online-aruhitel" style="color: blue !important;">Cofidis expressz online áruhitel</a></p>
+<p>A hitelkonstrukcióhoz tartozó hirdetményt itt találja: <a target="_blank" href="'.esc_url($notice_url).'" style="color: blue !important;">Hirdetmény</a></p>
+<p>Az ügynöki tájékoztatót itt találja: <a target="_blank" href="'.esc_url($agent_url).'" style="color: blue !important;">Ügynöki tájékoztató</a></p>
+</div>';
+        $content = "<!-- wp:html -->\n".$html."\n<!-- /wp:html -->";
+        $page = get_page_by_path(Cofidis::INFO_PAGE);
+        $data = [ 'post_type' => 'page', 'post_status' => 'publish', 'post_name' => Cofidis::INFO_PAGE, 'post_title' => 'Cofidis expressz online áruhitel', 'post_content' => wp_slash($content) ];
+        if ($page){ $data['ID'] = $page->ID; wp_update_post($data); }
+        else wp_insert_post($data);
+        // A fizetési mód bekapcsolva, de bank-kapcsolattal élesítésig csak a tesztlinkkel látszik (CofidisBank::visible).
+        $gw = get_option('woocommerce_'.Cofidis::ID.'_settings', []);
+        if (is_array($gw) && ($gw['enabled'] ?? 'no') !== 'yes' && CofidisBank::configured()){ $gw['enabled'] = 'yes'; update_option('woocommerce_'.Cofidis::ID.'_settings', $gw); $this->log[] = 'Cofidis fizetési mód bekapcsolva (élesítésig csak tesztlinkkel látható).'; }
+        $this->log[] = 'Cofidis tájékoztató oldal: '.($page ? 'frissítve' : 'létrehozva').' (hirdetmény: '.($notice ? 'feltöltve' : 'HIÁNYZIK').', ügynöki tájékoztató: '.($agent ? 'feltöltve' : 'HIÁNYZIK').').';
     }
 
 }

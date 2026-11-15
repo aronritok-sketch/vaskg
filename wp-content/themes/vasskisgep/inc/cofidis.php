@@ -23,6 +23,7 @@ namespace VasskisgepTheme;
  */
 class Cofidis {
     const ID = 'vk_cofidis';
+    const INFO_PAGE = 'cofidis-expressz-online-aruhitel';
 
     private static $instance;
     static function get_instance(){
@@ -37,7 +38,7 @@ class Cofidis {
         add_filter('woocommerce_order_actions', [$this, 'order_actions'], 10, 2);
         add_action('woocommerce_order_action_vk_cofidis_approved', [$this, 'approved']);
         add_action('woocommerce_order_action_vk_cofidis_rejected', [$this, 'rejected']);
-        add_action('rest_api_init', [$this, 'rest']);
+        // A visszahívást és a bank-kapcsolatot a CofidisBank kezeli (inc/cofidis-bank.php).
     }
 
     function register($gateways){
@@ -59,6 +60,7 @@ class Cofidis {
     }
 
     static function amount_eligible($amount){
+        if (CofidisBank::configured()) return CofidisBank::amount_ok((int)round($amount));
         $config = ProductPage::cofidis_config();
         $min = $config ? $config['min'] : 0;
         $max = $config ? $config['max'] : 0;
@@ -88,33 +90,5 @@ class Cofidis {
         $order->update_meta_data('_vk_cofidis_status', 'rejected');
         $order->update_status('cancelled', 'Cofidis: a hitelkérelmet elutasították.');
         $order->save();
-    }
-
-    /* ---------- Visszahívás (online hitelkérelemhez) ---------- */
-
-    function rest(){
-        register_rest_route('vasskisgep/v1', '/cofidis/callback', [
-            'methods' => ['POST', 'GET'],
-            'permission_callback' => '__return_true',
-            'callback' => function(\WP_REST_Request $request){
-                /*
-                 * A Cofidis dokumentáció alapján ide kell bekötni: az üzenet hitelességének
-                 * ellenőrzése (aláírás / token) és a rendelés + állapot kiolvasása. A szűrő
-                 * ['order_id' => int, 'status' => 'approved'|'rejected'|'pending'] tömböt adjon,
-                 * vagy WP_Error-t. Bekötés nélkül a hívás elutasításra kerül.
-                 */
-                $result = apply_filters('vasskisgep_cofidis_callback', new \WP_Error('not_configured', 'A Cofidis visszahívás nincs bekötve.', [ 'status' => 501 ]), $request);
-                if (is_wp_error($result)) return $result;
-
-                $order = wc_get_order((int)($result['order_id'] ?? 0));
-                if (!$order || $order->get_payment_method() !== self::ID) return new \WP_Error('order', 'Ismeretlen rendelés.', [ 'status' => 404 ]);
-
-                $status = $result['status'] ?? '';
-                if ($status === 'approved' && !$order->is_paid()) $this->approved($order);
-                elseif ($status === 'rejected' && !$order->has_status('cancelled')) $this->rejected($order);
-                elseif ($status === 'pending') $order->add_order_note('Cofidis: a hitelkérelem bírálat alatt.');
-                return [ 'ok' => true ];
-            }
-        ]);
     }
 }

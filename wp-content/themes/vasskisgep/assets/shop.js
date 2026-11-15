@@ -216,7 +216,7 @@
 		$box.find('.vk-cof-monthly').text(tooSmall ? '–' : format(monthly));
 		$box.find('.vk-cof-total').text(tooSmall ? '–' : format(monthly * months + down));
 	};
-	$(document).on('change input', '.vk-cofidis input', function(){
+	$(document).on('change input', '.vk-cofidis:not(.vk-cofidis-bank) input', function(){
 		cofidis($(this).closest('.vk-cofidis'));
 	});
 
@@ -314,7 +314,7 @@
 		$('.vk-buy').each(function(){ syncQty($(this)); });
 		$('.vk-buy-native form.variations_form').each(function(){ sizePicker($(this)); });
 		$('.vk-cross-sells').each(function(){ xsUpdate($(this)); });
-		$('.vk-cofidis').each(function(){ cofidis($(this)); });
+		$('.vk-cofidis:not(.vk-cofidis-bank)').each(function(){ cofidis($(this)); });
 		if (window.location.hash === '#vk-reviews' || window.location.hash.indexOf('#comment') === 0 || window.location.hash === '#reviews') openTab('Vélemények');
 	});
 

@@ -10,6 +10,8 @@
 			if (in_array(get_post_type(), ['iu_template', 'revision'])) return '';
 			$product = wc_get_product();
 			if (!$product || !\VasskisgepTheme\Catalog::has_cofidis($product)) return '';
+			// Bank-kapcsolattal a Cofidis Bank beágyazott kalkulátora (élesítésig csak a tesztelőknek).
+			if (\VasskisgepTheme\CofidisBank::configured()) return \VasskisgepTheme\CofidisBank::widget(wc_get_price_to_display($product), 'vk-cof-product');
 			$config = \VasskisgepTheme\ProductPage::cofidis_config();
 			if (!$config) return '';
 

@@ -4664,3 +4664,47 @@ body.admin-bar .iu-woocommerce-mini-cart__drawer {
 		display: flex;
 	}
 }
+
+/* Cofidis expressz online áruhitel: a bank beágyazott kalkulátora (2026-11-15). */
+.vk-cofidis.vk-cofidis-bank {
+	display: block;
+	max-width: 46rem;
+	padding: 1.2rem;
+	border: 1px solid var(--vk-border);
+	border-radius: .45rem;
+	background: var(--wp--preset--color--white);
+}
+.vk-cof-bank-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+}
+.vk-cofidis-bank .vk-cof-title {
+	margin: 0;
+	color: #d0103a;
+}
+.vk-cofidis-bank .vk-cof-lead {
+	margin: .5rem 0 .8rem;
+	font-size: .85rem;
+}
+.vk-cof-frame iframe {
+	display: block;
+	width: 100%;
+	max-width: 100%;
+	border: 0;
+}
+.vk-cof-barems {
+	display: flex;
+	flex-wrap: wrap;
+	gap: .4rem;
+	margin-bottom: .6rem;
+}
+.vk-cof-info {
+	margin: .6rem 0 0;
+	font-size: .8rem;
+}
+.payment_box .vk-cofidis-bank {
+	margin-top: .8rem;
+	padding: .8rem;
+}

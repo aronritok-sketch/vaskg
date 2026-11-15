@@ -15,6 +15,7 @@ require_once(__DIR__.'/product.php');
 require_once(__DIR__.'/pages.php');
 require_once(__DIR__.'/search.php');
 require_once(__DIR__.'/cofidis.php');
+require_once(__DIR__.'/cofidis-bank.php');
 require_once(__DIR__.'/migration.php');
 require_once(__DIR__.'/orders.php');
 require_once(__DIR__.'/checkout.php');
@@ -70,6 +71,7 @@ class Theme {
         Gls::get_instance();
         Aszf::get_instance();
         Barion::get_instance();
+        CofidisBank::get_instance();
         SelfCron::get_instance();
         StaffFrontend::get_instance();
         StockNote::get_instance();
