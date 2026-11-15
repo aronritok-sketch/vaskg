@@ -523,6 +523,8 @@ class Catalog {
         if (strpos((string)($block['attrs']['className'] ?? ''), 'brand') === false) return $content;
         $product = wc_get_product();
         if (!$product || !self::has_cofidis($product)) return $content;
+        // Bank-kapcsolattal a jelvény csak élesítés után (a kártyák gyorsítótárban vannak, ezért tesztelőnek sem).
+        if (CofidisBank::configured() && CofidisBank::opt('live_enabled', 'no') !== 'yes') return $content;
         $pos = strrpos($content, '</div>');
         return $pos === false ? $content : substr_replace($content, self::cofidis_badge().'</div>', $pos, 6);
     }

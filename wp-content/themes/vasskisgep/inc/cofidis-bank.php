@@ -57,6 +57,28 @@ class CofidisBank {
         add_action(self::POLL, [__CLASS__, 'poll']);
         add_action('init', [$this, 'schedule']);
         add_filter('wp_robots', [$this, 'noindex_page']);
+        add_filter('bulk_actions-edit-product', [$this, 'bulk_actions'], 45);
+        add_filter('handle_bulk_actions-edit-product', [$this, 'handle_bulk'], 10, 3);
+        add_action('admin_notices', [$this, 'bulk_notice']);
+    }
+
+    /* ---------- Termékek jelölése tömegesen ---------- */
+
+    function bulk_actions($actions){
+        $actions['vk_cofidis_on'] = 'Cofidis áruhitel: bekapcsolás';
+        $actions['vk_cofidis_off'] = 'Cofidis áruhitel: kikapcsolás';
+        return $actions;
+    }
+
+    function handle_bulk($redirect, $action, $ids){
+        if (!in_array($action, [ 'vk_cofidis_on', 'vk_cofidis_off' ], true) || !current_user_can('edit_products')) return $redirect;
+        foreach((array)$ids as $id) update_post_meta((int)$id, '_vk_cofidis', $action === 'vk_cofidis_on' ? 'yes' : 'no');
+        return add_query_arg([ 'vk_cofidis_done' => count((array)$ids), 'vk_cofidis_on' => $action === 'vk_cofidis_on' ? 1 : 0 ], $redirect);
+    }
+
+    function bulk_notice(){
+        if (!isset($_GET['vk_cofidis_done'])) return;
+        echo '<div class="notice notice-success is-dismissible"><p>'.(int)$_GET['vk_cofidis_done'].' terméken a Cofidis áruhitel '.(!empty($_GET['vk_cofidis_on']) ? 'bekapcsolva' : 'kikapcsolva').'.</p></div>';
     }
 
     /* ---------- Beállítások ---------- */
@@ -501,6 +523,7 @@ class CofidisBank {
             'cert' => [ 'demo' => self::cert_pem('demo') !== '', 'live' => self::cert_pem('live') !== '' ],
             'credentials' => self::credentials_ready(),
             'info_page' => ($p = get_page_by_path(Cofidis::INFO_PAGE)) ? get_permalink($p) : null,
+            'flagged_products' => (int)$GLOBALS['wpdb']->get_var("SELECT COUNT(*) FROM {$GLOBALS['wpdb']->postmeta} pm JOIN {$GLOBALS['wpdb']->posts} p ON p.ID = pm.post_id AND p.post_status = 'publish' WHERE pm.meta_key = '_vk_cofidis' AND pm.meta_value = 'yes'"),
             'test_url' => self::test_url(),
         ];
         if (in_array($make_csr, [ 'demo', 'live' ], true)){
