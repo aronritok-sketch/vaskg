@@ -55,6 +55,9 @@
 		],
 		'editJS' => 'const labels = { featured: "Kiemelt", popular: "Népszerű", sale: "Akciós", newest: "Legújabb", season: "Szezonális", category: "Kategória" }; return `<div style="background:#eee;display:flex;align-items:center;justify-content:center;width:100%;padding:6rem 0;font-family:monospace;">Termék karusszel: ${labels[attributes.source] || attributes.source}</div>`;',
 		'template' => function($attributes){
+			// Gyorsítótár (Levi, 2026-11-13: „a webshop egyre lassabb”): a kezdőlap 72 termékkártyája tárhelyen ~5 mp volt.
+			// A kész HTML egy óráig tárolódik; bármely termék mentése, készletváltozása, rendelés után új készül.
+			return \VasskisgepTheme\Shop::cached_block('carousel', $attributes, function() use ($attributes){
 			$limit = max(1, (int)$attributes['limit']);
 			$columns = max(1, (int)$attributes['columns']);
 			$params = [ 'slidesToShow' => $columns, 'slidesToScroll' => $columns, 'infinite' => false, 'dots' => true ];
@@ -119,5 +122,6 @@
 			}
 
 			return \VasskisgepTheme\Shop::render_product_carousel($products, $params);
+			});
 		}
 	]);

@@ -31,6 +31,14 @@ class Shop {
     }
 
     function __construct(){
+        // Termékblokk-gyorsítótár ürítése, ha egy termék változik (mentés, készlet, akció, közzététel, tömeges műveletek).
+        foreach([ 'woocommerce_update_product', 'woocommerce_new_product', 'woocommerce_delete_product', 'woocommerce_trash_product',
+            'woocommerce_product_set_stock', 'woocommerce_variation_set_stock', 'woocommerce_product_set_stock_status',
+            'woocommerce_variation_set_stock_status', 'transition_post_status' ] as $hook){
+            add_action($hook, [__CLASS__, 'flush_block_cache_maybe'], 10, 3);
+        }
+        foreach([ 'added_post_meta', 'updated_post_meta', 'deleted_post_meta' ] as $hook) add_action($hook, [__CLASS__, 'flush_on_meta'], 10, 3);
+        add_action('set_object_terms', [__CLASS__, 'flush_on_terms'], 10, 4);
         // Szezon (évszak) választó a termékszerkesztőben és a tömeges szerkesztésben (a címkékkel szinkronban).
         add_action('add_meta_boxes_product', [$this, 'season_meta_box']);
         add_action('woocommerce_admin_process_product_object', [$this, 'season_save']);
@@ -381,8 +389,91 @@ class Shop {
      * Termékkarusszel a keretrendszer product-carousel blokkjának markupjával,
      * így annak szkriptje és stílusa érvényes rá.
      */
+    const CACHE_VER = 'vk_block_cache_ver';
+
+    /**
+     * Termékblokk kész HTML-je egy óráig (tranziens); a kulcsban az attribútumok, az évszak és a gyorsítótár-verzió,
+     * ami bármely termékváltozáskor nő (`flush_block_cache`). A karusszel szkriptje találatkor is betöltődik.
+     */
+    static function cached_block($kind, $attributes, callable $render){
+        $nocache = is_admin() || is_customize_preview() || (defined('REST_REQUEST') && REST_REQUEST) || isset($_GET['vk_prof_nocache']);
+        if ($nocache) return $render();
+        global $iu_block_styles;
+        $key = 'vk_blk_'.md5($kind.'|'.wp_json_encode($attributes).'|'.self::current_season().'|'.(int)get_option(self::CACHE_VER, 0).'|'.wp_date('Y-m-d'));
+        $hit = get_transient($key);
+        if (is_array($hit) && isset($hit['html'], $hit['styles'], $hit['start'])){
+            wp_enqueue_script('iu-woocommerce-product-carousel-script');
+            wp_enqueue_style('iu-woocommerce-product-carousel-style');
+            // Az iu_theme a blokkok egyedi stílusát sorszámozott osztállyal adja (pl. .iu-group_6): a tárolt
+            // blokkok stílusait hozzáadjuk, a sorszámokat pedig az oldal mostani számlálójához igazítjuk.
+            if (!is_array($iu_block_styles)) $iu_block_styles = [];
+            $map = [];
+            foreach($hit['styles'] as $name => $list){
+                $now = count($iu_block_styles[$name] ?? []);
+                $map[str_replace([ '/', 'core' ], [ '-', 'iu' ], $name)] = [ (int)($hit['start'][$name] ?? 0), $now, count($list) ];
+                foreach($list as $atts) $iu_block_styles[$name][] = $atts;
+            }
+            return preg_replace_callback('/class="([^"]*)"/', function($m) use ($map){
+                return 'class="'.preg_replace_callback('/(?<![\w-])([a-z0-9-]+)_(\d+)(?![\w-])/', function($c) use ($map){
+                    if (!isset($map[$c[1]])) return $c[0];
+                    [$from, $now, $n] = $map[$c[1]];
+                    $i = (int)$c[2];
+                    return $i > $from && $i <= $from + $n ? $c[1].'_'.($i - $from + $now) : $c[0];
+                }, $m[1]).'"';
+            }, $hit['html']);
+        }
+        $before = is_array($iu_block_styles) ? array_map('count', $iu_block_styles) : [];
+        $html = (string)$render();
+        $styles = [];
+        foreach((array)$iu_block_styles as $name => $list){
+            $from = (int)($before[$name] ?? 0);
+            if (count($list) > $from) $styles[$name] = array_slice($list, $from);
+        }
+        set_transient($key, [ 'html' => $html, 'styles' => $styles, 'start' => $before ], HOUR_IN_SECONDS);
+        return $html;
+    }
+
+    static function flush_block_cache(){
+        static $done = false;
+        if ($done) return;
+        $done = true;
+        update_option(self::CACHE_VER, (int)get_option(self::CACHE_VER, 0) + 1, true);
+    }
+
+    static function flush_block_cache_maybe($a = null, $b = null, $c = null){
+        // transition_post_status: ($new, $old, $post) – csak terméknél.
+        if ($c instanceof \WP_Post && $c->post_type !== 'product') return;
+        self::flush_block_cache();
+    }
+
+    static function flush_on_meta($meta_id, $object_id, $key){
+        if (in_array($key, [ '_edit_lock', '_edit_last', 'total_sales', '_wc_review_count', '_wc_rating_count', '_wc_average_rating' ], true)) return;
+        if (get_post_type((int)$object_id) !== 'product') return;
+        self::flush_block_cache();
+    }
+
+    static function flush_on_terms($object_id, $terms, $tt_ids, $taxonomy){
+        if (in_array($taxonomy, [ 'product_cat', 'product_tag', 'product_brand', 'product_visibility' ], true)) self::flush_block_cache();
+    }
+
+    /** A kártyák adatai egyben (meta, kategóriák, képek), hogy ne termékenként fussanak a lekérdezések. */
+    private static function prime_products($products){
+        $ids = $thumbs = [];
+        foreach($products as $p){
+            if (!$p instanceof \WC_Product) continue;
+            $ids[] = $p->get_id();
+            if ($p->get_image_id()) $thumbs[] = (int)$p->get_image_id();
+            $gallery = $p->get_gallery_image_ids();
+            if ($gallery) $thumbs[] = (int)$gallery[0];
+        }
+        if (!$ids) return;
+        _prime_post_caches($ids, true, true);
+        if ($thumbs) _prime_post_caches(array_unique($thumbs), false, true);
+    }
+
     static function render_product_carousel($products, $params = []){
         if (empty($products)) return '';
+        self::prime_products($products);
 
         $params = wp_parse_args($params, [ 'slidesToShow' => 4, 'slidesToScroll' => 1, 'infinite' => false, 'dots' => true ]);
 
