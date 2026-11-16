@@ -4708,3 +4708,12 @@ body.admin-bar .iu-woocommerce-mini-cart__drawer {
 	margin-top: .8rem;
 	padding: .8rem;
 }
+
+/* Pénztár: az iu_woocommerce a hibadobozt elrejti (a mezőhibák a mezőknél jelennek meg); a nem mezőhöz tartozó hibák
+   (pl. a fizetés indítása nem sikerült) viszont csak itt látszanak – ezek legyenek láthatók (2026-11-16, Barion). */
+.woocommerce-checkout .woocommerce-NoticeGroup .woocommerce-error:has(li:not([data-id])) {
+	display: block;
+}
+.woocommerce-checkout .woocommerce-NoticeGroup .woocommerce-error li[data-id] {
+	display: none;
+}

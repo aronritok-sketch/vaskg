@@ -34,6 +34,22 @@ class Barion {
         add_action('manage_woocommerce_page_wc-orders_custom_column', [$this, 'list_badge'], 20, 2);
         add_action('manage_shop_order_posts_custom_column', [$this, 'list_badge'], 20, 2);
         add_action('admin_head', [$this, 'admin_css']);
+        // Ha a Barion nem fogadja a fizetést (pl. hibás fiókadat), a bővítmény csak naplóz: a vásárló és a bolt is lássa az okát.
+        add_action('woocommerce_barion_prepare_payment_called', [$this, 'prepare_failed'], 10, 2);
+    }
+
+    function prepare_failed($payment, $order){
+        if (!$payment || !empty($payment->RequestSuccessful) || !$order instanceof \WC_Order) return;
+        $msgs = [];
+        foreach((array)($payment->Errors ?? []) as $e){
+            $code = is_object($e) ? (string)($e->ErrorCode ?? '') : '';
+            $text = is_object($e) ? trim((string)($e->Description ?? $e->Title ?? '')) : (string)$e;
+            if ($text !== '' || $code !== '') $msgs[] = trim($code.($code !== '' && $text !== '' ? ': ' : '').$text);
+        }
+        $detail = $msgs ? implode(' | ', $msgs) : 'ismeretlen hiba';
+        $order->add_order_note('✖ A Barion nem indította el a fizetést: '.$detail);
+        update_option('vk_barion_last_error', [ 'time' => time(), 'order' => $order->get_id(), 'detail' => $detail ], false);
+        if (function_exists('wc_add_notice')) wc_add_notice('A bankkártyás fizetés most nem indítható el. Kérjük, válassz másik fizetési módot, vagy próbáld újra később. (Barion: '.$detail.')', 'error');
     }
 
     const RESULT = '_vk_barion_result';
@@ -188,6 +204,7 @@ class Barion {
                 update_option($key, $settings);
             }
             $settings = (array)get_option('woocommerce_'.$gateway->id.'_settings', []);
+            $out['last_error'] = get_option('vk_barion_last_error') ?: null;
             $out[$gateway->id] = [ 'enabled' => ($settings['enabled'] ?? 'no'), 'title' => $gateway->get_title(), 'poskey_set' => !empty($settings['poskey']) || !empty($settings['pos_key']),
                 'environment' => $settings['environment'] ?? '', 'payee_set' => !empty($settings['payee']), 'pixel_set' => !empty($settings['barion_pixel_id']),
                 'order_status' => $settings['order_status'] ?? '', 'rejected_status' => $settings['rejected_status'] ?? '', 'expired_status' => $settings['expired_status'] ?? '' ];

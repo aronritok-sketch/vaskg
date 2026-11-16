@@ -172,6 +172,19 @@ class MigrationData {
         if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'barion') return Barion::find_old_pixel();
         if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'carts') return AbandonedCart::diagnose();
         if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'cron') return SelfCron::diagnose();
+        if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'wclog'){
+            // A WooCommerce napló (pl. source=barion) utolsó sorai; hosszú kulcs-szerű karakterláncok kitakarva.
+            $source = sanitize_key((string)$request->get_param('source')) ?: 'barion';
+            $dir = defined('WC_LOG_DIR') ? WC_LOG_DIR : trailingslashit(wp_upload_dir()['basedir']).'wc-logs/';
+            $files = glob(trailingslashit($dir).$source.'-*.log') ?: [];
+            usort($files, function($a, $b){ return filemtime($b) <=> filemtime($a); });
+            $out = [ 'files' => array_map('basename', array_slice($files, 0, 5)) ];
+            if ($files){
+                $text = (string)file_get_contents($files[0], false, null, max(0, filesize($files[0]) - 6000));
+                $out['tail'] = preg_replace('/[A-Za-z0-9]{28,}/', '[kitakarva]', $text);
+            }
+            return $out;
+        }
         if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'szamlazz'){
             // Számlázz.hu bővítmény fizetési mód beállításai (kulcs, jelszó, token nélkül).
             global $wpdb;
