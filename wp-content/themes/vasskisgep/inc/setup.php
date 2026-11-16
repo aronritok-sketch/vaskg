@@ -81,6 +81,8 @@ class Setup {
         62 => 'barion_plugin',
         63 => 'barion_statuses',
         64 => 'szamlazz_barion',
+        65 => 'order_attribution',
+        66 => 'gls_point_method',
     ];
 
     /**
@@ -2380,6 +2382,52 @@ class Setup {
         $opts['barion'] = array_merge([ 'deadline' => '', 'complete' => false, 'proform' => false, 'deposit' => false, 'name' => '', 'auto_disabled' => false ], (array)($opts['barion'] ?? []), [ 'complete' => true, 'name' => 'Barion Payment' ]);
         update_option('wc_szamlazz_payment_method_options_v2', $opts);
         $this->log[] = 'Számlázz.hu: Barion → „Barion Payment”, teljesítettként.';
+    }
+
+    /** 65. WooCommerce rendelés-forrás (Order Attribution) bekapcsolva – az Analitika kéri (Dávid, 2026-11-16). */
+    function order_attribution(){
+        update_option('woocommerce_feature_order_attribution_enabled', 'yes');
+        $this->log[] = 'WooCommerce: rendelés-forrás (Order Attribution) bekapcsolva.';
+    }
+
+    /**
+     * 66. GLS CsomagPont / Csomagautomata szállítási mód a Magyarország zónába, a házhozszállítás után; az ingyenes
+     * szállítás értékhatára és súlyhatára a házhozszállításéból (Dávid, 2026-11-16).
+     */
+    function gls_point_method(){
+        global $wpdb;
+        foreach(\WC_Shipping_Zones::get_zones() as $data){
+            $zone = new \WC_Shipping_Zone($data['id']);
+            $hu = false;
+            foreach($zone->get_zone_locations() as $location) if ($location->type === 'country' && $location->code === 'HU') $hu = true;
+            if (!$hu) continue;
+            $free_total = '30000'; $free_weight = '10'; $after = 0;
+            foreach($zone->get_shipping_methods() as $method){
+                if ($method->id === GlsPoint::METHOD){ $this->log[] = 'GLS CsomagPont: már megvan.'; return; }
+                if ($method->id === Shipping::METHOD){
+                    $free_total = (string)$method->get_option('free_total', '30000');
+                    $free_weight = (string)$method->get_option('free_weight', '10');
+                    $after = (int)$method->method_order;
+                }
+            }
+            $instance_id = $zone->add_shipping_method(GlsPoint::METHOD);
+            update_option('woocommerce_'.GlsPoint::METHOD.'_'.$instance_id.'_settings', [
+                'title' => 'GLS CsomagPont / Csomagautomata',
+                'rates' => GlsPoint::DEFAULT_RATES,
+                'free_total' => $free_total,
+                'free_weight' => $free_weight,
+                'tax_status' => 'taxable',
+            ]);
+            $table = $wpdb->prefix.'woocommerce_shipping_zone_methods';
+            foreach($zone->get_shipping_methods() as $method){
+                if ((int)$method->get_instance_id() !== (int)$instance_id && (int)$method->method_order > $after) $wpdb->update($table, [ 'method_order' => (int)$method->method_order + 1 ], [ 'instance_id' => $method->get_instance_id() ]);
+            }
+            $wpdb->update($table, [ 'method_order' => $after + 1 ], [ 'instance_id' => $instance_id ]);
+            \WC_Cache_Helper::get_transient_version('shipping', true);
+            $this->log[] = 'GLS CsomagPont / Csomagautomata szállítási mód felvéve (10 kg-ig 2 490 Ft, 20 kg-ig 3 490 Ft; ingyenes: '.$free_total.' Ft felett, '.$free_weight.' kg-ig).';
+            return;
+        }
+        $this->log[] = 'GLS CsomagPont: nincs Magyarország zóna.';
     }
 
 }

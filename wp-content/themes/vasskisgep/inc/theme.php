@@ -27,6 +27,7 @@ require_once(__DIR__.'/order-statuses.php');
 require_once(__DIR__.'/abandoned-cart.php');
 require_once(__DIR__.'/seasons-admin.php');
 require_once(__DIR__.'/gls.php');
+require_once(__DIR__.'/gls-point.php');
 require_once(__DIR__.'/aszf.php');
 require_once(__DIR__.'/barion.php');
 require_once(__DIR__.'/selfcron.php');
@@ -69,6 +70,7 @@ class Theme {
         AbandonedCart::get_instance();
         SeasonsAdmin::get_instance();
         Gls::get_instance();
+        GlsPoint::get_instance();
         Aszf::get_instance();
         Barion::get_instance();
         CofidisBank::get_instance();

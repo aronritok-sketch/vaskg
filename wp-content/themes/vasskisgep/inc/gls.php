@@ -261,6 +261,9 @@ class Gls {
             // Utánvét-hivatkozás: a számla száma (Dávid, 2026-11), ha még nincs számla, a rendelésszám.
             $p['CODReference'] = mb_substr(self::invoice_number($order) ?: (string)$order->get_order_number(), 0, 40);
         }
+        // GLS CsomagPont / Csomagautomata: a csomag a választott pontra megy (PSD szolgáltatás a pont azonosítójával).
+        $point = GlsPoint::order_point($order);
+        if ($point) $p['ServiceList'][] = [ 'Code' => 'PSD', 'PSDParameter' => [ 'StringValue' => $point['id'] ] ];
         $email = $ship['email'];
         $tel = self::phone($phone);
         if ($opt['email'] && $email !== ''){

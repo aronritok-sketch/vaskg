@@ -14,6 +14,9 @@ namespace VasskisgepTheme;
  * (uploads/vk-feed/arukereso.xml); ha az újragenerálás elakad, az utolsó jó változat megy ki. Az építés
  * adagonként üríti a memória-gyorsítótárat (~1900 termék egy kérésben: a WordPress futásidejű gyorsítótára
  * termékenként ~40 KB-tal nőne, ez az élesen kifutott a memóriakorlátból → 500).
+ *
+ * Google Merchant Center termékfeed (RSS 2.0, g: mezők): /google.xml (vagy /?vk_feed=google) – Dávid, 2026-11-16:
+ * a Merchant a régi webshop feedjét kereste. Ugyanazokból a termékekből, ugyanígy fájlba generálva (uploads/vk-feed/google.xml).
  */
 class Feed {
     const QUERY_VAR = 'vk_feed';
@@ -40,51 +43,61 @@ class Feed {
         }
     }
 
+    const TYPES = [ 'arukereso', 'google' ];
+
     static function rewrite(){
         add_rewrite_rule('^arukereso\.xml$', 'index.php?'.self::QUERY_VAR.'=arukereso', 'top');
+        add_rewrite_rule('^google\.xml$', 'index.php?'.self::QUERY_VAR.'=google', 'top');
+        // Az új szabály egyszer a permalinkek közé kerül.
+        if (get_option('vk_feed_rules') !== '2'){ update_option('vk_feed_rules', '2'); flush_rewrite_rules(false); }
     }
 
-    static function url(){
-        return get_option('permalink_structure') ? home_url('/arukereso.xml') : add_query_arg(self::QUERY_VAR, 'arukereso', home_url('/'));
+    static function url($type = 'arukereso'){
+        return get_option('permalink_structure') ? home_url('/'.$type.'.xml') : add_query_arg(self::QUERY_VAR, $type, home_url('/'));
     }
 
     /** A kész feed fájlja. */
-    static function file(){
+    static function file($type = 'arukereso'){
         $dir = trailingslashit(wp_upload_dir()['basedir']).'vk-feed';
         if (!is_dir($dir)) wp_mkdir_p($dir);
-        return $dir.'/arukereso.xml';
+        return $dir.'/'.$type.'.xml';
     }
+
+    private static function stale_key($type){ return $type === 'arukereso' ? self::CACHE.'_stale' : 'vk_feed_'.$type.'_stale'; }
 
     /** Termék mentésekor: a következő lekérés újragenerálja (addig a mostani megy ki). */
     static function flush(){
         delete_transient(self::CACHE);
-        update_option(self::CACHE.'_stale', time(), false);
+        foreach(self::TYPES as $type) update_option(self::stale_key($type), time(), false);
     }
 
     /** A feed (újra)generálása fájlba. true, ha sikerült. */
-    static function generate(){
-        $file = self::file();
-        $xml = self::build();
-        if (substr_count($xml, '<product>') === 0 && is_file($file) && filesize($file) > 1000) return false;
+    static function generate($type = 'arukereso'){
+        $file = self::file($type);
+        $xml = self::build($type);
+        $mark = $type === 'google' ? '<item>' : '<product>';
+        if (substr_count($xml, $mark) === 0 && is_file($file) && filesize($file) > 1000) return false;
         $tmp = $file.'.tmp';
         if (file_put_contents($tmp, $xml) === false) return false;
         rename($tmp, $file);
-        delete_option(self::CACHE.'_stale');
+        delete_option(self::stale_key($type));
         return true;
     }
 
     function serve(){
-        if (get_query_var(self::QUERY_VAR) !== 'arukereso') return;
-        $file = self::file();
-        $fresh = is_file($file) && filemtime($file) > time() - self::MAX_AGE && !get_option(self::CACHE.'_stale');
-        if (!$fresh && !get_transient(self::CACHE.'_lock')){
-            set_transient(self::CACHE.'_lock', 1, 10 * MINUTE_IN_SECONDS);
+        $type = (string)get_query_var(self::QUERY_VAR);
+        if (!in_array($type, self::TYPES, true)) return;
+        $file = self::file($type);
+        $fresh = is_file($file) && filemtime($file) > time() - self::MAX_AGE && !get_option(self::stale_key($type));
+        $lock = 'vk_feed_'.$type.'_lock';
+        if (!$fresh && !get_transient($lock)){
+            set_transient($lock, 1, 10 * MINUTE_IN_SECONDS);
             try {
-                self::generate();
+                self::generate($type);
             } catch (\Throwable $e){
-                error_log('Árukereső feed: '.$e->getMessage());
+                error_log('Termékfeed ('.$type.'): '.$e->getMessage());
             }
-            delete_transient(self::CACHE.'_lock');
+            delete_transient($lock);
         }
         if (!is_file($file)){
             status_header(503);
@@ -177,11 +190,14 @@ class Feed {
         return $out;
     }
 
-    static function build(){
+    static function build($type = 'arukereso'){
         @set_time_limit(600);
         wp_raise_memory_limit('admin');
         $shipping = Shipping::method();
-        $xml = '<?xml version="1.0" encoding="UTF-8"?>'."\n".'<products>'."\n";
+        $google = $type === 'google';
+        $xml = '<?xml version="1.0" encoding="UTF-8"?>'."\n".($google
+            ? '<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0"><channel><title>'.esc_xml(get_bloginfo('name')).'</title><link>'.esc_url(home_url('/')).'</link><description>Termékfeed</description>'
+            : '<products>')."\n";
         $page = 1;
         do {
             $ids = wc_get_products([ 'status' => 'publish', 'type' => [ 'simple', 'variable' ], 'limit' => 200, 'page' => $page, 'return' => 'ids', 'orderby' => 'ID', 'order' => 'ASC' ]);
@@ -189,7 +205,8 @@ class Feed {
                 $product = wc_get_product($id);
                 foreach($product && $product->is_type('variable') ? $product->get_children() : [ $id ] as $child){
                     try {
-                        $item = self::item($child === $id ? $product : wc_get_product($child), $shipping);
+                        $obj = $child === $id ? $product : wc_get_product($child);
+                        $item = $google ? self::google_item($obj, $shipping) : self::item($obj, $shipping);
                     } catch (\Throwable $e){
                         // Egy hibás termék ne vigye el az egész feedet.
                         error_log('Árukereső feed, termék '.$child.': '.$e->getMessage());
@@ -201,6 +218,65 @@ class Feed {
             $page++;
             self::free_memory();
         } while (count($ids) === 200);
-        return $xml.'</products>'."\n";
+        return $xml.($google ? '</channel></rss>' : '</products>')."\n";
+    }
+
+    private static function gtag($name, $value){
+        $value = (string)$value;
+        return $value === '' ? '' : '<g:'.$name.'>'.esc_xml($value).'</g:'.$name.'>';
+    }
+
+    /** Egy termék a Google Merchant feedben (ugyanazok a termékek, mint az Árukeresőben). */
+    static function google_item($product, $shipping = null){
+        if (!$product || !$product->is_type([ 'simple', 'variation' ])) return null;
+        $parent = $product->is_type('variation') ? wc_get_product($product->get_parent_id()) : $product;
+        if (!$parent || $parent->get_status() !== 'publish' || !$parent->is_visible()) return null;
+        if ($product->get_price() === '' || !$product->is_purchasable() || !$product->is_in_stock()) return null;
+        $gross = (float)wc_get_price_including_tax($product);
+        if ($gross <= 0) return null;
+        $regular = $product->get_regular_price() !== '' ? (float)wc_get_price_including_tax($product, [ 'price' => $product->get_regular_price() ]) : $gross;
+
+        $brands = taxonomy_exists('product_brand') ? get_the_terms($parent->get_id(), 'product_brand') : [];
+        $brand = !empty($brands) && !is_wp_error($brands) ? $brands[0]->name : '';
+        $images = array_values(array_slice(array_unique(array_filter(array_merge([ $product->get_image_id() ?: $parent->get_image_id() ], $parent->get_gallery_image_ids()))), 0, 11));
+        $variant = $product->is_type('variation') ? implode(' ', array_filter(array_values($product->get_attributes()))) : '';
+        $ean = preg_replace('/\D/', '', method_exists($product, 'get_global_unique_id') ? (string)$product->get_global_unique_id() : '');
+        if (!in_array(strlen($ean), [ 8, 12, 13, 14 ], true)) $ean = '';
+        $sku = (string)$product->get_sku();
+
+        $out = '<item>'
+            .self::gtag('id', $sku !== '' ? $sku : 'vk-'.$product->get_id())
+            .self::tag('title', mb_substr(trim($parent->get_name().' '.$variant), 0, 150))
+            .self::tag('description', self::text($parent->get_description() ?: $parent->get_short_description(), 4900), true)
+            .self::tag('link', $product->get_permalink());
+        foreach($images as $i => $image){
+            $url = wp_get_attachment_image_url($image, 'full');
+            if ($url) $out .= self::gtag($i ? 'additional_image_link' : 'image_link', $url);
+        }
+        if ($product->is_on_backorder()){
+            $out .= self::gtag('availability', 'backorder').self::gtag('availability_date', gmdate('Y-m-d\TH:iO', time() + self::BACKORDER_DAYS * DAY_IN_SECONDS));
+        } else {
+            $out .= self::gtag('availability', 'in_stock');
+        }
+        $out .= self::gtag('price', round($regular).' HUF');
+        if ($product->is_on_sale() && $gross < $regular){
+            $out .= self::gtag('sale_price', round($gross).' HUF');
+            $from = $product->get_date_on_sale_from(); $to = $product->get_date_on_sale_to();
+            if ($from && $to) $out .= self::gtag('sale_price_effective_date', $from->date('c').'/'.$to->date('c'));
+        }
+        $out .= self::gtag('condition', 'new')
+            .self::gtag('brand', $brand)
+            .self::gtag('gtin', $ean)
+            .self::gtag('mpn', $sku);
+        if ($ean === '' && ($brand === '' || $sku === '')) $out .= self::gtag('identifier_exists', 'no');
+        $out .= self::gtag('product_type', self::category($parent));
+        if ($variant !== '') $out .= self::gtag('item_group_id', 'vk-'.$parent->get_id());
+        if ($shipping){
+            $weight = Shipping::product_weight($product);
+            $value = Shipping::is_free($product) ? 0.0 : Shipping::gross_cost($shipping, $weight > 0 ? $weight : 1, $gross);
+            if ($value !== null) $out .= '<g:shipping><g:country>HU</g:country><g:price>'.esc_xml(max(0, round($value)).' HUF').'</g:price></g:shipping>';
+        }
+        if ($product->get_weight() !== '') $out .= self::gtag('shipping_weight', wc_format_decimal($product->get_weight()).' '.get_option('woocommerce_weight_unit', 'kg'));
+        return $out.'</item>';
     }
 }
