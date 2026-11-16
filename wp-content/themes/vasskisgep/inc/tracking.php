@@ -37,6 +37,21 @@ class Tracking {
         add_action('wp_footer', [$this, 'footer'], 50);
         add_action('woocommerce_add_to_cart', [$this, 'remember_add'], 20, 6);
         add_filter('woocommerce_add_to_cart_fragments', [$this, 'fragments']);
+        // Ha a Facebook for WooCommerce bővítmény fut (Dávid, 2026-11-16), a Meta képpontot az adja: a saját kódunk
+        // kimarad (nincs dupla), a bővítmény képpontja pedig csak marketing-hozzájárulással fut.
+        add_filter('facebook_for_woocommerce_integration_pixel_enabled', [__CLASS__, 'marketing_allowed'], 20);
+    }
+
+    static function fb_plugin(){ return function_exists('facebook_for_woocommerce') || class_exists('\WC_Facebookcommerce'); }
+
+    static function consent(){
+        $raw = isset($_COOKIE[self::COOKIE]) ? json_decode(wp_unslash((string)$_COOKIE[self::COOKIE]), true) : null;
+        return is_array($raw) ? $raw : null;
+    }
+
+    static function marketing_allowed($enabled = true){
+        $c = self::consent();
+        return $enabled && $c && !empty($c['m']);
     }
 
     function settings($fields){
@@ -176,7 +191,7 @@ class Tracking {
         foreach(self::take_adds() as $e) $this->events[] = $e;
         $text = trim((string)Reviews::setting('consent_text')) ?: 'Sütiket használunk a webshop működéséhez, a látogatottság méréséhez és a hirdetéseink személyre szabásához (Google, Meta, Barion). A szükséges sütik nélkül a webshop nem működik; a többit csak a hozzájárulásoddal használjuk.';
         $privacy = get_privacy_policy_url();
-        $cfg = [ 'meta' => self::meta_pixel(), 'events' => $this->events, 'email' => $this->email, 'checkout' => function_exists('is_checkout') && is_checkout() && !is_wc_endpoint_url('order-received') ];
+        $cfg = [ 'meta' => self::fb_plugin() ? '' : self::meta_pixel(), 'events' => $this->events, 'email' => $this->email, 'checkout' => function_exists('is_checkout') && is_checkout() && !is_wc_endpoint_url('order-received') ];
         ?>
 <div class="vk-track-fragment" hidden data-events="[]"></div>
 <div id="vk-consent" class="vk-consent" role="dialog" aria-live="polite" aria-label="Sütibeállítások" hidden>
@@ -235,7 +250,7 @@ class Tracking {
     loadMeta();
     while (queue.length){
       var ev = queue.shift();
-      try { if (ev.meta && window.fbq) fbq('track', ev.meta[0], ev.meta[1]); } catch (e) {}
+      try { if (ev.meta && CFG.meta && window.fbq) fbq('track', ev.meta[0], ev.meta[1]); } catch (e) {}
       try { if (ev.barion && typeof bp !== 'undefined') bp('track', ev.barion[0], ev.barion[1]); } catch (e) {}
     }
     if (CFG.email) { sendEmail(CFG.email); CFG.email = ''; }
