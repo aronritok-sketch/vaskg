@@ -36,6 +36,7 @@ require_once(__DIR__.'/stock-note.php');
 require_once(__DIR__.'/publish-admin.php');
 require_once(__DIR__.'/admin-lists.php');
 require_once(__DIR__.'/price-import.php');
+require_once(__DIR__.'/wholesale.php');
 require_once(__DIR__.'/brand-report.php');
 require_once(__DIR__.'/profiler.php');
 Profiler::start();
@@ -74,6 +75,7 @@ class Theme {
         Aszf::get_instance();
         Barion::get_instance();
         CofidisBank::get_instance();
+        Wholesale::get_instance();
         SelfCron::get_instance();
         StaffFrontend::get_instance();
         StockNote::get_instance();

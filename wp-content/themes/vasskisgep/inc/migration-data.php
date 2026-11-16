@@ -172,6 +172,7 @@ class MigrationData {
         if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'barion') return Barion::find_old_pixel();
         if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'carts') return AbandonedCart::diagnose();
         if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'cron') return SelfCron::diagnose();
+        if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'b2b') return Wholesale::diagnose(sanitize_key((string)$request->get_param('apply')));
         if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'wclog'){
             // A WooCommerce napló (pl. source=barion) utolsó sorai; hosszú kulcs-szerű karakterláncok kitakarva.
             $source = sanitize_key((string)$request->get_param('source')) ?: 'barion';

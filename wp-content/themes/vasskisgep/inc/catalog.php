@@ -738,6 +738,8 @@ class Catalog {
 
     function wholesale_field(){
         global $product_object;
+        // A B2BKing saját csoportár-mezőt ad (a régi árak oda kerültek át: Wholesale::apply), ezért ez a mező ott nem kell.
+        if (class_exists(__NAMESPACE__.'\\Wholesale') && Wholesale::active()) return;
         woocommerce_wp_text_input([
             'id' => self::WHOLESALE,
             'label' => 'Nagyker ár (bruttó, Ft)',

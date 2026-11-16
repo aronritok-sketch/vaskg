@@ -399,7 +399,7 @@ class Shop {
         $nocache = is_admin() || is_customize_preview() || (defined('REST_REQUEST') && REST_REQUEST) || isset($_GET['vk_prof_nocache']);
         if ($nocache) return $render();
         global $iu_block_styles;
-        $key = 'vk_blk_'.md5($kind.'|'.wp_json_encode($attributes).'|'.self::current_season().'|'.(int)get_option(self::CACHE_VER, 0).'|'.wp_date('Y-m-d'));
+        $key = 'vk_blk_'.md5($kind.'|'.wp_json_encode($attributes).'|'.self::current_season().'|'.(int)get_option(self::CACHE_VER, 0).'|'.wp_date('Y-m-d').'|'.(class_exists(__NAMESPACE__.'\\Wholesale') ? Wholesale::cache_key() : ''));
         $hit = get_transient($key);
         if (is_array($hit) && isset($hit['html'], $hit['styles'], $hit['start'])){
             wp_enqueue_script('iu-woocommerce-product-carousel-script');
