@@ -80,6 +80,7 @@ class Setup {
         61 => 'cofidis_info_page',
         62 => 'barion_plugin',
         63 => 'barion_statuses',
+        64 => 'szamlazz_barion',
     ];
 
     /**
@@ -2370,6 +2371,15 @@ class Setup {
             update_option('woocommerce_barion_settings', $settings);
             $this->log[] = 'Barion: elutasított fizetés → Sikertelen állapot.';
         }
+    }
+
+    /** 64. Számlázz.hu: Barion fizetésnél a számlán „Barion Payment” a fizetési mód, és a számla teljesítettként (fizetve) készül (Dávid, 2026-11-16). */
+    function szamlazz_barion(){
+        $opts = get_option('wc_szamlazz_payment_method_options_v2');
+        if (!is_array($opts)) $opts = [];
+        $opts['barion'] = array_merge([ 'deadline' => '', 'complete' => false, 'proform' => false, 'deposit' => false, 'name' => '', 'auto_disabled' => false ], (array)($opts['barion'] ?? []), [ 'complete' => true, 'name' => 'Barion Payment' ]);
+        update_option('wc_szamlazz_payment_method_options_v2', $opts);
+        $this->log[] = 'Számlázz.hu: Barion → „Barion Payment”, teljesítettként.';
     }
 
 }
