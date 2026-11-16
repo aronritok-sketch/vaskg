@@ -28,7 +28,11 @@ class Wholesale {
         add_action('wp_head', [$this, 'css']);
     }
 
-    static function active(){ return defined('B2BKINGCORE_DIR') || class_exists('\B2bkingcore') || post_type_exists('b2bking_group'); }
+    static function active(){
+        if (defined('B2BKINGCORE_DIR') || class_exists('\B2bkingcore') || post_type_exists('b2bking_group')) return true;
+        foreach((array)get_option('active_plugins', []) as $p) if (strpos($p, 'b2bking') === 0) return true;
+        return false;
+    }
 
     /** A bejelentkezett vásárló B2B csoportja (0: nem B2B). */
     static function user_group(){
@@ -99,12 +103,13 @@ class Wholesale {
     /** A régi nagyker árak és vásárlók átvétele egy B2BKing csoportba (vagy egy új „Nagyker” csoportba). */
     static function apply($target){
         global $wpdb;
-        if (!post_type_exists('b2bking_group')) return [ 'error' => 'a B2BKing nincs bekapcsolva' ];
+        // A B2BKing a csoport-típust csak az adminban jegyzi be, ezért a bővítményt és a csoportot közvetlenül nézzük.
+        if (!self::active()) return [ 'error' => 'a B2BKing nincs bekapcsolva' ];
         if ($target === 'new'){
             $group = wp_insert_post([ 'post_type' => 'b2bking_group', 'post_status' => 'publish', 'post_title' => 'Nagyker' ]);
         } else {
             $group = (int)$target;
-            if (get_post_type($group) !== 'b2bking_group') return [ 'error' => 'nincs ilyen csoport' ];
+            if (get_post_field('post_type', $group) !== 'b2bking_group') return [ 'error' => 'nincs ilyen csoport' ];
         }
         if (!$group || is_wp_error($group)) return [ 'error' => 'a csoport nem jött létre' ];
 
