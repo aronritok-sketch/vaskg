@@ -78,6 +78,7 @@ class Setup {
         59 => 'old_wholesale_prices',
         60 => 'cofidis_constructions',
         61 => 'cofidis_info_page',
+        62 => 'barion_plugin',
     ];
 
     /**
@@ -2326,6 +2327,37 @@ class Setup {
         $gw = get_option('woocommerce_'.Cofidis::ID.'_settings', []);
         if (is_array($gw) && ($gw['enabled'] ?? 'no') !== 'yes' && CofidisBank::configured()){ $gw['enabled'] = 'yes'; update_option('woocommerce_'.Cofidis::ID.'_settings', $gw); $this->log[] = 'Cofidis fizetési mód bekapcsolva (élesítésig csak tesztlinkkel látható).'; }
         $this->log[] = 'Cofidis tájékoztató oldal: '.($page ? 'frissítve' : 'létrehozva').' (hirdetmény: '.($notice ? 'feltöltve' : 'HIÁNYZIK').', ügynöki tájékoztató: '.($agent ? 'feltöltve' : 'HIÁNYZIK').').';
+    }
+
+    /**
+     * 62. Barion fizetési bővítmény (Pay via Barion for WooCommerce, wordpress.org) telepítése és bekapcsolása, ha
+     * még nincs meg (Dávid, 2026-11-15: „a barion mikortól lesz újból elérhető?”). A fizetési mód kikapcsolva
+     * marad: a POSKey-t a WooCommerce → Fizetés → Barion alatt kell megadni, utána diag=barion-gateway&enable=1.
+     */
+    function barion_plugin(){
+        $file = 'pay-via-barion-for-woocommerce/index.php';
+        require_once(ABSPATH.'wp-admin/includes/plugin.php');
+        if (version_compare(PHP_VERSION, '8.2', '<')){ $this->log[] = 'Barion bővítmény: PHP 8.2 kell, a tárhelyen '.PHP_VERSION.' van – nem telepítettem.'; return; }
+        if (!file_exists(WP_PLUGIN_DIR.'/'.$file)){
+            require_once(ABSPATH.'wp-admin/includes/file.php');
+            require_once(ABSPATH.'wp-admin/includes/misc.php');
+            require_once(ABSPATH.'wp-admin/includes/class-wp-upgrader.php');
+            WP_Filesystem();
+            $skin = new \WP_Ajax_Upgrader_Skin();
+            $upgrader = new \Plugin_Upgrader($skin);
+            $res = $upgrader->install('https://downloads.wordpress.org/plugin/pay-via-barion-for-woocommerce.latest-stable.zip');
+            if (is_wp_error($res) || !$res){ $this->log[] = 'Barion bővítmény telepítése sikertelen: '.(is_wp_error($res) ? $res->get_error_message() : implode('; ', (array)$skin->get_error_messages())); return; }
+            $this->log[] = 'Barion bővítmény telepítve.';
+        }
+        if (!is_plugin_active($file)){
+            $res = activate_plugin($file);
+            $this->log[] = is_wp_error($res) ? 'Barion bővítmény bekapcsolása sikertelen: '.$res->get_error_message() : 'Barion bővítmény bekapcsolva.';
+        }
+        // A fizetési mód kikapcsolva marad, amíg nincs POSKey.
+        foreach([ 'woocommerce_barion_settings' ] as $key){
+            $settings = get_option($key);
+            if (is_array($settings) && empty($settings['poskey']) && ($settings['enabled'] ?? '') === 'yes'){ $settings['enabled'] = 'no'; update_option($key, $settings); }
+        }
     }
 
 }
