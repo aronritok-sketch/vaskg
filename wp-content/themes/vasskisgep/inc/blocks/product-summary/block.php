@@ -76,7 +76,7 @@
 				$current = '<span class="vk-price-request">Ár egyeztetés alapján</span>';
 			}
 
-			$cofidis = \VasskisgepTheme\Catalog::has_cofidis($product) ? \VasskisgepTheme\Catalog::cofidis_badge() : '';
+			$cofidis = \VasskisgepTheme\Catalog::cofidis_shown($product) ? \VasskisgepTheme\Catalog::cofidis_badge() : '';
 
 			return '<div class="vk-price-box">
 				<div class="vk-price-box-top">'.$regular.$cofidis.'</div>

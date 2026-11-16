@@ -24,6 +24,92 @@ class Barion {
     function __construct(){
         add_filter('iu_theme_settings', [$this, 'settings']);
         add_action('wp_head', [$this, 'pixel'], 1);
+        // Fizetés eredménye egyértelműen (Dávid, 2026-11-16): jegyzet, jelölés a rendeléslistában és a rendelésnél,
+        // tájékoztatás a vásárlónak a köszönőoldalon és a levélben.
+        add_action('woocommerce_payment_complete', [$this, 'paid'], 20);
+        add_action('woocommerce_order_status_changed', [$this, 'status_changed'], 20, 4);
+        add_action('woocommerce_thankyou_barion', [$this, 'thankyou'], 5);
+        add_action('woocommerce_email_before_order_table', [$this, 'email_line'], 5, 4);
+        add_action('woocommerce_admin_order_data_after_billing_address', [$this, 'admin_badge']);
+        add_action('manage_woocommerce_page_wc-orders_custom_column', [$this, 'list_badge'], 20, 2);
+        add_action('manage_shop_order_posts_custom_column', [$this, 'list_badge'], 20, 2);
+        add_action('admin_head', [$this, 'admin_css']);
+    }
+
+    const RESULT = '_vk_barion_result';
+
+    static function is_barion($order){
+        return $order instanceof \WC_Order && strpos((string)$order->get_payment_method(), 'barion') === 0;
+    }
+
+    function paid($order_id){
+        $order = wc_get_order($order_id);
+        if (!self::is_barion($order) || $order->get_meta(self::RESULT) === 'paid') return;
+        $order->update_meta_data(self::RESULT, 'paid');
+        $order->add_order_note('✔ Sikeres bankkártyás fizetés (Barion)'.($order->get_transaction_id() ? ', tranzakció: '.$order->get_transaction_id() : '').'. A rendelés kifizetve.');
+        $order->save();
+    }
+
+    function status_changed($order_id, $from, $to, $order){
+        if (!self::is_barion($order) || $order->get_meta(self::RESULT) === 'paid') return;
+        if (!in_array($from, [ 'pending', 'on-hold' ], true)) return;
+        if ($to === 'failed'){
+            $order->update_meta_data(self::RESULT, 'failed');
+            $order->add_order_note('✖ Sikertelen bankkártyás fizetés (Barion): a bank elutasította. A rendelés nincs kifizetve.');
+            $order->save();
+        } elseif ($to === 'cancelled'){
+            $order->update_meta_data(self::RESULT, 'cancelled');
+            $order->add_order_note('✖ A bankkártyás fizetés nem történt meg (Barion): a vásárló megszakította, vagy lejárt. A rendelés nincs kifizetve.');
+            $order->save();
+        }
+    }
+
+    private static function badge($order){
+        if (!self::is_barion($order)) return '';
+        $result = (string)$order->get_meta(self::RESULT);
+        if ($result === '' && $order->is_paid()) $result = 'paid';
+        $map = [
+            'paid' => [ 'vk-barion-ok', 'Kifizetve – Barion' ],
+            'failed' => [ 'vk-barion-bad', 'Sikertelen fizetés – Barion' ],
+            'cancelled' => [ 'vk-barion-bad', 'Nem fizetett – Barion' ],
+        ];
+        if (!isset($map[$result])) return $order->has_status([ 'pending', 'on-hold' ]) ? '<span class="vk-barion-badge vk-barion-wait">Fizetésre vár – Barion</span>' : '';
+        return '<span class="vk-barion-badge '.$map[$result][0].'">'.esc_html($map[$result][1]).'</span>';
+    }
+
+    function list_badge($column, $order){
+        if ($column !== 'order_status') return;
+        $order = $order instanceof \WC_Order ? $order : wc_get_order($order);
+        $badge = self::badge($order);
+        if ($badge !== '') echo '<br>'.$badge;
+    }
+
+    function admin_badge($order){
+        $badge = self::badge($order);
+        if ($badge !== '') echo '<p><strong>Fizetés:</strong><br>'.$badge.($order->get_transaction_id() ? '<br><small>Barion tranzakció: '.esc_html($order->get_transaction_id()).'</small>' : '').'</p>';
+    }
+
+    function admin_css(){
+        echo '<style>.vk-barion-badge{display:inline-block;margin-top:4px;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;line-height:1.6;white-space:nowrap}.vk-barion-ok{background:#d1fae5;color:#065f46}.vk-barion-bad{background:#fee2e2;color:#991b1b}.vk-barion-wait{background:#fef3c7;color:#92400e}</style>';
+    }
+
+    function thankyou($order_id){
+        $order = wc_get_order($order_id);
+        if (!self::is_barion($order)) return;
+        if ($order->is_paid()){
+            echo '<div class="vk-notice vk-barion-notice vk-barion-notice-ok"><p><strong>Sikeres fizetés.</strong> A bankkártyás fizetést a Barion visszaigazolta, a rendelésed kifizetve. Köszönjük!</p></div>';
+        } elseif ($order->has_status([ 'failed', 'cancelled' ])){
+            echo '<div class="vk-notice vk-barion-notice vk-barion-notice-bad"><p><strong>A fizetés nem sikerült.</strong> A bankkártyás fizetés elutasításra került vagy megszakadt, ezért a rendelés nincs kifizetve. Próbáld újra, vagy válassz másik fizetési módot; kérdés esetén hívj minket.</p>'
+                .($order->needs_payment() ? '<p><a class="iu-button iu-button-default" href="'.esc_url($order->get_checkout_payment_url()).'"><span class="iu-button-text"><span>Fizetés újra</span></span></a></p>' : '').'</div>';
+        } else {
+            echo '<div class="vk-notice vk-barion-notice"><p>A fizetés visszaigazolására várunk a Bariontól. Ha a fizetés sikeres volt, néhány percen belül e-mailben is visszaigazoljuk.</p></div>';
+        }
+    }
+
+    function email_line($order, $sent_to_admin, $plain_text = false, $email = null){
+        if (!self::is_barion($order) || !$order->is_paid()) return;
+        $text = 'Fizetés: bankkártyával (Barion) – sikeres, a rendelés kifizetve.';
+        echo $plain_text ? $text."\n\n" : '<p><strong>'.esc_html($text).'</strong></p>';
     }
 
     function settings($fields){
@@ -50,6 +136,9 @@ class Barion {
     /** Barion Pixel alapkód (a Barion leírása szerint). */
     function pixel(){
         if (is_admin()) return;
+        // Ha a Barion bővítmény maga is kiteszi a Pixelt (azonosító megadva, követés bekapcsolva), nem duplázzuk.
+        $plugin = (array)get_option('woocommerce_barion_settings', []);
+        if (!empty($plugin['barion_pixel_id']) && ($plugin['tracking_enabled'] ?? 'yes') === 'yes' && class_exists('\WC_Gateway_Barion')) return;
         $id = self::pixel_id();
         if ($id === '') return;
         $js = wp_json_encode($id);
@@ -99,7 +188,9 @@ class Barion {
                 update_option($key, $settings);
             }
             $settings = (array)get_option('woocommerce_'.$gateway->id.'_settings', []);
-            $out[$gateway->id] = [ 'enabled' => ($settings['enabled'] ?? 'no'), 'title' => $gateway->get_title(), 'poskey_set' => !empty($settings['poskey']) || !empty($settings['pos_key']) ];
+            $out[$gateway->id] = [ 'enabled' => ($settings['enabled'] ?? 'no'), 'title' => $gateway->get_title(), 'poskey_set' => !empty($settings['poskey']) || !empty($settings['pos_key']),
+                'environment' => $settings['environment'] ?? '', 'payee_set' => !empty($settings['payee']), 'pixel_set' => !empty($settings['barion_pixel_id']),
+                'order_status' => $settings['order_status'] ?? '', 'rejected_status' => $settings['rejected_status'] ?? '', 'expired_status' => $settings['expired_status'] ?? '' ];
         }
         return $out ?: [ 'error' => 'nincs Barion fizetési mód (bővítmény?)' ];
     }

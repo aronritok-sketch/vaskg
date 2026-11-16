@@ -652,6 +652,11 @@ class Catalog {
         return $product->get_meta('_vk_cofidis') === 'yes';
     }
 
+    /** A Cofidis jelölés látszhat-e a termékoldalon: bank-kapcsolattal élesítésig csak a tesztelőknek (Dávid, 2026-11-16). */
+    static function cofidis_shown($product){
+        return $product && self::has_cofidis($product) && (!CofidisBank::configured() || CofidisBank::visible());
+    }
+
     static function documents($product){
         $ids = array_filter(array_map('absint', explode(',', (string)$product->get_meta('_vk_documents'))));
         return array_values(array_filter($ids, function($id){ return get_post_type($id) === 'attachment'; }));

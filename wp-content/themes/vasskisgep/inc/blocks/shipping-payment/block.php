@@ -63,7 +63,7 @@
 				foreach($map as $key => $value){ if (strpos($gateway->id, $key) === 0) $type = $value; }
 				$payment .= '<li>'.$icon($type).'<span>'.esc_html(wp_strip_all_tags($gateway->get_title())).'</span></li>';
 			}
-			if ($product && \VasskisgepTheme\Catalog::has_cofidis($product)){
+			if ($product && \VasskisgepTheme\Catalog::cofidis_shown($product)){
 				$payment .= '<li>'.$icon('loan').'<span>Részletfizetés (Cofidis)</span></li>';
 			}
 

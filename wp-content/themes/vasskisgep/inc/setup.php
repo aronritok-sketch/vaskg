@@ -79,6 +79,7 @@ class Setup {
         60 => 'cofidis_constructions',
         61 => 'cofidis_info_page',
         62 => 'barion_plugin',
+        63 => 'barion_statuses',
     ];
 
     /**
@@ -2357,6 +2358,17 @@ class Setup {
         foreach([ 'woocommerce_barion_settings' ] as $key){
             $settings = get_option($key);
             if (is_array($settings) && empty($settings['poskey']) && ($settings['enabled'] ?? '') === 'yes'){ $settings['enabled'] = 'no'; update_option($key, $settings); }
+        }
+    }
+
+    /** 63. Barion: elutasított fizetés után „Sikertelen” állapot (nem „Visszamondva”), hogy egyértelmű legyen (Dávid, 2026-11-16). */
+    function barion_statuses(){
+        $settings = get_option('woocommerce_barion_settings');
+        if (!is_array($settings)){ $this->log[] = 'Barion: még nincs beállítás.'; return; }
+        if (empty($settings['rejected_status']) || $settings['rejected_status'] === 'no'){
+            $settings['rejected_status'] = 'wc-failed';
+            update_option('woocommerce_barion_settings', $settings);
+            $this->log[] = 'Barion: elutasított fizetés → Sikertelen állapot.';
         }
     }
 

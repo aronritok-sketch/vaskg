@@ -172,6 +172,25 @@ class MigrationData {
         if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'barion') return Barion::find_old_pixel();
         if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'carts') return AbandonedCart::diagnose();
         if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'cron') return SelfCron::diagnose();
+        if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'szamlazz'){
+            // Számlázz.hu bővítmény fizetési mód beállításai (kulcs, jelszó, token nélkül).
+            global $wpdb;
+            $out = [ 'plugins' => array_values(array_filter((array)get_option('active_plugins', []), function($p){ return stripos($p, 'szamlazz') !== false || stripos($p, 'invoice') !== false || stripos($p, 'szamla') !== false; })) ];
+            $clean = function($v, $depth = 0) use (&$clean){
+                if (!is_array($v)) return is_scalar($v) ? (strlen((string)$v) > 120 ? mb_substr((string)$v, 0, 120).'…' : $v) : gettype($v);
+                $o = [];
+                foreach($v as $k => $x){
+                    if (preg_match('/key|pass|token|secret|agent|user/i', (string)$k)) { $o[$k] = '(rejtve)'; continue; }
+                    $o[$k] = $depth > 3 ? '…' : $clean($x, $depth + 1);
+                }
+                return $o;
+            };
+            foreach((array)$wpdb->get_col("SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE '%szamlazz%' AND option_name NOT LIKE '%transient%' LIMIT 80") as $name){
+                if (preg_match('/key|pass|token|secret|agent|user/i', $name)) { $out['options'][$name] = '(rejtve)'; continue; }
+                $out['options'][$name] = $clean(get_option($name));
+            }
+            return $out;
+        }
         if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'cofidis') return CofidisBank::diagnose(sanitize_key((string)$request->get_param('csr')));
         if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'user'){
             // Egy fiók szerepköre és kosár-állapota (belépési / kosáremlékeztető hibához); jelszó, cím nélkül.
