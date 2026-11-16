@@ -577,6 +577,31 @@ class Gls {
         return 'other';
     }
 
+    /** A legutóbbi GLS-es rendelések: állapot, jegyzetek (állapotváltás, levelek) és a GLS állapotkódjai (diag=glsorders). */
+    static function diagnose_orders(){
+        $orders = wc_get_orders([ 'limit' => 8, 'meta_key' => '_vk_gls', 'meta_compare' => 'EXISTS', 'orderby' => 'date', 'order' => 'DESC' ]);
+        $out = []; $by = [];
+        foreach($orders as $order){
+            $parcel = (string)(self::info($order)['parcel'] ?? '');
+            $notes = [];
+            foreach(array_reverse(wc_get_order_notes([ 'order_id' => $order->get_id(), 'limit' => 25 ])) as $n) $notes[] = $n->date_created->date('m-d H:i').' '.mb_substr(wp_strip_all_tags($n->content), 0, 140);
+            $out[$order->get_id()] = [ 'status' => $order->get_status(), 'parcel' => $parcel, 'gls_status' => $order->get_meta('_vk_gls_status'), 'notes' => $notes ];
+            if (ctype_digit($parcel)) $by[$parcel] = $order->get_id();
+        }
+        if ($by){
+            $res = self::request('GetParcelListStatuses', [ 'ParcelNumberList' => array_map('intval', array_keys($by)), 'LanguageIsoCode' => 'HU' ]);
+            if (!is_wp_error($res)) foreach((array)($res['ParcelList'] ?? []) as $p){
+                $id = $by[(string)($p['ParcelNumber'] ?? '')] ?? 0;
+                if (!$id) continue;
+                foreach((array)($p['ParcelStatusList'] ?? []) as $st){
+                    $t = preg_match('/Date\((\d+)/', (string)($st['StatusDate'] ?? ''), $m) ? (int)($m[1] / 1000) : 0;
+                    $out[$id]['gls'][] = ($t ? wp_date('m-d H:i', $t) : '?').' '.(int)($st['StatusCode'] ?? 0).' '.self::status_kind((int)($st['StatusCode'] ?? 0)).' '.mb_substr((string)($st['StatusDescription'] ?? ''), 0, 60);
+                }
+            }
+        }
+        return $out;
+    }
+
     /** Óránként: a GLS-csomaggal rendelkező, még nem teljesített rendelések állapota. */
     static function track(){
         if (!self::ready()) return;
