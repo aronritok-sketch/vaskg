@@ -206,7 +206,7 @@ class Barion {
             $settings = (array)get_option('woocommerce_'.$gateway->id.'_settings', []);
             $out['last_error'] = get_option('vk_barion_last_error') ?: null;
             $out[$gateway->id] = [ 'enabled' => ($settings['enabled'] ?? 'no'), 'title' => $gateway->get_title(), 'poskey_set' => !empty($settings['poskey']) || !empty($settings['pos_key']),
-                'environment' => $settings['environment'] ?? '', 'payee_set' => !empty($settings['payee']), 'pixel_set' => !empty($settings['barion_pixel_id']),
+                'environment' => $settings['environment'] ?? '', 'payee_set' => !empty($settings['payee']), 'payee' => !empty($settings['payee']) ? mb_substr((string)$settings['payee'], 0, 3).'…'.strstr((string)$settings['payee'], '@') : '', 'pixel_set' => !empty($settings['barion_pixel_id']),
                 'order_status' => $settings['order_status'] ?? '', 'rejected_status' => $settings['rejected_status'] ?? '', 'expired_status' => $settings['expired_status'] ?? '' ];
         }
         return $out ?: [ 'error' => 'nincs Barion fizetési mód (bővítmény?)' ];
