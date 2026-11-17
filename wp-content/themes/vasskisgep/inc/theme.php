@@ -40,6 +40,8 @@ require_once(__DIR__.'/wholesale.php');
 require_once(__DIR__.'/tracking.php');
 require_once(__DIR__.'/brand-report.php');
 require_once(__DIR__.'/profiler.php');
+require_once(__DIR__.'/order-notes.php');
+require_once(__DIR__.'/rest-compat.php');
 Profiler::start();
 
 class Theme {
@@ -89,6 +91,8 @@ class Theme {
         Search::get_instance();
         Cofidis::get_instance();
         Migration::get_instance();
+        OrderNotes::get_instance();
+        RestCompat::get_instance();
 
         add_action('after_setup_theme', [$this, 'editor_styles'], 999);
 

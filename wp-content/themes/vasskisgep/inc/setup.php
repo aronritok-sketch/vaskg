@@ -83,6 +83,7 @@ class Setup {
         64 => 'szamlazz_barion',
         65 => 'order_attribution',
         66 => 'gls_point_method',
+        67 => 'apple_pay_domain',
     ];
 
     /**
@@ -2428,6 +2429,23 @@ class Setup {
             return;
         }
         $this->log[] = 'GLS CsomagPont: nincs Magyarország zóna.';
+    }
+
+    /**
+     * 67. Apple Pay domain-igazolás a Barionhoz (Dávid, 2026-11-17): a fájl a webhely gyökerének .well-known mappájába
+     * kerül. Az ELIN a /.well-known/ címeket maga szolgálja ki (nem jut el a WordPressig), ezért fizikai fájl kell.
+     */
+    function apple_pay_domain(){
+        $name = 'apple-developer-merchantid-domain-association';
+        $source = get_stylesheet_directory().'/setup/well-known/'.$name;
+        $dir = rtrim(ABSPATH, '/').'/.well-known';
+        $target = $dir.'/'.$name;
+        if (!is_dir($dir) && !wp_mkdir_p($dir)){ $this->log[] = 'Apple Pay: a .well-known mappa nem hozható létre.'; return; }
+        $content = (string)file_get_contents($source);
+        if (is_file($target) && file_get_contents($target) === $content){ $this->log[] = 'Apple Pay: az igazoló fájl már a helyén van.'; return; }
+        $this->log[] = file_put_contents($target, $content) === strlen($content)
+            ? 'Apple Pay: az igazoló fájl kint van (/.well-known/'.$name.').'
+            : 'Apple Pay: az igazoló fájl nem írható ki ('.$target.').';
     }
 
 }
