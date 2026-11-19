@@ -128,7 +128,10 @@ class Feed {
     /** A termék legmélyebb kategóriájának útvonala: „Kerti és erdészeti gépek > Fűnyírók > Benzines fűnyírók”. */
     private static function category($product){
         $best = [];
-        foreach($product->get_category_ids() as $term_id){
+        $ids = $product->get_category_ids();
+        // Csak gyártói oldali / akció-kategória csak akkor, ha nincs más.
+        $normal = array_values(array_filter($ids, function($id){ return !Catalog::special_cat($id); }));
+        foreach($normal ?: $ids as $term_id){
             $path = [];
             for ($term = get_term($term_id, 'product_cat'); $term && !is_wp_error($term); $term = $term->parent ? get_term($term->parent, 'product_cat') : null){
                 array_unshift($path, $term->name);

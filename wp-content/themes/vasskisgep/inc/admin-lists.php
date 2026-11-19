@@ -37,6 +37,16 @@ class AdminLists {
         // Gyártói oldal csempéinek sorrendje gyártónként (a márka szerkesztésénél).
         add_action('product_brand_edit_form_fields', [$this, 'brand_order_fields'], 20);
         add_action('edited_product_brand', [$this, 'save_brand_order']);
+        // Gyártók sorrendje (Termékek → Gyártók „Sorrend” oszlop; Dávid, 2026-11-19).
+        add_filter('manage_edit-product_brand_columns', [$this, 'brand_columns'], 20);
+        add_filter('manage_product_brand_custom_column', [$this, 'brand_column'], 10, 3);
+        add_action('wp_ajax_vk_brand_order', [$this, 'ajax_brand_order']);
+        add_action('admin_footer-edit-tags.php', [$this, 'brand_order_script']);
+        // Kategória: kiemelt akció a menüben / csak a gyártói oldalon.
+        add_action('product_cat_edit_form_fields', [$this, 'special_fields'], 40);
+        add_action('product_cat_add_form_fields', [$this, 'special_add_fields'], 40);
+        add_action('edited_product_cat', [$this, 'save_special']);
+        add_action('created_product_cat', [$this, 'save_special']);
         // Rendelés: telefonszám másolása a futárszolgálatokhoz (+36 nélkül, egybeírva).
         add_action('admin_footer', [$this, 'phone_copy_script']);
         // Táblázat a klasszikus szerkesztőben (termékleírás; Dávid, 2026-11-10): a TinyMCE 4 hivatalos table bővítménye
@@ -289,21 +299,37 @@ class AdminLists {
             .'<option value="count"'.selected($mode, 'count', false).'>Termékszám szerint (a legtöbb terméket tartalmazó elöl)</option>'
             .'<option value="custom"'.selected($mode, 'custom', false).'>Egyedi sorrend (lent, számokkal)</option>'
             .'</select></p>';
-        echo '<table class="widefat striped" style="max-width:560px"><thead><tr><th style="width:90px">Sorrend</th><th>Csempe</th><th style="width:90px">Termék</th></tr></thead><tbody>';
+        if (function_exists('wp_enqueue_media')) wp_enqueue_media();
+        $own = (array)get_term_meta($term->term_id, Catalog::TILE_IMAGES, true);
+        echo '<table class="widefat striped" style="max-width:720px"><thead><tr><th style="width:90px">Sorrend</th><th>Csempe</th><th style="width:70px">Termék</th><th style="width:200px">Kép</th></tr></thead><tbody>';
         $i = 0;
         foreach($groups as $gid => $g){
             $cat = get_term($gid, 'product_cat');
             if (!$cat || is_wp_error($cat)) continue;
             $i++;
-            echo '<tr><td><input type="number" min="1" name="vk_tile_order['.(int)$gid.']" value="'.$i.'" class="vk-tile-pos" style="width:70px"><input type="hidden" name="vk_tile_old['.(int)$gid.']" value="'.$i.'"></td><td>'.esc_html($cat->name).'</td><td>'.(int)$g['count'].'</td></tr>';
+            $set = (int)($own[$gid] ?? 0);
+            $thumb = $g['image'] ? wp_get_attachment_image((int)$g['image'], [ 48, 48 ], false, [ 'style' => 'width:48px;height:48px;object-fit:contain;vertical-align:middle' ]) : '';
+            echo '<tr><td><input type="number" min="1" name="vk_tile_order['.(int)$gid.']" value="'.$i.'" class="vk-tile-pos" style="width:70px"><input type="hidden" name="vk_tile_old['.(int)$gid.']" value="'.$i.'"></td><td>'.esc_html($cat->name).'</td><td>'.(int)$g['count'].'</td>'
+                .'<td class="vk-tile-img"><span class="vk-tile-img-preview">'.$thumb.'</span> <input type="hidden" name="vk_tile_image['.(int)$gid.']" value="'.$set.'">'
+                .'<button type="button" class="button button-small vk-tile-img-pick">'.($set ? 'Csere' : 'Kép választása').'</button>'
+                .($set ? ' <button type="button" class="button-link vk-tile-img-clear">automatikus</button>' : ' <small style="color:#646970">automatikus</small>').'</td></tr>';
         }
-        echo '</tbody></table><p class="description">A mostani sorrend látszik. Ha átírod a számokat, a sorrend „Egyedi” lesz; mentés: „Frissítés” lent. Ez csak ennél a gyártónál számít, a többi gyártó és a kategóriák sorrendje nem változik.</p>';
+        echo '</tbody></table><p class="description">A mostani sorrend látszik. Ha átírod a számokat, a sorrend „Egyedi” lesz; mentés: „Frissítés” lent. Ez csak ennél a gyártónál számít, a többi gyártó és a kategóriák sorrendje nem változik.<br>Kép: ha nem választasz, a rendszer a gyártó egyik termékének képét teszi a csempére (ez a termékek változásával cserélődhet); a választott kép marad.</p>';
+        echo '<script>jQuery(function($){$(document).on("click",".vk-tile-img-pick",function(e){e.preventDefault();var td=$(this).closest("td");var f=wp.media({title:"Csempe képe",button:{text:"Kiválasztás"},library:{type:"image"},multiple:false});f.on("select",function(){var a=f.state().get("selection").first().toJSON();td.find("input").val(a.id);var u=(a.sizes&&a.sizes.thumbnail?a.sizes.thumbnail.url:a.url);td.find(".vk-tile-img-preview").html("<img src=\""+u+"\" style=\"width:48px;height:48px;object-fit:contain;vertical-align:middle\" alt=\"\">");td.find(".vk-tile-img-pick").text("Csere");});f.open();});$(document).on("click",".vk-tile-img-clear",function(e){e.preventDefault();var td=$(this).closest("td");td.find("input").val("0");td.find(".vk-tile-img-preview").html("");$(this).replaceWith("<small style=\"color:#646970\">automatikus (mentés után)</small>");});});</script>';
         echo '<script>document.addEventListener("input",function(e){if(e.target.classList&&e.target.classList.contains("vk-tile-pos")){var s=document.getElementById("vk-tile-mode");if(s)s.value="custom";}});</script>';
         echo '</td></tr>';
     }
 
     function save_brand_order($term_id){
         if (!isset($_POST['vk_tile_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['vk_tile_nonce'])), 'vk_tile_order') || !current_user_can('manage_product_terms')) return;
+        if (isset($_POST['vk_tile_image'])){
+            $images = [];
+            foreach((array)$_POST['vk_tile_image'] as $gid => $image) if ((int)$image > 0) $images[(int)$gid] = (int)$image;
+            if ($images) update_term_meta($term_id, Catalog::TILE_IMAGES, $images);
+            else delete_term_meta($term_id, Catalog::TILE_IMAGES);
+            if (function_exists('wp_cache_set_terms_last_changed')) wp_cache_set_terms_last_changed();
+            Shop::flush_block_cache();
+        }
         $mode = sanitize_key(wp_unslash($_POST['vk_tile_mode'] ?? ''));
         if (!in_array($mode, [ '', 'count', 'custom' ], true)) $mode = '';
         if ($mode === '') delete_term_meta($term_id, Catalog::TILE_MODE);
@@ -322,6 +348,101 @@ class AdminLists {
             uasort($positions, function($a, $b){ return $a <=> $b; });
             update_term_meta($term_id, Catalog::TILE_ORDER, array_keys($positions));
         }
+    }
+
+    /* ---------- Gyártók sorrendje ---------- */
+
+    function brand_columns($columns){
+        $out = [];
+        foreach($columns as $key => $label){
+            if ($key === 'name') $out['vk_brand_order'] = 'Sorrend';
+            $out[$key] = $label;
+        }
+        return $out;
+    }
+
+    function brand_column($content, $column, $term_id){
+        if ($column !== 'vk_brand_order') return $content;
+        static $positions = null;
+        if ($positions === null){
+            $positions = [];
+            foreach(Catalog::sorted_brands(false) as $i => $b) $positions[(int)$b->term_id] = $i + 1;
+        }
+        $pos = $positions[(int)$term_id] ?? 0;
+        $max = count($positions);
+        return '<input type="number" class="vk-brand-order" min="1" max="'.(int)$max.'" value="'.(int)$pos.'" data-term="'.(int)$term_id.'" data-old="'.(int)$pos.'" style="width:64px" title="Sorszám a menü Gyártók fülén és a Gyártók oldalon (1–'.(int)$max.'). Átírás után Enter.">'
+            .'<span style="color:#646970"> / '.(int)$max.'</span>';
+    }
+
+    function ajax_brand_order(){
+        $term_id = (int)($_POST['term'] ?? 0);
+        $pos = (int)($_POST['pos'] ?? 0);
+        if (!check_ajax_referer('vk_brand_order', 'nonce', false) || !current_user_can('manage_product_terms')) wp_send_json_error([ 'message' => 'Nincs jogosultság.' ], 403);
+        $term = get_term($term_id, 'product_brand');
+        if (!$term || is_wp_error($term) || $pos < 1) wp_send_json_error([ 'message' => 'Hibás adat.' ], 400);
+        $ids = array_map(function($t){ return (int)$t->term_id; }, Catalog::sorted_brands(false));
+        $ids = array_values(array_diff($ids, [ $term_id ]));
+        array_splice($ids, min($pos, count($ids) + 1) - 1, 0, [ $term_id ]);
+        foreach($ids as $i => $id) update_term_meta($id, Catalog::BRAND_ORDER, $i + 1);
+        Shop::flush_block_cache();
+        MegaMenu::flush();
+        wp_send_json_success([ 'position' => array_search($term_id, $ids, true) + 1 ]);
+    }
+
+    function brand_order_script(){
+        if (($_GET['taxonomy'] ?? '') !== 'product_brand') return;
+        ?>
+        <style>.column-vk_brand_order { width: 7rem; } .vk-brand-order.is-busy { opacity: .5; }</style>
+        <script>
+        (function(){
+            var nonce = <?php echo wp_json_encode(wp_create_nonce('vk_brand_order')); ?>;
+            function save(input){
+                var pos = parseInt(input.value, 10), old = parseInt(input.getAttribute('data-old'), 10);
+                if (!pos || pos === old || input.classList.contains('is-busy')) return;
+                input.classList.add('is-busy'); input.disabled = true;
+                var body = new URLSearchParams({ action: 'vk_brand_order', nonce: nonce, term: input.getAttribute('data-term'), pos: pos });
+                fetch(ajaxurl, { method: 'POST', credentials: 'same-origin', body: body }).then(function(r){ return r.json(); }).then(function(r){
+                    if (!r || !r.success){ alert((r && r.data && r.data.message) || 'Nem sikerült menteni.'); input.value = old; input.disabled = false; input.classList.remove('is-busy'); return; }
+                    location.reload();
+                }).catch(function(){ alert('Nem sikerült menteni (kapcsolati hiba).'); input.value = old; input.disabled = false; input.classList.remove('is-busy'); });
+            }
+            document.addEventListener('keydown', function(e){ if (e.key === 'Enter' && e.target.classList && e.target.classList.contains('vk-brand-order')){ e.preventDefault(); save(e.target); } });
+            document.addEventListener('change', function(e){ if (e.target.classList && e.target.classList.contains('vk-brand-order')) save(e.target); });
+            document.addEventListener('click', function(e){ if (e.target.classList && e.target.classList.contains('vk-brand-order')) e.stopPropagation(); }, true);
+        })();
+        </script>
+        <?php
+    }
+
+    /* ---------- Kategória: kiemelt akció a menüben / csak a gyártói oldalon ---------- */
+
+    function special_fields($term){
+        $promo = get_term_meta($term->term_id, Catalog::PROMO, true) === 'yes';
+        $until = (string)get_term_meta($term->term_id, Catalog::PROMO_UNTIL, true);
+        $only = get_term_meta($term->term_id, Catalog::BRAND_ONLY, true) === 'yes';
+        wp_nonce_field('vk_cat_special', 'vk_cat_special_nonce');
+        echo '<tr class="form-field"><th scope="row">Kiemelt akció</th><td><label><input type="checkbox" name="vk_promo_menu" value="yes"'.checked($promo, true, false).'> Kiemelt akció a Termékek menüben</label>'
+            .'<p><label>Eddig látszik: <input type="date" name="vk_promo_until" value="'.esc_attr($until).'" style="width:auto"></label></p>'
+            .'<p class="description">A menü fülsorának végén narancs gombként látszik, ha van benne termék (a kategória képe, pl. az akció logója, a név előtt). Az akció végén vedd ki a pipát, vagy add meg a dátumot: utána magától eltűnik. A termékeket a terméklistában csoportos szerkesztéssel teheted bele.</p></td></tr>';
+        echo '<tr class="form-field"><th scope="row">Csak gyártói oldal</th><td><label><input type="checkbox" name="vk_brand_only" value="yes"'.checked($only, true, false).'> Csak a gyártó oldalán látszik</label>'
+            .'<p class="description">A menüben és a kategóriaoldalak csempéi között nem jelenik meg, a gyártó oldalán viszont csempe lesz belőle (pl. Cedrus: Lombfúvók és lombszívók).</p></td></tr>';
+    }
+
+    function special_add_fields(){
+        wp_nonce_field('vk_cat_special', 'vk_cat_special_nonce');
+        echo '<div class="form-field"><label><input type="checkbox" name="vk_promo_menu" value="yes"> Kiemelt akció a Termékek menüben</label><p>Narancs gombként a menü fülsorának végén, ha van benne termék (pl. Orange Week akció). Lejárat a szerkesztésnél adható meg.</p></div>';
+    }
+
+    function save_special($term_id){
+        if (!isset($_POST['vk_cat_special_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['vk_cat_special_nonce'])), 'vk_cat_special') || !current_user_can('manage_product_terms')) return;
+        if (!empty($_POST['vk_promo_menu'])) update_term_meta($term_id, Catalog::PROMO, 'yes'); else delete_term_meta($term_id, Catalog::PROMO);
+        $until = sanitize_text_field(wp_unslash($_POST['vk_promo_until'] ?? ''));
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $until)) update_term_meta($term_id, Catalog::PROMO_UNTIL, $until); elseif (isset($_POST['vk_promo_until'])) delete_term_meta($term_id, Catalog::PROMO_UNTIL);
+        if (isset($_POST['vk_promo_until'])){
+            if (!empty($_POST['vk_brand_only'])) update_term_meta($term_id, Catalog::BRAND_ONLY, 'yes'); else delete_term_meta($term_id, Catalog::BRAND_ONLY);
+        }
+        MegaMenu::flush();
+        Shop::flush_block_cache();
     }
 
     /* ---------- Termék szerkesztése: kategória-kereső ---------- */

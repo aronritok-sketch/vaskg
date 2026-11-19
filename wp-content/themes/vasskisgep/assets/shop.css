@@ -2515,6 +2515,64 @@ ul.products:not(.columns-1) li.product .iu-group.brand:has(.vk-cofidis-badge) .i
 	color: var(--iu-text-color);
 	border-bottom-color: var(--iu-text-color);
 }
+/* Kiemelt akció-kategória a fülsor végén (pl. Orange Week akció): narancs gomb, a kategória képével (logó). */
+.iu-menu-block .vk-mega-tabs .vk-mega-promo,
+.vk-mega-tabs .vk-mega-promo {
+	display: inline-flex;
+	align-items: center;
+	gap: .45rem;
+	align-self: center;
+	margin-bottom: .4rem;
+	padding: .45rem 1.05rem;
+	border-radius: 999px;
+	background: #f37a1f;
+	color: #fff !important;
+	font-family: inherit;
+	font-size: 1rem;
+	font-weight: 600;
+	line-height: 1.2;
+	white-space: nowrap;
+	text-decoration: none !important;
+	box-shadow: 0 2px 8px rgb(243 122 31 / .35);
+	transition: background .2s, transform .2s;
+}
+.vk-mega-promo:hover,
+.vk-mega-promo:focus-visible {
+	background: #d9620a;
+	transform: translateY(-1px);
+}
+.vk-promo-strip {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: .8rem;
+	margin: 0 0 2rem;
+}
+.vk-promo-strip .vk-mega-promo {
+	display: inline-flex;
+	align-items: center;
+	gap: .55rem;
+	padding: .7rem 1.5rem;
+	border-radius: 999px;
+	background: #f37a1f;
+	color: #fff !important;
+	font-size: 1.15rem;
+	font-weight: 700;
+	line-height: 1.2;
+	text-decoration: none !important;
+	box-shadow: 0 4px 14px rgb(243 122 31 / .35);
+	transition: background .2s, transform .2s;
+}
+.vk-promo-strip .vk-mega-promo:hover { background: #d9620a; transform: translateY(-1px); }
+.vk-promo-strip .vk-mega-promo-logo { height: 2rem !important; }
+.vk-mega-promo-logo {
+	width: auto !important;
+	height: 1.5rem !important;
+	max-width: 4rem;
+	object-fit: contain;
+	border-radius: .2rem;
+	background: #fff;
+}
 .vk-mega-close {
 	position: absolute;
 	top: 0;

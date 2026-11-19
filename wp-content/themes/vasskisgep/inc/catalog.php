@@ -51,6 +51,12 @@ class Catalog {
     }
 
     function __construct(){
+        // A morzsamenü ne a csak gyártói oldali vagy az akció-kategóriát mutassa, ha a terméknek van rendes kategóriája.
+        add_filter('woocommerce_breadcrumb_main_term', function($main, $terms){
+            if (!$main || !self::special_cat($main->term_id)) return $main;
+            foreach((array)$terms as $t) if (!self::special_cat($t->term_id)) return $t;
+            return $main;
+        }, 10, 2);
         add_action('woocommerce_product_options_general_product_data', [$this, 'product_fields']);
         add_action('woocommerce_admin_process_product_object', [$this, 'save_product_fields']);
         // Nagyker ár (a régi webshop „Nagyker” vásárlói csoportjának ára; Dávid, 2026-11-10): az ár mellett, csak az adminban.
@@ -202,6 +208,54 @@ class Catalog {
     const TILE_MODE = 'vk_tile_mode';
     const TILE_ORDER = 'vk_tile_order';
 
+    /** Gyártónként a csempék saját képe: [kategória term_id => kép (attachment) id] (Dávid, 2026-11-19). */
+    const TILE_IMAGES = 'vk_tile_images';
+    /** Gyártók sorrendje (Termékek → Gyártók „Sorrend” oszlop; Dávid, 2026-11-19: a régi webshopban is állítható volt). */
+    const BRAND_ORDER = 'vk_brand_order';
+    /** Csak a gyártói oldalon látszó kategória (a menüben, a kategóriaoldalak csempéi között nem; pl. Cedrus lombfúvók). */
+    const BRAND_ONLY = 'vk_brand_only';
+    /** Kiemelt akció-kategória a Termékek menü fülsorában (pl. Orange Week akció), opcionális lejárattal. */
+    const PROMO = 'vk_promo_menu';
+    const PROMO_UNTIL = 'vk_promo_until';
+
+    /** A kategória (vagy valamelyik szülője) a megadott jelölésű-e (BRAND_ONLY / PROMO). */
+    static function cat_flag($term_id, $meta){
+        static $cache = [];
+        $term_id = (int)$term_id;
+        if (isset($cache[$meta][$term_id])) return $cache[$meta][$term_id];
+        $on = false;
+        foreach(array_merge([ $term_id ], array_map('intval', get_ancestors($term_id, 'product_cat'))) as $id){
+            if (get_term_meta($id, $meta, true) === 'yes'){ $on = true; break; }
+        }
+        return $cache[$meta][$term_id] = $on;
+    }
+
+    /** Különleges (csak gyártói oldali vagy akció) kategória-e: a feed és a morzsamenü ezeket csak végső esetben választja. */
+    static function special_cat($term_id){
+        return self::cat_flag($term_id, self::BRAND_ONLY) || self::cat_flag($term_id, self::PROMO);
+    }
+
+    /** Az akció-kategória látszik-e most a menüben (be van kapcsolva, van terméke, nem járt le). */
+    static function promo_active($term){
+        if (get_term_meta($term->term_id, self::PROMO, true) !== 'yes') return false;
+        $until = trim((string)get_term_meta($term->term_id, self::PROMO_UNTIL, true));
+        if ($until !== '' && $until < current_time('Y-m-d')) return false;
+        $count = (int)get_term_meta($term->term_id, 'product_count_product_cat', true) ?: (int)$term->count;
+        return $count > 0;
+    }
+
+    /** A gyártók a beállított sorrendben (Sorrend oszlop; ahol nincs, utánuk név szerint). */
+    static function sorted_brands($hide_empty = false){
+        if (!taxonomy_exists('product_brand')) return [];
+        $brands = get_terms([ 'taxonomy' => 'product_brand', 'hide_empty' => $hide_empty, 'orderby' => 'name' ]);
+        if (is_wp_error($brands)) return [];
+        usort($brands, function($a, $b){
+            $oa = get_term_meta($a->term_id, self::BRAND_ORDER, true); $ob = get_term_meta($b->term_id, self::BRAND_ORDER, true);
+            return [ $oa === '' ? PHP_INT_MAX : (int)$oa, $a->name ] <=> [ $ob === '' ? PHP_INT_MAX : (int)$ob, $b->name ];
+        });
+        return $brands;
+    }
+
     const BRAND_TILE_GROUPS = [ 'Fűnyírók', 'Fűnyíró traktorok', 'Láncfűrészek és ágnyesők', 'Permetezés', 'Kombi- és multirendszerek', 'Daraboló gépek', 'Tömörítő gépek' ];
 
     /**
@@ -230,9 +284,21 @@ class Catalog {
             // Termékenként azok a kategóriák, amelyeknek a termék egy alkategóriájában is benne van (ezek nem típus-csempék).
             $has_deeper = [];
             foreach($assigned as $t) foreach(get_ancestors($t->term_id, 'product_cat') as $a) $has_deeper[(int)$t->object_id][(int)$a] = true;
+            // Csak gyártói oldali kategória (pl. Cedrus: Lombfúvók és lombszívók): a termék ugyanazon főágbeli többi
+            // kategóriája itt nem számít, különben két csempén is ott lenne.
+            $brand_only_roots = [];
+            foreach($assigned as $t){
+                if (!self::cat_flag($t->term_id, self::BRAND_ONLY)) continue;
+                $anc = array_map('intval', get_ancestors($t->term_id, 'product_cat'));
+                $brand_only_roots[(int)$t->object_id][$anc ? (int)end($anc) : (int)$t->term_id] = true;
+            }
             foreach($assigned as $t){
                 // A termék szülő-kategóriáját kihagyjuk, ha egy alkategóriájában is benne van (azzal számít).
                 if (isset($has_deeper[(int)$t->object_id][(int)$t->term_id])) continue;
+                if (isset($brand_only_roots[(int)$t->object_id]) && !self::cat_flag($t->term_id, self::BRAND_ONLY)){
+                    $anc = array_map('intval', get_ancestors($t->term_id, 'product_cat'));
+                    if (isset($brand_only_roots[(int)$t->object_id][$anc ? (int)end($anc) : (int)$t->term_id])) continue;
+                }
                 $chain = array_reverse(array_map('intval', get_ancestors($t->term_id, 'product_cat')));
                 $chain[] = (int)$t->term_id;
                 $root = $name($chain[0]);
@@ -316,6 +382,10 @@ class Catalog {
                 $g = [ 'count' => $g['count'], 'image' => $g['image'], 'children' => $g['children'], 'acc' => $acc_ids, 'child_images' => array_map(function($i){ return $i[0]; }, $g['child_images']) ];
             }
             unset($g);
+        }
+        // A gyártónál beállított csempeképek (a gyártó szerkesztésénél) felülírják a termékből vett képet.
+        foreach((array)get_term_meta($brand->term_id, self::TILE_IMAGES, true) as $gid => $image){
+            if (isset($groups[(int)$gid]) && (int)$image && wp_attachment_is_image((int)$image)) $groups[(int)$gid]['image'] = (int)$image;
         }
         set_transient($key, $groups, DAY_IN_SECONDS);
         return $groups;
@@ -402,6 +472,7 @@ class Catalog {
         if (!is_array($tiles)){
             $tiles = [];
             foreach($children as $child){
+                if (get_term_meta($child->term_id, self::BRAND_ONLY, true) === 'yes') continue;
                 $count = (int)get_term_meta($child->term_id, 'product_count_product_cat', true) ?: (int)$child->count;
                 if (!$count) continue;
                 $image = (int)get_term_meta($child->term_id, 'thumbnail_id', true);

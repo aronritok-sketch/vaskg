@@ -85,6 +85,7 @@ class Setup {
         66 => 'gls_point_method',
         67 => 'apple_pay_domain',
         68 => 'cedrus_categories',
+        69 => 'promo_and_cedrus_blowers',
     ];
 
     /**
@@ -2504,6 +2505,51 @@ class Setup {
         } else $this->log[] = 'Fűnyíró traktorok: a kategória nincs meg.';
 
         if (function_exists('_wc_term_recount')) _wc_term_recount(get_terms([ 'taxonomy' => 'product_cat', 'hide_empty' => false ]), get_taxonomy('product_cat'), true, false);
+    }
+
+    /**
+     * 69. (Dávid, 2026-11-19) „Orange Week akció” kategória kiemelt akcióként a Termékek menüben (üres: a termékeket a
+     * csapat teszi bele; amíg üres, nem látszik), és a Cedrus gyártói oldalán egy „Lombfúvók és lombszívók” csempe
+     * „Kézi és háti lombfúvók” és „Kerekes lombszívók és aprítók” bontással (csak gyártói oldali kategória: a menüben és
+     * a kategóriaoldalakon nem látszik, a többi gyártót nem érinti).
+     */
+    function promo_and_cedrus_blowers(){
+        $found = get_terms([ 'taxonomy' => 'product_cat', 'name' => 'Orange Week akció', 'parent' => 0, 'hide_empty' => false, 'number' => 1 ]);
+        $promo = !is_wp_error($found) && $found ? (int)$found[0]->term_id : 0;
+        if (!$promo){
+            $made = wp_insert_term('Orange Week akció', 'product_cat', [ 'parent' => 0, 'slug' => 'orange-week-akcio' ]);
+            $promo = is_wp_error($made) ? 0 : (int)$made['term_id'];
+            if ($promo) update_term_meta($promo, 'order', 999);
+        }
+        if ($promo){
+            update_term_meta($promo, Catalog::PROMO, 'yes');
+            $this->log[] = 'Orange Week akció kategória kész (kiemelt akció a Termékek menüben; termékek nélkül még nem látszik).';
+        }
+
+        $area = Catalog::category_by_path('Kerti és erdészeti gépek/Tisztítás, víz és energia/Terület- és kerttisztítás');
+        $blowers = Catalog::category_by_path('Kerti és erdészeti gépek/Tisztítás, víz és energia/Terület- és kerttisztítás/Lombfúvók');
+        $vacuums = Catalog::category_by_path('Kerti és erdészeti gépek/Tisztítás, víz és energia/Terület- és kerttisztítás/Lombszívók és aprítók');
+        $cedrus = get_term_by('slug', 'cedrus', 'product_brand');
+        if (!$area || !$blowers || !$vacuums || !$cedrus){ $this->log[] = 'Cedrus lombfúvók: a kategória vagy a gyártó nincs meg.'; return; }
+        $parent = $this->child_category($area->term_id, 'Lombfúvók és lombszívók', 99);
+        if (!$parent) return;
+        update_term_meta($parent, Catalog::BRAND_ONLY, 'yes');
+        $hand = $this->child_category($parent, 'Kézi és háti lombfúvók', 0);
+        $wheel = $this->child_category($parent, 'Kerekes lombszívók és aprítók', 1);
+        $done = [ 0, 0 ];
+        foreach([ [ $blowers, $hand, 0 ], [ $vacuums, $wheel, 1 ] ] as [$source, $target, $k]){
+            if (!$target) continue;
+            $ids = get_posts([ 'post_type' => 'product', 'post_status' => 'any', 'numberposts' => -1, 'fields' => 'ids', 'tax_query' => [
+                'relation' => 'AND',
+                [ 'taxonomy' => 'product_cat', 'terms' => $source->term_id, 'include_children' => true ],
+                [ 'taxonomy' => 'product_brand', 'terms' => $cedrus->term_id ],
+            ] ]);
+            foreach($ids as $id){ wp_set_object_terms($id, $target, 'product_cat', true); $done[$k]++; }
+        }
+        if (function_exists('_wc_term_recount')) _wc_term_recount(get_terms([ 'taxonomy' => 'product_cat', 'hide_empty' => false ]), get_taxonomy('product_cat'), true, false);
+        MegaMenu::flush();
+        Shop::flush_block_cache();
+        $this->log[] = 'Cedrus: Lombfúvók és lombszívók (csak gyártói oldal) – Kézi és háti lombfúvók '.$done[0].', Kerekes lombszívók és aprítók '.$done[1].' termék.';
     }
 
     function apple_pay_domain(){

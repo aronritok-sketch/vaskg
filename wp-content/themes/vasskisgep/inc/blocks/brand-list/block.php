@@ -8,8 +8,8 @@
 		'editJS' => 'return "Gyártók listája";',
 		'template' => function(){
 			if (!taxonomy_exists('product_brand')) return '';
-			$brands = get_terms([ 'taxonomy' => 'product_brand', 'hide_empty' => true, 'orderby' => 'name' ]);
-			if (is_wp_error($brands) || empty($brands)) return '';
+			$brands = \VasskisgepTheme\Catalog::sorted_brands(true);
+			if (empty($brands)) return '';
 
 			$html = '';
 			foreach($brands as $brand){
@@ -21,6 +21,8 @@
 					.'<span class="vk-brand-card-count">'.esc_html(sprintf('%d termék', $brand->count)).'</span>'
 				.'</a></li>';
 			}
-			return '<ul class="vk-brand-list">'.$html.'</ul>';
+			// Kiemelt akció (pl. Orange Week) a gyártók fölött: telefonon a Termékek menü ide visz (Dávid, 2026-11-19).
+			$promo = \VasskisgepTheme\MegaMenu::promo_links();
+			return ($promo !== '' ? '<div class="vk-promo-strip">'.$promo.'</div>' : '').'<ul class="vk-brand-list">'.$html.'</ul>';
 		}
 	]);

@@ -68,7 +68,7 @@ class MegaMenu {
         // A téma új változata (a fájl módosítása) is frissíti: a tárolt panel a régi kóddal készült.
         $version = (string)filemtime(__FILE__);
         $cached = get_transient($key);
-        if (is_array($cached) && ($cached['version'] ?? '') === $version) return $cached['html'];
+        if (is_array($cached) && ($cached['version'] ?? '') === $version) return str_replace('<!--vk-promo-->', self::promo_links(), $cached['html']);
 
         $tabs = [];
         foreach(self::children(0) as $top){
@@ -87,13 +87,31 @@ class MegaMenu {
 
         $html = '<div class="vk-mega" aria-label="Termékkategóriák">
             <div class="vk-mega-head">
-                <div class="vk-mega-tabs" role="tablist">'.$nav.'</div>
+                <div class="vk-mega-tabs" role="tablist">'.$nav.'<!--vk-promo--></div>
                 <button type="button" class="vk-mega-close" aria-label="Bezárás"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M5 5l14 14M19 5 5 19"/></svg></button>
             </div>
             '.$panes.'
         </div>';
 
         set_transient($key, [ 'version' => $version, 'html' => $html ], WEEK_IN_SECONDS);
+        return str_replace('<!--vk-promo-->', self::promo_links(), $html);
+    }
+
+    /**
+     * Kiemelt akció-kategóriák a fülsor végén (Dávid, 2026-11-19: „Orange Week Akció … jól látható helyen”): a kategória
+     * szerkesztésénél „Kiemelt akció a Termékek menüben”; a kategória képe (pl. az akció logója) a név előtt. Minden
+     * oldalbetöltéskor frissen (a lejárat és a termékszám miatt nincs gyorsítótárban).
+     */
+    static function promo_links(){
+        $promos = get_terms([ 'taxonomy' => 'product_cat', 'hide_empty' => false, 'meta_query' => [[ 'key' => Catalog::PROMO, 'value' => 'yes' ]] ]);
+        if (is_wp_error($promos) || !$promos) return '';
+        $html = '';
+        foreach($promos as $term){
+            if (!Catalog::promo_active($term)) continue;
+            $logo = (int)get_term_meta($term->term_id, 'thumbnail_id', true);
+            $img = $logo ? wp_get_attachment_image($logo, 'thumbnail', false, [ 'alt' => '', 'class' => 'vk-mega-promo-logo', 'loading' => 'lazy' ]) : '';
+            $html .= '<a class="vk-mega-promo" href="'.esc_url(get_term_link($term)).'">'.$img.'<span>'.esc_html($term->name).'</span></a>';
+        }
         return $html;
     }
 
@@ -114,7 +132,9 @@ class MegaMenu {
             if (!in_array($term->term_id, $ids, true)) $terms[] = $term;
         }
         return array_values(array_filter($terms, function($term){
-            return !in_array($term->slug, self::HIDDEN_CATEGORIES, true);
+            return !in_array($term->slug, self::HIDDEN_CATEGORIES, true)
+                && get_term_meta($term->term_id, Catalog::BRAND_ONLY, true) !== 'yes'
+                && get_term_meta($term->term_id, Catalog::PROMO, true) !== 'yes';
         }));
     }
 
@@ -151,8 +171,8 @@ class MegaMenu {
 
     private static function brands_tab(){
         if (!taxonomy_exists('product_brand')) return '';
-        $brands = get_terms([ 'taxonomy' => 'product_brand', 'hide_empty' => false, 'orderby' => 'name' ]);
-        if (is_wp_error($brands) || empty($brands)) return '';
+        $brands = Catalog::sorted_brands(false);
+        if (empty($brands)) return '';
 
         $html = '';
         foreach($brands as $brand){
