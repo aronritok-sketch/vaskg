@@ -264,7 +264,7 @@ class Catalog {
      * A csempe képe a márka egy terméke a csoportból (kiemelt, készleten lévő előnyben).
      */
     static function brand_categories($brand){
-        $key = 'vk_brand_tiles12_'.$brand->term_id.'_'.md5(wp_cache_get_last_changed('posts').wp_cache_get_last_changed('terms'));
+        $key = 'vk_brand_tiles13_'.$brand->term_id.'_'.md5(wp_cache_get_last_changed('posts').wp_cache_get_last_changed('terms'));
         $cached = get_transient($key);
         if (is_array($cached)) return $cached;
         $ids = get_posts([ 'post_type' => 'product', 'post_status' => 'publish', 'numberposts' => -1, 'fields' => 'ids',
@@ -367,10 +367,15 @@ class Catalog {
                 uksort($groups, function($a, $b) use ($groups, $keys){ return [ $groups[$a]['kind'], -$groups[$a]['count'], $keys[$a] ] <=> [ $groups[$b]['kind'], -$groups[$b]['count'], $keys[$b] ]; });
             } elseif ($mode === 'custom'){
                 $custom = array_flip(array_map('intval', (array)get_term_meta($brand->term_id, self::TILE_ORDER, true)));
-                $base = array_flip(array_keys($groups));
-                uksort($groups, function($a, $b) use ($custom, $base){
-                    return [ $custom[$a] ?? PHP_INT_MAX, $base[$a] ] <=> [ $custom[$b] ?? PHP_INT_MAX, $base[$b] ];
-                });
+                // Az egyedi sorrendből hiányzó (azóta keletkezett) csempe a természetes helyén: a kategóriasorrendben
+                // előtte álló csempe után, nem a lista végén.
+                $rank = [];
+                $last = -1;
+                foreach(array_keys($groups) as $i => $gid){
+                    if (isset($custom[$gid])){ $last = $custom[$gid]; $rank[$gid] = [ $last, 0, $i ]; }
+                    else $rank[$gid] = [ $last, 1, $i ];
+                }
+                uksort($groups, function($a, $b) use ($rank){ return $rank[$a] <=> $rank[$b]; });
             }
             foreach($groups as &$g){
                 $ck = [];
