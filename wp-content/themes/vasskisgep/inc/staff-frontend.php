@@ -31,6 +31,7 @@ class StaffFrontend {
         add_filter('determine_current_user', [$this, 'frontend_user'], 99);
         add_action('set_logged_in_cookie', [$this, 'remember_front_login'], 10, 6);
         add_action('clear_auth_cookie', [$this, 'forget_front_login']);
+        add_filter('woocommerce_set_cookie_enabled', [$this, 'block_cart_cookie'], 10, 2);
         // Ha egy bővítmény már a téma előtt megállapította a felhasználót, induláskor (az admin-sáv és a kosár előtt) kiléptetjük.
         add_action('init', [$this, 'reset'], -1000);
         if (did_action('init')) $this->reset();
@@ -121,6 +122,27 @@ class StaffFrontend {
         return hash_equals(self::sign($user_id, $parts['token']), $sig);
     }
 
+    /** A munkatárs admin-oldali kérése fut (a webshop kosarához nem nyúlhat). */
+    private static $shielded = false;
+
+    /**
+     * A munkatárs admin-oldali kérései nem látják és nem írják felül a webshopban vendégként használt kosár sütijét.
+     * Ha az adminban valami betölti a WooCommerce-munkamenetet (egy bővítmény az admin oldalain, pl. heartbeat vagy
+     * rendelésszerkesztés), a WooCommerce a vendég-munkamenetet a felhasználóéba költöztetné és törölné, a sütit pedig
+     * a felhasználóéra cserélné: a webshopban kiürülne a kosár, és csak az utána betett termék maradna (Dávid, 2026-11-09
+     * és 2026-11-18: „amikor a HTA 86-ot raktuk volna a kosárhoz, minden elment belőle”).
+     */
+    private static function shield_cart(){
+        self::$shielded = true;
+        if (!defined('COOKIEHASH')) return;
+        foreach([ 'wp_woocommerce_session_'.COOKIEHASH, 'woocommerce_cart_hash', 'woocommerce_items_in_cart' ] as $name) unset($_COOKIE[$name]);
+    }
+
+    function block_cart_cookie($enabled, $name){
+        if (!self::$shielded) return $enabled;
+        return preg_match('/^(wp_woocommerce_session_|woocommerce_cart_hash|woocommerce_items_in_cart)/', (string)$name) ? false : $enabled;
+    }
+
     function frontend_user($user_id){
         if (!$user_id) return $user_id;
         $user = get_userdata((int)$user_id);
@@ -128,9 +150,7 @@ class StaffFrontend {
         if (!$staff) return $user_id;
         if (self::front_login_valid($user_id)) return $user_id;
         if (self::backend_request()){
-            // Az admin háttérkérései (pl. heartbeat) ne vegyék át a webshopban vendégként használt kosarat: a WooCommerce
-            // a vendég-munkamenetet a felhasználóéba költöztetné (és törölné), a webshopban pedig kiürülne a kosár.
-            if (self::ajax_request() && defined('COOKIEHASH')) unset($_COOKIE['wp_woocommerce_session_'.COOKIEHASH]);
+            self::shield_cart();
             return $user_id;
         }
         return 0;

@@ -84,6 +84,7 @@ class Setup {
         65 => 'order_attribution',
         66 => 'gls_point_method',
         67 => 'apple_pay_domain',
+        68 => 'cedrus_categories',
     ];
 
     /**
@@ -2435,6 +2436,76 @@ class Setup {
      * 67. Apple Pay domain-igazolás a Barionhoz (Dávid, 2026-11-17): a fájl a webhely gyökerének .well-known mappájába
      * kerül. Az ELIN a /.well-known/ címeket maga szolgálja ki (nem jut el a WordPressig), ezért fizikai fájl kell.
      */
+    /** Alkategória a szülő alá (ha még nincs), sorrenddel. */
+    private function child_category($parent_id, $name, $order){
+        $found = get_terms([ 'taxonomy' => 'product_cat', 'name' => $name, 'parent' => $parent_id, 'hide_empty' => false, 'number' => 1 ]);
+        if (!is_wp_error($found) && $found) return (int)$found[0]->term_id;
+        $made = wp_insert_term($name, 'product_cat', [ 'parent' => $parent_id ]);
+        if (is_wp_error($made)) return 0;
+        update_term_meta((int)$made['term_id'], 'order', $order);
+        return (int)$made['term_id'];
+    }
+
+    /** A régi webshop kategórianeve(i) termékenként (régi azonosító → nevek), LIKE-mintára szűrve. */
+    private function old_category_names($like){
+        global $wpdb;
+        $out = [];
+        if (MigrationData::prefix() === '' || !MigrationData::has('virtuemart_product_categories')) return $out;
+        $lang = MigrationData::lang_table('virtuemart_categories');
+        $rows = $wpdb->get_results($wpdb->prepare('SELECT pc.virtuemart_product_id pid, c.category_name name FROM '.MigrationData::t('virtuemart_product_categories').' pc JOIN '.MigrationData::t($lang).' c ON c.virtuemart_category_id = pc.virtuemart_category_id WHERE c.category_name LIKE %s', $like));
+        foreach((array)$rows as $r) $out[(int)$r->pid][] = trim(html_entity_decode((string)$r->name, ENT_QUOTES, 'UTF-8'));
+        return $out;
+    }
+
+    /**
+     * 68. Cedrus-bontás a régi webshop szerint (Dávid, 2026-11-18): a Motorok tengely és gyártó szerint (Függőleges /
+     * Vízszintes tengelyű motorok – Loncin, Rato; a Berrin vízszintes motorok külön), a Fűnyíró traktoroknál
+     * „Professzionális fűnyíró traktorok” (a régi „Cedrus Professzionális Fűgyűjtős Fűnyíró Traktorok” termékei).
+     * A termékek a szülőben is maradnak; ami nem sorolható be, csak a szülőben van.
+     */
+    function cedrus_categories(){
+        $motors = Catalog::category_by_path('Kerti és erdészeti gépek/Tisztítás, víz és energia/Víz és energia/Motorok');
+        if ($motors){
+            $old = $this->old_category_names('%Tengelyű Motor%');
+            $names = [ 'Függőleges tengelyű motorok (Loncin)', 'Függőleges tengelyű motorok (Rato)', 'Vízszintes tengelyű motorok (Loncin)', 'Vízszintes tengelyű motorok (Rato)', 'Vízszintes tengelyű motorok (Berrin)' ];
+            $counts = array_fill_keys($names, 0);
+            $skipped = [];
+            $products = get_posts([ 'post_type' => 'product', 'post_status' => 'any', 'numberposts' => -1, 'fields' => 'ids', 'tax_query' => [[ 'taxonomy' => 'product_cat', 'terms' => $motors->term_id, 'include_children' => false ]] ]);
+            foreach($products as $product_id){
+                $title = get_the_title($product_id);
+                $old_id = (int)get_post_meta($product_id, '_vk_old_id', true);
+                $hint = $title.' '.implode(' ', $old[$old_id] ?? []);
+                $axis = preg_match('/függőleges/iu', $hint) ? 'Függőleges' : (preg_match('/vízszintes/iu', $hint) ? 'Vízszintes' : '');
+                $maker = preg_match('/loncin/iu', $hint) ? 'Loncin' : (preg_match('/\brato\b/iu', $hint) ? 'Rato' : (preg_match('/berrin/iu', $hint) ? 'Berrin' : ''));
+                $name = $axis && $maker ? $axis.' tengelyű motorok ('.$maker.')' : '';
+                if (!isset($counts[$name])){ $skipped[] = $title; continue; }
+                $term = $this->child_category($motors->term_id, $name, array_search($name, $names, true));
+                if (!$term) continue;
+                wp_set_object_terms($product_id, $term, 'product_cat', true);
+                $counts[$name]++;
+            }
+            $parts = [];
+            foreach($counts as $name => $n) if ($n) $parts[] = $name.' '.$n;
+            $this->log[] = 'Motorok: '.implode(', ', $parts).' termék'.($skipped ? '; nem sorolható be (a Motorokban marad): '.implode('; ', $skipped) : '').'.';
+        } else $this->log[] = 'Motorok: a kategória nincs meg.';
+
+        $tractors = Catalog::category_by_path('Kerti és erdészeti gépek/Fűnyírás és gyepápolás/Fűnyíró traktorok');
+        if ($tractors){
+            $old = $this->old_category_names('%Professzionális%Fűnyíró Traktor%');
+            $term = $this->child_category($tractors->term_id, 'Professzionális fűnyíró traktorok', 4);
+            $done = [];
+            if ($term && $old){
+                foreach(get_posts([ 'post_type' => 'product', 'post_status' => 'any', 'numberposts' => -1, 'fields' => 'ids', 'meta_query' => [[ 'key' => '_vk_old_id', 'value' => array_map('strval', array_keys($old)), 'compare' => 'IN' ]] ]) as $product_id){
+                    wp_set_object_terms($product_id, $term, 'product_cat', true);
+                    $done[] = get_the_title($product_id);
+                }
+            }
+            $this->log[] = 'Professzionális fűnyíró traktorok: '.count($done).' termék'.($done ? ' ('.implode('; ', $done).')' : '').'.';
+        } else $this->log[] = 'Fűnyíró traktorok: a kategória nincs meg.';
+
+        if (function_exists('_wc_term_recount')) _wc_term_recount(get_terms([ 'taxonomy' => 'product_cat', 'hide_empty' => false ]), get_taxonomy('product_cat'), true, false);
+    }
+
     function apple_pay_domain(){
         $name = 'apple-developer-merchantid-domain-association';
         $source = get_stylesheet_directory().'/setup/well-known/'.$name;
