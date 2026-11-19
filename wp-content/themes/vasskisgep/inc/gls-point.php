@@ -13,6 +13,9 @@ class GlsPoint {
     const META = '_vk_gls_point';
     const SESSION = 'vk_gls_point';
     const DEFAULT_RATES = "10 | 2490\n20 | 3490";
+    /** Mehet-e csomagautomatába a termék (termék-meta) vagy a kategóriája termékei (kategória-meta; Dani, 2026-11-10). */
+    const LOCKER = '_vk_gls_locker';
+    const LOCKER_TERM = 'vk_gls_locker';
 
     private static $instance;
     static function get_instance(){
@@ -43,6 +46,84 @@ class GlsPoint {
         add_action('woocommerce_order_details_after_order_table', [$this, 'customer_box']);
         add_action('woocommerce_thankyou', [$this, 'customer_box'], 6);
         add_action('woocommerce_checkout_order_processed', [$this, 'note'], 20, 3);
+        // „Mehet csomagautomatába” jelölés termékre / kategóriára.
+        add_action('woocommerce_product_options_shipping', [$this, 'product_field'], 20);
+        add_action('woocommerce_admin_process_product_object', [$this, 'save_product_field']);
+        add_action('product_cat_add_form_fields', [$this, 'category_add_field'], 20);
+        add_action('product_cat_edit_form_fields', [$this, 'category_edit_field'], 20);
+        add_action('created_product_cat', [$this, 'save_category_field']);
+        add_action('edited_product_cat', [$this, 'save_category_field']);
+    }
+
+    /** Mehet-e a termék csomagautomatába (a saját jelölése vagy valamelyik kategóriája, ill. annak szülője szerint). */
+    static function product_locker_ok($product){
+        if (!$product) return false;
+        $id = $product->get_parent_id() ?: $product->get_id();
+        if (get_post_meta($id, self::LOCKER, true) === 'yes') return true;
+        static $terms = [];
+        $cats = get_the_terms($id, 'product_cat');
+        if (empty($cats) || is_wp_error($cats)) return false;
+        foreach($cats as $cat){
+            foreach(array_merge([ (int)$cat->term_id ], array_map('intval', get_ancestors($cat->term_id, 'product_cat'))) as $tid){
+                if (!isset($terms[$tid])) $terms[$tid] = get_term_meta($tid, self::LOCKER_TERM, true) === 'yes';
+                if ($terms[$tid]) return true;
+            }
+        }
+        return false;
+    }
+
+    /** A csomag (kosár) minden terméke mehet-e automatába; „all” módban mindig igen. */
+    static function package_locker_ok($contents, $mode){
+        if ($mode !== 'marked') return true;
+        foreach((array)$contents as $item){
+            if (!self::product_locker_ok($item['data'] ?? null)) return false;
+        }
+        return true;
+    }
+
+    /** A választott GLS-pont szállítási mód „Csomagautomata” beállítása (all / marked). */
+    static function locker_mode(){
+        if (!function_exists('WC') || !WC()->session) return 'all';
+        foreach((array)WC()->session->get('chosen_shipping_methods', []) as $rate){
+            if (strpos((string)$rate, self::METHOD.':') !== 0) continue;
+            $settings = get_option('woocommerce_'.self::METHOD.'_'.(int)substr((string)$rate, strlen(self::METHOD) + 1).'_settings');
+            return is_array($settings) && ($settings['locker_mode'] ?? '') === 'marked' ? 'marked' : 'all';
+        }
+        return 'all';
+    }
+
+    static function cart_locker_ok(){
+        if (!function_exists('WC') || !WC()->cart) return true;
+        return self::package_locker_ok(WC()->cart->get_cart(), self::locker_mode());
+    }
+
+    function product_field(){
+        global $product_object;
+        woocommerce_wp_checkbox([
+            'id' => self::LOCKER,
+            'label' => 'Mehet csomagautomatába',
+            'description' => 'A termék súlya és mérete alapján befér a GLS csomagautomatába. Ha a kosárban van nem megjelölt termék, csak GLS CsomagPont választható (ha a szállítási módnál „Csak a megjelölt termékek” van beállítva). Kategóriára: Termékek → Kategóriák.',
+            'value' => $product_object && $product_object->get_meta(self::LOCKER) === 'yes' ? 'yes' : 'no',
+        ]);
+    }
+
+    function save_product_field($product){
+        $product->update_meta_data(self::LOCKER, !empty($_POST[self::LOCKER]) ? 'yes' : 'no');
+    }
+
+    function category_add_field(){
+        echo '<div class="form-field"><label><input type="checkbox" name="'.esc_attr(self::LOCKER_TERM).'" value="yes"> Mehet csomagautomatába</label><p>A kategória (és alkategóriái) minden terméke befér a GLS csomagautomatába.</p></div>';
+    }
+
+    function category_edit_field($term){
+        $on = get_term_meta($term->term_id, self::LOCKER_TERM, true) === 'yes';
+        echo '<tr class="form-field"><th scope="row">Csomagautomata</th><td><label><input type="checkbox" name="'.esc_attr(self::LOCKER_TERM).'" value="yes"'.checked($on, true, false).'> A kategória (és alkategóriái) minden terméke mehet GLS csomagautomatába</label></td></tr>';
+    }
+
+    function save_category_field($term_id){
+        if (!current_user_can('manage_product_terms') || !isset($_POST['_wpnonce'])) return;
+        if (!empty($_POST[self::LOCKER_TERM])) update_term_meta($term_id, self::LOCKER_TERM, 'yes');
+        else delete_term_meta($term_id, self::LOCKER_TERM);
     }
 
     /** A kosárban a GLS-csomagpont van-e kiválasztva szállítási módnak. */
@@ -86,7 +167,10 @@ class GlsPoint {
   $(document).on('click', '.vk-gls-point-pick', function(e){
     e.preventDefault();
     var d = dlg();
-    if (d && typeof d.showModal === 'function') d.showModal();
+    if (!d) return;
+    // Ha a kosárban van csomagautomatába nem való termék, a térkép csak CsomagPontokat mutat.
+    if (String($(this).data('locker')) === '0') d.setAttribute('filter-type', 'parcel-shop'); else d.removeAttribute('filter-type');
+    if (typeof d.showModal === 'function') d.showModal();
   });
   document.addEventListener('change', function(e){
     if (!e.target || e.target.id !== 'vk-gls-dpm' || !e.detail || !e.detail.id) return;
@@ -113,17 +197,25 @@ JS;
         wp_send_json_success();
     }
 
+    const LOCKER_NOTICE = 'A kosárban van olyan termék, amely a mérete miatt nem fér csomagautomatába, ezért csak GLS CsomagPont választható.';
+
     function checkout_row(){
         if (!self::chosen()) return;
         $p = self::session_point();
+        $locker_ok = self::cart_locker_ok();
+        $bad = $p && !$locker_ok && $p['type'] === 'parcel-locker';
         echo '<tr class="vk-gls-point-row"><th>Átvételi pont</th><td>'
             .'<span class="vk-gls-point-text">'.esc_html($p ? self::text($p) : 'Még nincs kiválasztva').'</span><br>'
-            .'<a href="#" class="button vk-gls-point-pick">'.($p ? 'Másik csomagpont' : 'Csomagpont kiválasztása').'</a>'
+            .($locker_ok ? '' : '<small class="vk-gls-point-locker-note"'.($bad ? ' style="color:#b32d2e"' : '').'>'.esc_html(self::LOCKER_NOTICE.($bad ? ' Kérlek, válassz CsomagPontot.' : '')).'</small><br>')
+            .'<a href="#" class="button vk-gls-point-pick" data-locker="'.($locker_ok ? '1' : '0').'">'.($p ? 'Másik csomagpont' : 'Csomagpont kiválasztása').'</a>'
             .'</td></tr>';
     }
 
     function validate($data, $errors){
-        if (self::chosen() && !self::session_point()) $errors->add('vk_gls_point', 'Válassz GLS csomagpontot vagy csomagautomatát a térképen („Csomagpont kiválasztása”).');
+        if (!self::chosen()) return;
+        $p = self::session_point();
+        if (!$p) $errors->add('vk_gls_point', self::cart_locker_ok() ? 'Válassz GLS csomagpontot vagy csomagautomatát a térképen („Csomagpont kiválasztása”).' : 'Válassz GLS CsomagPontot a térképen („Csomagpont kiválasztása”).');
+        elseif ($p['type'] === 'parcel-locker' && !self::cart_locker_ok()) $errors->add('vk_gls_point', self::LOCKER_NOTICE.' Kérlek, válassz CsomagPontot a térképen („Másik csomagpont”).');
     }
 
     function save($order, $data){

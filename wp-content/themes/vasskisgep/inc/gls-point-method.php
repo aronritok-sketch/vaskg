@@ -23,6 +23,13 @@ class GlsPointMethod extends \WC_Shipping_Method {
             'free_total' => [ 'title' => 'Ingyenes szállítás ennyi Ft (bruttó) felett', 'type' => 'text', 'default' => '30000', 'description' => '0 vagy üres: nincs ingyenes szállítás.' ],
             'free_weight' => [ 'title' => 'Ingyenes szállítás legfeljebb ennyi kg-ig', 'type' => 'text', 'default' => '10' ],
             'tax_status' => [ 'title' => 'Adózás', 'type' => 'select', 'default' => 'taxable', 'options' => [ 'taxable' => 'Adóköteles', 'none' => 'Nincs' ] ],
+            'locker_mode' => [
+                'title' => 'Csomagautomata',
+                'type' => 'select',
+                'default' => 'all',
+                'options' => [ 'all' => 'Minden termék mehet csomagautomatába', 'marked' => 'Csak a megjelölt termékek („Mehet csomagautomatába”)' ],
+                'description' => 'Ha a kosárban van nem megjelölt termék, a térképen csak GLS CsomagPont választható. Jelölés: a termék Szállítás fülén, a terméklista „Automata” oszlopában (csoportművelettel is) vagy a kategóriánál.',
+            ],
         ];
         $this->init_settings();
         $this->title = $this->get_option('title');
@@ -51,6 +58,8 @@ class GlsPointMethod extends \WC_Shipping_Method {
             $percent = array_sum(wp_list_pluck(\WC_Tax::get_shipping_tax_rates(), 'rate'));
             if ($percent > 0) $cost = $gross / (1 + $percent / 100);
         }
-        $this->add_rate([ 'id' => $this->get_rate_id(), 'label' => $this->title, 'cost' => $cost, 'package' => $package ]);
+        $label = $this->title;
+        if (!GlsPoint::package_locker_ok($package['contents'], $this->get_option('locker_mode', 'all'))) $label = trim(preg_replace('#\s*/\s*Csomagautomata#iu', '', $label));
+        $this->add_rate([ 'id' => $this->get_rate_id(), 'label' => $label, 'cost' => $cost, 'package' => $package ]);
     }
 }

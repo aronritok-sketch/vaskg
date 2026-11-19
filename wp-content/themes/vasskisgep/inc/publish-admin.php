@@ -6,7 +6,8 @@ namespace VasskisgepTheme;
  * „Közzétéve” pipa a terméklistában (Dávid, 2026-11-09): egy kattintással le- és felrakható a termék a webshopra
  * (közzétéve ↔ vázlat), több termékre a csoportműveletekkel („Közzététel a webshopon”, „Levétel a webshopról”).
  * A levett termék vázlat lesz: a webshopon, a keresőben és a feedekben nem látszik, az adatai megmaradnak.
- * Mellette „Ingyenes szállítás” pipa és csoportművelet (Shipping::FREE; a kategória szerinti ingyenesség szürkén látszik).
+ * Mellette „Ingyenes szállítás” pipa és csoportművelet (Shipping::FREE; a kategória szerinti ingyenesség szürkén látszik),
+ * és „Automata” pipa: mehet-e GLS csomagautomatába (GlsPoint::LOCKER; Dani, 2026-11-10).
  */
 class PublishAdmin {
     private static $instance;
@@ -25,6 +26,7 @@ class PublishAdmin {
         add_action('admin_notices', [$this, 'notice']);
         add_action('wp_ajax_vk_publish_toggle', [$this, 'ajax_toggle']);
         add_action('wp_ajax_vk_free_toggle', [$this, 'ajax_free_toggle']);
+        add_action('wp_ajax_vk_locker_toggle', [$this, 'ajax_locker_toggle']);
         add_action('admin_footer-edit.php', [$this, 'script']);
     }
 
@@ -36,15 +38,24 @@ class PublishAdmin {
     function columns($columns){
         $out = [];
         foreach($columns as $key => $label){
-            if ($key === 'date'){ $out['vk_publish'] = 'Közzétéve'; $out['vk_free'] = 'Ingyenes szállítás'; }
+            if ($key === 'date'){ $out['vk_publish'] = 'Közzétéve'; $out['vk_free'] = 'Ingyenes szállítás'; $out['vk_locker'] = 'Automata'; }
             $out[$key] = $label;
         }
         if (!isset($out['vk_publish'])) $out['vk_publish'] = 'Közzétéve';
         if (!isset($out['vk_free'])) $out['vk_free'] = 'Ingyenes szállítás';
+        if (!isset($out['vk_locker'])) $out['vk_locker'] = 'Automata';
         return $out;
     }
 
     function column($column, $post_id){
+        if ($column === 'vk_locker'){
+            $own = get_post_meta($post_id, GlsPoint::LOCKER, true) === 'yes';
+            $by_cat = !$own && GlsPoint::product_locker_ok(wc_get_product($post_id));
+            $title = $by_cat ? 'A kategóriája szerint mehet csomagautomatába (Termékek → Kategóriák)' : ($own ? 'Mehet GLS csomagautomatába – kattints a kikapcsoláshoz' : 'Kattints: ez a termék mehet GLS csomagautomatába');
+            echo '<label class="vk-publish vk-locker" title="'.esc_attr($title).'"><input type="checkbox" class="vk-locker-toggle" data-product="'.(int)$post_id.'"'.checked($own || $by_cat, true, false).disabled($by_cat, true, false).'><span class="screen-reader-text">Mehet csomagautomatába</span></label>';
+            if ($by_cat) echo '<small class="vk-free-cat">kategória</small>';
+            return;
+        }
         if ($column === 'vk_free'){
             // Ingyenes szállítás (Dávid, 2026-11-09): a termék saját jelölése; ha a kategóriája miatt ingyenes, az is látszik.
             $own = get_post_meta($post_id, Shipping::FREE, true) === 'yes';
@@ -90,10 +101,21 @@ class PublishAdmin {
         $actions['vk_publish_off'] = 'Levétel a webshopról (vázlat)';
         $actions['vk_free_on'] = 'Ingyenes szállítás: be';
         $actions['vk_free_off'] = 'Ingyenes szállítás: ki';
+        $actions['vk_locker_on'] = 'Mehet csomagautomatába: be';
+        $actions['vk_locker_off'] = 'Mehet csomagautomatába: ki';
         return $actions;
     }
 
     function handle_bulk($redirect, $action, $ids){
+        if (in_array($action, [ 'vk_locker_on', 'vk_locker_off' ], true) && current_user_can('edit_products')){
+            $done = 0;
+            foreach(array_map('intval', (array)$ids) as $id){
+                if (!current_user_can('edit_post', $id)) continue;
+                update_post_meta($id, GlsPoint::LOCKER, $action === 'vk_locker_on' ? 'yes' : 'no');
+                $done++;
+            }
+            return add_query_arg([ 'vk_locker_done' => $done, 'vk_locker_mode' => $action === 'vk_locker_on' ? 'on' : 'off' ], remove_query_arg([ 'vk_locker_done', 'vk_locker_mode' ], $redirect));
+        }
         if (in_array($action, [ 'vk_free_on', 'vk_free_off' ], true) && current_user_can('edit_products')){
             $done = 0;
             foreach(array_map('intval', (array)$ids) as $id){
@@ -115,6 +137,10 @@ class PublishAdmin {
     }
 
     function notice(){
+        if (self::is_products_screen() && isset($_GET['vk_locker_done'])){
+            $text = ($_GET['vk_locker_mode'] ?? '') === 'on' ? 'Mehet csomagautomatába: %d termék megjelölve.' : 'Csomagautomata-jelölés levéve: %d termék.';
+            echo '<div class="notice notice-success is-dismissible"><p>'.esc_html(sprintf($text, (int)$_GET['vk_locker_done'])).'</p></div>';
+        }
         if (self::is_products_screen() && isset($_GET['vk_free_done'])){
             $text = ($_GET['vk_free_mode'] ?? '') === 'on' ? 'Ingyenes szállítás bekapcsolva: %d termék.' : 'Ingyenes szállítás kikapcsolva: %d termék.';
             echo '<div class="notice notice-success is-dismissible"><p>'.esc_html(sprintf($text, (int)$_GET['vk_free_done'])).'</p></div>';
@@ -143,12 +169,21 @@ class PublishAdmin {
         wp_send_json_success([ 'free' => get_post_meta($id, Shipping::FREE, true) === 'yes' ]);
     }
 
+    function ajax_locker_toggle(){
+        $id = (int)($_POST['product'] ?? 0);
+        $on = !empty($_POST['locker']) && $_POST['locker'] !== '0';
+        if (!check_ajax_referer('vk_publish', 'nonce', false) || !$id || !current_user_can('edit_post', $id)) wp_send_json_error([ 'message' => 'Nincs jogosultság.' ], 403);
+        update_post_meta($id, GlsPoint::LOCKER, $on ? 'yes' : 'no');
+        wp_send_json_success([ 'locker' => get_post_meta($id, GlsPoint::LOCKER, true) === 'yes' ]);
+    }
+
     function script(){
         if (!self::is_products_screen()) return;
         ?>
         <style>
             .column-vk_publish { width: 6.5rem; text-align: center; }
             .column-vk_free { width: 7.5rem; text-align: center; }
+            .column-vk_locker { width: 5.5rem; text-align: center; }
             .vk-free-cat { display: block; color: #646970; }
             .vk-publish { display: inline-flex; padding: 4px; cursor: pointer; }
             .vk-publish input { margin: 0 !important; width: 18px; height: 18px; }
@@ -167,6 +202,14 @@ class PublishAdmin {
                 $.post(ajaxurl, { action: 'vk_free_toggle', nonce: nonce, product: $box.data('product'), free: want ? 1 : 0 }).done(function(r){
                     if (!r || !r.success){ $box.prop('checked', !want); window.alert((r && r.data && r.data.message) || 'Nem sikerült menteni.'); return; }
                     $box.prop('checked', r.data.free);
+                }).fail(function(){ $box.prop('checked', !want); window.alert('Nem sikerült menteni (kapcsolati hiba).'); }).always(function(){ $label.removeClass('is-busy'); });
+            });
+            $(document).on('change', '.vk-locker-toggle', function(){
+                var $box = $(this), $label = $box.closest('.vk-publish'), want = $box.prop('checked');
+                $label.addClass('is-busy');
+                $.post(ajaxurl, { action: 'vk_locker_toggle', nonce: nonce, product: $box.data('product'), locker: want ? 1 : 0 }).done(function(r){
+                    if (!r || !r.success){ $box.prop('checked', !want); window.alert((r && r.data && r.data.message) || 'Nem sikerült menteni.'); return; }
+                    $box.prop('checked', r.data.locker);
                 }).fail(function(){ $box.prop('checked', !want); window.alert('Nem sikerült menteni (kapcsolati hiba).'); }).always(function(){ $label.removeClass('is-busy'); });
             });
             $(document).on('change', '.vk-publish-toggle', function(){
