@@ -29,12 +29,23 @@ class MegaMenu {
         add_action('wp_enqueue_scripts', [$this, 'enqueue'], 110);
 
         // A gyorsítótárazott panel frissítése kategória / márka módosításakor.
+        // Kiemelt akció a fejlécben is: a kereső elé (gépen a Kapcsolat és a kereső közé, telefonon a kereső alá;
+        // Dávid, 2026-11-19).
+        add_filter('render_block', [$this, 'header_promo'], 10, 2);
         foreach(['saved_term', 'delete_term', 'added_term_meta', 'updated_term_meta', 'deleted_term_meta', 'update_option_home'] as $hook){
             add_action($hook, [__CLASS__, 'flush']);
         }
     }
 
     const CACHE_KEY = 'vk_megamenu';
+
+    function header_promo($html, $block){
+        static $done = false;
+        if ($done || is_admin() || ($block['blockName'] ?? '') !== 'iu-woocommerce/search') return $html;
+        $done = true;
+        $promo = self::promo_links();
+        return $promo !== '' ? '<div class="vk-header-promo">'.$promo.'</div>'.$html : $html;
+    }
 
     static function flush(){
         delete_transient(self::CACHE_KEY);

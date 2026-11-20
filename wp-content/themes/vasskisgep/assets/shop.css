@@ -2541,6 +2541,51 @@ ul.products:not(.columns-1) li.product .iu-group.brand:has(.vk-cofidis-badge) .i
 	background: #d9620a;
 	transform: translateY(-1px);
 }
+/* Kiemelt akció a fejlécben: gépen a menü és a kereső között, telefonon a kereső alatt. */
+.vk-header-promo {
+	display: flex;
+	align-items: center;
+	flex: 0 0 auto;
+}
+.vk-header-promo .vk-mega-promo {
+	display: inline-flex;
+	align-items: center;
+	gap: .45rem;
+	padding: .5rem 1.1rem;
+	border-radius: 999px;
+	background: #f37a1f;
+	color: #fff !important;
+	font-size: 1rem;
+	font-weight: 600;
+	line-height: 1.2;
+	white-space: nowrap;
+	text-decoration: none !important;
+	box-shadow: 0 2px 8px rgb(243 122 31 / .35);
+	transition: background .2s, transform .2s;
+}
+.vk-header-promo .vk-mega-promo:hover,
+.vk-header-promo .vk-mega-promo:focus-visible {
+	background: #d9620a;
+	transform: translateY(-1px);
+}
+.vk-header-promo .vk-mega-promo + .vk-mega-promo { margin-left: .5rem; }
+@media (min-width: 992px) {
+	.header-menu .iu-group:has(> .vk-header-promo) { gap: 2rem; }
+}
+@media (max-width: 991.8px) {
+	.header-menu .vk-header-promo {
+		order: 3;
+		flex: 1 0 100%;
+		justify-content: center;
+	}
+	.header-menu .vk-header-promo .vk-mega-promo {
+		justify-content: center;
+		width: 100%;
+		padding: .6rem 1rem;
+		border-radius: .4rem;
+		font-size: 1.05rem;
+	}
+}
 .vk-promo-strip {
 	display: flex;
 	flex-wrap: wrap;
