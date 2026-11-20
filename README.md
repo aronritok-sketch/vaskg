@@ -85,6 +85,10 @@ A `wp-content/plugins`, `uploads` és `languages` mappák nincsenek verzióköve
     - *Kalkulátor*: Megjelenés → Beállítások → Cofidis áruhitel fülön THM, ügyleti kamat, futamidők, min./max. hitelösszeg, reprezentatív példa (a Cofidis szerződés adatai).
     - *Online hitelkérelem (API)*: a Cofidis **webshop / online áruhitel** kereskedői dokumentációja kell hozzá (a PSD2 számlainformációs API nem erre való). Bekötési pontok: `vasskisgep_cofidis_start_application` szűrő (a rendelésből hitelkérelmet indít, az átirányítási URL-t adja vissza) és `vasskisgep_cofidis_callback` szűrő a `rest_url('vasskisgep/v1/cofidis/callback')` végponthoz (az iu_theme a REST előtagot átnevezi, a pontos cím a fizetési mód beállításainál látszik) (hitelesség ellenőrzése, `['order_id' => …, 'status' => 'approved'|'rejected'|'pending']`). Bekötés nélkül a végpont 501-gyel elutasít.
 
+## Egyedi kérések
+
+Az ügyfél külön kérései (nem a régi webshop átvétele, nem javítás) az `EGYEDI-KERESEK.md` élő listájában: minden új egyedi kérést oda is fel kell venni (Áron, 2026-11-20).
+
 ## Funkciók
 
 - **Termékoldal** (`templates/single_product_content.html`, Figma szerint): galéria kedvezmény-jelvénnyel, promó szöveggel és márkával; cikkszám, készlet + csillagos értékelés, ár doboz (régi/akciós ár, áfa megjegyzés, Cofidis jelvény), tulajdonság-csempék, mennyiség + Kosárba (AJAX), kedvencek/összehasonlítás; „Kapcsolódó termékek” oldalsáv (keresztértékesítés); fülek: Részletek (tájékoztató doboz, leírás, műszaki adatok), Dokumentumok, Vélemények (WooCommerce értékelések, moderálás a Termékek → Értékelések alatt), Kérdése van?; szállítási és fizetési módok a WooCommerce beállításaiból; Cofidis kalkulátor; hasonló és legutóbb megtekintett termékek.
