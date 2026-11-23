@@ -30,7 +30,7 @@ class MigrationData {
     /** Magától induló átvétel (élesítés után, 2026-11): háttérlépés, és az állapotlap kulcsának sha256-ja (a kulcs nincs a repóban). */
     const HOOK = 'vasskisgep_data_step';
     const AUTO = 'vk_mig_data_auto';
-    const STATUS_KEY_HASH = '0417b1a451bf0e0e8f8af7ebd309eb5e9fdebb89fdd6578a62e0d7228532bdae';
+    const STATUS_KEY_HASH = '08366b1b77428af8cd9e43bb32f2228b6ef1801edf475efc917170246e406ea6';
 
     private static $tables = null;
     private static $products = null;

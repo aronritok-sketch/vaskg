@@ -266,7 +266,11 @@ class Gls {
         if ($point) $p['ServiceList'][] = [ 'Code' => 'PSD', 'PSDParameter' => [ 'StringValue' => $point['id'] ] ];
         $email = $ship['email'];
         $tel = self::phone($phone);
-        if ($opt['email'] && $email !== ''){
+        // Pontra szóló csomagnál (PSD) a GLS maga értesít; az e-mail / SMS értesítést (FDS, FSS, SM2) a szolgáltatás-
+        // mátrix nem engedi: „MyGLS (13): Service matrix violated, Service 'FDS'” (Dávid, 2026-11-23).
+        if ($point){
+            // nincs külön értesítés
+        } elseif ($opt['email'] && $email !== ''){
             $p['ServiceList'][] = [ 'Code' => 'FDS', 'FDSParameter' => [ 'Value' => $email ] ];
             if ($opt['sms'] && strpos($tel, '+') === 0) $p['ServiceList'][] = [ 'Code' => 'FSS', 'FSSParameter' => [ 'Value' => $tel ] ];
         } elseif ($opt['sms'] && strpos($tel, '+') === 0){
