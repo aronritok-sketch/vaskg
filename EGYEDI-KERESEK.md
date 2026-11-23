@@ -1,6 +1,6 @@
 # Vass Kisgép – egyedi kérések (plusz fejlesztések)
 
-> Élő lista (Áron, 2026-11-20): minden új egyedi kérés ide kerül, amikor elkészül vagy beérkezik. Utolsó frissítés: 2026-11-20.
+> Élő lista (Áron, 2026-11-20): minden új egyedi kérés ide kerül, amikor elkészül vagy beérkezik. Utolsó frissítés: 2026-11-23.
 
 Csak azok a tételek, amik **nem voltak a régi Joomla-boltban**, **nem javítások**, hanem az ügyfél (Dávid, Dani) **külön kérései**. Forrás: a vasskisgep téma változásnaplója (1.0.8–1.0.74) és az ügyfélkörök.
 
@@ -78,6 +78,7 @@ A **Méret** oszlop: **K** = kicsi (néhány óra), **K-K** = közepes (fél–e
 | 44 | B2B kedvezmény kategóriánként, partnerenként egyedi | Dávid, 11-19 | a B2BKing ingyenes változata nem tudja; saját fejlesztés (N) |
 | 45 | Cedrus API: termékképek átvétele cikkszám szerint | Dávid, 11-20 | API-leírás kell; K-K–N az API-tól függően |
 | 46 | Stiga API | Dávid, 11-19 | nem tudom, mit ígértünk |
+| 47 | Cedrus termékszövegek (angol) MI-fordítása magyarra, feltöltés a webshopba | Dávid, 11-20 (csak kérdés) | a Cedrus API-hoz kapcsolódik; ellenőrzéssel megoldható (K-K) |
 
 ## Nem került a listára
 
