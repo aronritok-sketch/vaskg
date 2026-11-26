@@ -11,7 +11,7 @@
 			$product = wc_get_product();
 			if (!$product || !\VasskisgepTheme\Catalog::has_cofidis($product)) return '';
 			// Bank-kapcsolattal a Cofidis Bank beágyazott kalkulátora (élesítésig csak a tesztelőknek).
-			if (\VasskisgepTheme\CofidisBank::configured()) return \VasskisgepTheme\CofidisBank::widget(wc_get_price_to_display($product), 'vk-cof-product');
+			if (\VasskisgepTheme\CofidisBank::configured()) return \VasskisgepTheme\CofidisBank::widget(wc_get_price_to_display($product), 'vk-cof-product', \VasskisgepTheme\CofidisBank::product_barem($product));
 			$config = \VasskisgepTheme\ProductPage::cofidis_config();
 			if (!$config) return '';
 

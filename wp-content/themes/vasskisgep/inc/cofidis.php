@@ -52,6 +52,12 @@ class Cofidis {
     /** A kosár Cofidis-szel fizethető-e: minden termék jelölt, és az összeg a határokon belül. */
     static function cart_eligible($total = null){
         if (!function_exists('WC') || !WC()->cart || WC()->cart->is_empty()) return false;
+        if (CofidisBank::configured()){
+            // Konstrukció szerint: 19,9%-nál bármilyen tartozék mehet, ingyenes hitelnél csak a jelölt termékek.
+            $st = CofidisBank::cart_state();
+            if (!$st['flagged'] || $st['excluded']) return false;
+            return self::amount_eligible($total ?? (float)WC()->cart->get_total('edit'));
+        }
         foreach(WC()->cart->get_cart() as $item){
             $product = wc_get_product($item['product_id']);
             if (!$product || !Catalog::has_cofidis($product)) return false;

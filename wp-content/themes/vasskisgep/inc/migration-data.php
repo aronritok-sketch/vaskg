@@ -218,7 +218,17 @@ class MigrationData {
             }
             return $out;
         }
-        if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'cofidis') return CofidisBank::diagnose(sanitize_key((string)$request->get_param('csr')));
+        if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'cofidis'){
+            // A bank technikai felhasználója (titok: nem a repóban; a kulcsos végponton egyszer beállítva).
+            $tu = (string)$request->get_param('tech_user'); $tp = (string)$request->get_param('tech_password');
+            if ($tu !== '' && $tp !== ''){
+                $settings = get_option('woocommerce_'.Cofidis::ID.'_settings', []);
+                if (!is_array($settings)) $settings = [];
+                $settings['tech_user'] = sanitize_text_field($tu); $settings['tech_password'] = $tp;
+                update_option('woocommerce_'.Cofidis::ID.'_settings', $settings);
+            }
+            return CofidisBank::diagnose(sanitize_key((string)$request->get_param('csr')));
+        }
         if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'user'){
             // Egy fiók szerepköre és kosár-állapota (belépési / kosáremlékeztető hibához); jelszó, cím nélkül.
             $u = get_user_by('login', sanitize_user((string)$request->get_param('login')));

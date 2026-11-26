@@ -57,6 +57,9 @@ class CofidisBank {
         add_action(self::POLL, [__CLASS__, 'poll']);
         add_action('init', [$this, 'schedule']);
         add_filter('wp_robots', [$this, 'noindex_page']);
+        add_action('woocommerce_before_cart', [$this, 'print_cart_notice'], 5);
+        add_action('woocommerce_review_order_before_payment', [$this, 'print_cart_notice'], 5);
+        add_action('woocommerce_add_to_cart', [$this, 'add_to_cart_notice'], 50);
         add_filter('bulk_actions-edit-product', [$this, 'bulk_actions'], 45);
         add_filter('handle_bulk_actions-edit-product', [$this, 'handle_bulk'], 10, 3);
         add_action('admin_notices', [$this, 'bulk_notice']);
@@ -67,10 +70,15 @@ class CofidisBank {
     function bulk_actions($actions){
         $actions['vk_cofidis_on'] = 'Cofidis áruhitel: bekapcsolás';
         $actions['vk_cofidis_off'] = 'Cofidis áruhitel: kikapcsolás';
+        foreach(self::barems() as $b => $name) $actions['vk_cofidis_barem_'.(int)$b] = 'Cofidis konstrukció: '.($name ?: $b).' ('.(int)$b.')';
         return $actions;
     }
 
     function handle_bulk($redirect, $action, $ids){
+        if (preg_match('/^vk_cofidis_barem_(\d+)$/', $action, $m) && current_user_can('edit_products') && isset(self::barems()[(int)$m[1]])){
+            foreach((array)$ids as $id){ update_post_meta((int)$id, self::PRODUCT_BAREM, (int)$m[1]); update_post_meta((int)$id, '_vk_cofidis', 'yes'); }
+            return add_query_arg([ 'vk_cofidis_done' => count((array)$ids), 'vk_cofidis_on' => 1 ], $redirect);
+        }
         if (!in_array($action, [ 'vk_cofidis_on', 'vk_cofidis_off' ], true) || !current_user_can('edit_products')) return $redirect;
         foreach((array)$ids as $id) update_post_meta((int)$id, '_vk_cofidis', $action === 'vk_cofidis_on' ? 'yes' : 'no');
         return add_query_arg([ 'vk_cofidis_done' => count((array)$ids), 'vk_cofidis_on' => $action === 'vk_cofidis_on' ? 1 : 0 ], $redirect);
@@ -109,6 +117,74 @@ class CofidisBank {
     }
 
     static function barem(){ $b = array_keys(self::barems()); return $b ? (int)$b[0] : 0; }
+
+    const PRODUCT_BAREM = '_vk_cofidis_barem';
+
+    /** A konstrukció adatai a megnevezésből: ingyenes (0% THM) és futamidő (hónap) – pl. „4 hónap, 0% THM”. */
+    static function barem_info($barem){
+        $name = (string)(self::barems()[(int)$barem] ?? '');
+        $free = (bool)preg_match('/(^|\D)0\s*%/u', $name);
+        $months = preg_match('/(\d+)\s*(hó|hónap)/u', $name, $m) ? (int)$m[1] : 0;
+        return [ 'barem' => (int)$barem, 'name' => $name, 'free' => $free, 'months' => $months ];
+    }
+
+    /** A termék konstrukciója (Dávid, 2026-11-25: egy gépnél egyszerre egy); ha nincs megadva, az alapértelmezett (első). */
+    static function product_barem($product){
+        if (!$product) return self::barem();
+        $id = $product->get_parent_id() ?: $product->get_id();
+        $b = (int)get_post_meta($id, self::PRODUCT_BAREM, true);
+        return $b && isset(self::barems()[$b]) ? $b : self::barem();
+    }
+
+    /**
+     * A kosár Cofidis-állapota (Dávid, 2026-11-25, Katona Zoltánnal egyeztetve):
+     * - ha van a kosárban 19,9%-os (nem ingyenes) termék, a teljes kosárra az érvényes, és bármilyen tartozék mehet;
+     * - ha csak ingyenes hiteles termékek vannak, a legrövidebb futamidő érvényes; a hitelre nem jelölt tételek
+     *   (pl. olaj, lánc) ilyenkor nem mehetnek hitelre: külön rendelésben vásárolhatók meg.
+     * Visszaad: [ barem, info, mixed (több konstrukció), excluded (kizárt tételek neve), flagged (jelölt tételek száma) ].
+     */
+    static function cart_state(){
+        $state = [ 'barem' => 0, 'info' => null, 'mixed' => false, 'excluded' => [], 'flagged' => 0 ];
+        if (!function_exists('WC') || !WC()->cart || WC()->cart->is_empty()) return $state;
+        $barems = []; $unflagged = [];
+        foreach(WC()->cart->get_cart() as $item){
+            $product = wc_get_product($item['product_id']);
+            if ($product && Catalog::has_cofidis($product)){ $state['flagged']++; $barems[self::product_barem($product)] = true; }
+            else $unflagged[] = $product ? $product->get_name() : '';
+        }
+        if (!$barems) return $state;
+        $infos = array_map([ __CLASS__, 'barem_info' ], array_keys($barems));
+        $paid = array_values(array_filter($infos, function($i){ return !$i['free']; }));
+        if ($paid) $chosen = $paid[0];
+        else { usort($infos, function($a, $b){ return $a['months'] <=> $b['months']; }); $chosen = $infos[0]; }
+        $state['barem'] = $chosen['barem'];
+        $state['info'] = $chosen;
+        $state['mixed'] = count($barems) > 1;
+        if ($chosen['free']) $state['excluded'] = array_values(array_filter($unflagged));
+        return $state;
+    }
+
+    /** Tájékoztatás a kosárban és a pénztárban (vegyes konstrukció, hitelből kizárt tartozék). */
+    static function cart_notice_html(){
+        if (!self::configured() || !self::visible()) return '';
+        $st = self::cart_state();
+        if (!$st['flagged']) return '';
+        $lines = [];
+        if ($st['mixed']) $lines[] = 'A kosárban különböző Cofidis-konstrukciójú termékek vannak: Cofidis áruhitellel a <strong>teljes kosárra a '.esc_html($st['info']['name']).'</strong> feltétel érvényes'
+            .($st['info']['free'] ? ' (a legrövidebb futamidő)' : '').'. Ha ezt nem szeretnéd, a termékeket külön kosárban, külön hiteligényléssel vásárold meg.';
+        if ($st['excluded']) $lines[] = 'Az ingyenes Cofidis-hitel nem vonatkozik ezekre: <strong>'.esc_html(implode(', ', $st['excluded'])).'</strong>. Ezeket külön rendelésben (utánvéttel, bankkártyával vagy előre utalással) tudod megvásárolni; a hiteles rendeléshez vedd ki őket a kosárból.';
+        if (!$lines) return '';
+        return '<div class="vk-cofidis-cart-notice woocommerce-info" role="status">'.implode('<br>', $lines).'</div>';
+    }
+
+    function print_cart_notice(){ echo self::cart_notice_html(); }
+
+    /** Kosárba tételkor azonnal szól, ha a kosár vegyes konstrukciójú lett, vagy kizárt tartozék került az ingyenes hitel mellé. */
+    function add_to_cart_notice(){
+        if (!self::configured() || !self::visible() || !function_exists('wc_add_notice')) return;
+        $html = self::cart_notice_html();
+        if ($html !== '') wc_add_notice(wp_strip_all_tags(str_replace('<br>', ' ', $html)), 'notice');
+    }
 
     static function configured(){ return self::shop_code() > 0 && self::barem() > 0; }
 
@@ -150,17 +226,18 @@ class CofidisBank {
 
     /* ---------- Kalkulátor (a bank beágyazott kalkulátora) ---------- */
 
-    static function widget($amount, $id = ''){
+    static function widget($amount, $id = '', $barem = 0){
         $amount = (int)round($amount);
         if (!self::visible() || !self::amount_ok($amount)) return '';
         $id = $id ?: 'vk-cof-calc-'.wp_rand(1000, 999999);
-        $barems = self::barems();
+        // Egy termékhez / kosárhoz egy konstrukció tartozik: ilyenkor nincs választó.
+        $barems = $barem ? [ (int)$barem => (string)(self::barems()[(int)$barem] ?? '') ] : self::barems();
         $tabs = '';
         if (count($barems) > 1){
             foreach($barems as $b => $name) $tabs .= '<button type="button" class="vk-pill" data-barem="'.(int)$b.'">'.esc_html($name ?: 'Konstrukció '.$b).'</button>';
             $tabs = '<div class="vk-cof-barems">'.$tabs.'</div>';
         }
-        $cfg = [ 'shopCode' => (string)self::shop_code(), 'barem' => (string)self::barem(), 'purchaseAmount' => (string)$amount, 'duration' => 12, 'url' => self::base() ];
+        $cfg = [ 'shopCode' => (string)self::shop_code(), 'barem' => (string)($barem ?: self::barem()), 'purchaseAmount' => (string)$amount, 'duration' => 12, 'url' => self::base() ];
         $info = get_page_by_path(Cofidis::INFO_PAGE);
         // Az SDK az iframe-et a megadott elembe teszi (különben az oldal aljára); az „auto-resize” üzenetre magasságot állít.
         $target = '#'.$id.' .vk-cof-frame-target';

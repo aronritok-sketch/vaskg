@@ -87,6 +87,7 @@ class Setup {
         68 => 'cedrus_categories',
         69 => 'promo_and_cedrus_blowers',
         70 => 'search_visible',
+        71 => 'cofidis_certs',
     ];
 
     /**
@@ -2317,14 +2318,21 @@ class Setup {
         $agent = self::media('cofidis-ugynoki-tajekoztato-vass-kisgep.pdf');
         $notice_url = $notice ? wp_get_attachment_url($notice) : '';
         $agent_url = $agent ? wp_get_attachment_url($agent) : '';
+        // Konstrukciónként a hirdetmény (2026-11-25, Katona Zoltán: 961 – 176, 950 – 717, 959 – 223).
+        $notices = [ 'THM 19,9% (II.)' => $notice_url ];
+        foreach([ '4 hónap, 0% THM' => 'cofidis-hirdetmeny-4-honap-0-thm-717.pdf', '20 hónap, 0% THM' => 'cofidis-hirdetmeny-20-honap-0-thm-223.pdf' ] as $label => $file){
+            $id = is_file(get_stylesheet_directory().'/setup/media/'.$file) ? self::media($file) : 0;
+            if ($id) $notices[$label] = wp_get_attachment_url($id);
+        }
+        $notice_html = '';
+        foreach($notices as $label => $url) if ($url) $notice_html .= '<p>A hitelkonstrukcióhoz tartozó hirdetményt itt találja ('.esc_html($label).'): <a target="_blank" href="'.esc_url($url).'" style="color: blue !important;">Hirdetmény</a></p>'."\n";
         $html = '<div style="max-width: 820px !important; margin: auto !important;">
 <h1 style="color: rgb(208, 16, 58) !important;"><strong>Cofidis expressz online áruhitel</strong></h1><br>
 <p><strong>Gyors és kényelmes online hiteligénylési folyamatunkkal egyszerűen intézheti vásárlását, teljesen digitális módon.</strong></p><br>
 <p>Az alábbi linkeken részletes tájékoztatást talál a hiteligénylés menetéről, a kapcsolódó dokumentumokról, valamint a hitelkártyával kapcsolatos tudnivalókról.</p>
 <p>Kérjük, a hiteligénylés megkezdése előtt tekintse át az Ön számára releváns információkat.</p><br>
 <p>A hiteligényléssel kapcsolatos információkat itt találja: <a target="_blank" href="https://www.cofidisbank.hu/aruhitel/online-aruhitel" style="color: blue !important;">Cofidis expressz online áruhitel</a></p>
-<p>A hitelkonstrukcióhoz tartozó hirdetményt itt találja: <a target="_blank" href="'.esc_url($notice_url).'" style="color: blue !important;">Hirdetmény</a></p>
-<p>Az ügynöki tájékoztatót itt találja: <a target="_blank" href="'.esc_url($agent_url).'" style="color: blue !important;">Ügynöki tájékoztató</a></p>
+'.$notice_html.'<p>Az ügynöki tájékoztatót itt találja: <a target="_blank" href="'.esc_url($agent_url).'" style="color: blue !important;">Ügynöki tájékoztató</a></p>
 </div>';
         $content = "<!-- wp:html -->\n".$html."\n<!-- /wp:html -->";
         $page = get_page_by_path(Cofidis::INFO_PAGE);
@@ -2561,6 +2569,34 @@ class Setup {
         if ((string)get_option('blog_public') === '1'){ $this->log[] = 'Keresők: az oldal már indexelhető.'; return; }
         update_option('blog_public', '1');
         $this->log[] = 'Keresők: a „Keresőmotorok ne indexeljék” beállítás kikapcsolva, az oldal indexelhető (Beállítások → Olvasás).';
+    }
+
+    /**
+     * 71. Cofidis: a bank által kiállított tanúsítványok (2026-11-24, Katona Zoltán; a demó CSR-re készült mindkettő, ezért
+     * az éles környezet is a demó kulcsát kapja) és a konstrukciók (barem kódok, 2026-11-25): 961 – 19,9% THM, 950 – 4 hó,
+     * 952 – 6 hó, 954 – 10 hó, 959 – 20 hó 0% THM. A technikai felhasználó titok: nem a repóban, a státusz-végponton állítva.
+     */
+    function cofidis_certs(){
+        $dir = get_stylesheet_directory().'/setup/cofidis/';
+        $demo_key = CofidisBank::key_pem('demo');
+        foreach([ 'demo' => 'vasskisgep.hu_demo.pem', 'live' => 'vasskisgep.hu_prod.pem' ] as $env => $file){
+            $cert = trim((string)@file_get_contents($dir.$file));
+            if ($cert === ''){ $this->log[] = 'Cofidis: '.$file.' hiányzik.'; continue; }
+            $key = CofidisBank::key_pem($env);
+            if ($key === '' && $env === 'live' && $demo_key !== '' && @openssl_x509_check_private_key($cert, $demo_key)){
+                update_option('vk_cofidis_key_live', $demo_key, false);
+                $key = $demo_key;
+            }
+            if ($key === '' || !@openssl_x509_check_private_key($cert, $key)){ $this->log[] = 'Cofidis ('.$env.'): a tanúsítvány nem a szerver kulcsához tartozik – nincs beállítva.'; continue; }
+            update_option('vk_cofidis_cert_'.$env, $cert, false);
+            $this->log[] = 'Cofidis ('.$env.'): tanúsítvány beállítva ('.CofidisBank::cert_info($cert).').';
+        }
+        $settings = get_option('woocommerce_'.Cofidis::ID.'_settings', []);
+        if (!is_array($settings)) $settings = [];
+        $settings['barems'] = "961; THM 19,9% (II)\n950; 4 hónap, 0% THM\n952; 6 hónap, 0% THM\n954; 10 hónap, 0% THM\n959; 20 hónap, 0% THM";
+        update_option('woocommerce_'.Cofidis::ID.'_settings', $settings);
+        $this->log[] = 'Cofidis: konstrukciók: 961, 950, 952, 954, 959.';
+        $this->cofidis_info_page();
     }
 
     function apple_pay_domain(){

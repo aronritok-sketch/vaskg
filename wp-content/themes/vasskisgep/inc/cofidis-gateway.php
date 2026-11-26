@@ -130,7 +130,7 @@ class CofidisGateway extends \WC_Payment_Gateway {
     /** A pénztárban: bank-kapcsolattal a bank kalkulátora a kosár összegével. */
     function payment_fields(){
         parent::payment_fields();
-        if (CofidisBank::configured() && function_exists('WC') && WC()->cart) echo CofidisBank::widget((float)WC()->cart->get_total('edit'), 'vk-cof-checkout');
+        if (CofidisBank::configured() && function_exists('WC') && WC()->cart) echo CofidisBank::widget((float)WC()->cart->get_total('edit'), 'vk-cof-checkout', CofidisBank::cart_state()['barem']);
     }
 
     /** A pénztárban a leírás mellé a várható havi részlet (12 hónap), ha a THM meg van adva. */
@@ -161,7 +161,7 @@ class CofidisGateway extends \WC_Payment_Gateway {
         }
 
         $order->update_meta_data('_vk_cofidis_status', 'pending');
-        if (CofidisBank::configured()) $order->update_meta_data('_vk_cofidis_barem', CofidisBank::barem());
+        if (CofidisBank::configured()) $order->update_meta_data('_vk_cofidis_barem', CofidisBank::cart_state()['barem'] ?: CofidisBank::barem());
         $order->update_status('on-hold', 'Cofidis hitelbírálatra vár.');
         wc_maybe_reduce_stock_levels($order_id);
         WC()->cart->empty_cart();

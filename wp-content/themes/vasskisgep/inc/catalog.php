@@ -786,6 +786,18 @@ class Catalog {
             'description' => 'Cofidis áruhitellel is megvásárolható (jelvény + kalkulátor a termékoldalon)',
             'value' => $product_object && $product_object->get_meta('_vk_cofidis') === 'yes' ? 'yes' : 'no'
         ]);
+        if (count(CofidisBank::barems()) > 1){
+            $opts = [ '' => 'Alapértelmezett' ];
+            foreach(CofidisBank::barems() as $b => $name) $opts[(string)$b] = ($name ?: 'Konstrukció').' ('.$b.')';
+            woocommerce_wp_select([
+                'id' => CofidisBank::PRODUCT_BAREM,
+                'label' => 'Cofidis konstrukció',
+                'description' => 'Egy termékhez egy konstrukció (pl. 4 hónap 0% vagy 19,9% THM). Vegyes kosárnál: ha van 19,9%-os, az egész kosár az; ha csak ingyenesek, a legrövidebb futamidő.',
+                'desc_tip' => true,
+                'options' => $opts,
+                'value' => $product_object ? (string)$product_object->get_meta(CofidisBank::PRODUCT_BAREM) : '',
+            ]);
+        }
         // Dokumentumok: a fájlok nevével, egyenként törölhetők, több is hozzáadható (Dávid, 2026-11-10).
         $value = $product_object ? (string)$product_object->get_meta('_vk_documents') : '';
         $ids = array_filter(array_map('absint', explode(',', $value)));
@@ -806,6 +818,7 @@ class Catalog {
         if (isset($_POST[self::WHOLESALE])) $product->update_meta_data(self::WHOLESALE, wc_format_decimal(wp_unslash($_POST[self::WHOLESALE])));
         $product->update_meta_data('_vk_promo', isset($_POST['_vk_promo']) ? sanitize_textarea_field(wp_unslash($_POST['_vk_promo'])) : '');
         $product->update_meta_data('_vk_cofidis', !empty($_POST['_vk_cofidis']) ? 'yes' : 'no');
+        if (isset($_POST[CofidisBank::PRODUCT_BAREM])) $product->update_meta_data(CofidisBank::PRODUCT_BAREM, (int)$_POST[CofidisBank::PRODUCT_BAREM] ?: '');
         $documents = isset($_POST['_vk_documents']) ? implode(',', array_filter(array_map('absint', explode(',', wp_unslash($_POST['_vk_documents']))))) : '';
         $product->update_meta_data('_vk_documents', $documents);
     }
