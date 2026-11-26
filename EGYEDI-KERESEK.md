@@ -1,6 +1,6 @@
 # Vass Kisgép – egyedi kérések (plusz fejlesztések)
 
-> Élő lista (Áron, 2026-11-20): minden új egyedi kérés ide kerül, amikor elkészül vagy beérkezik. Utolsó frissítés: 2026-11-23.
+> Élő lista (Áron, 2026-11-20): minden új egyedi kérés ide kerül, amikor elkészül vagy beérkezik. Utolsó frissítés: 2026-11-26.
 
 Csak azok a tételek, amik **nem voltak a régi Joomla-boltban**, **nem javítások**, hanem az ügyfél (Dávid, Dani) **külön kérései**. Forrás: a vasskisgep téma változásnaplója (1.0.8–1.0.74) és az ügyfélkörök.
 
@@ -69,16 +69,20 @@ A **Méret** oszlop: **K** = kicsi (néhány óra), **K-K** = közepes (fél–e
 | 40 | Mobilon a „Termékek” a Gyártók oldalra visz | 11-06, 1.0.13 | K |
 | 41 | Cedrus gyártói oldal: „Lombfúvók és lombszívók” csempe (kézi és háti / kerekes), csak a gyártói oldalon | 11-19, 1.0.71–1.0.72 | K |
 | 42 | Akció-gomb (Orange Week) a fejlécben: gépen a Kapcsolat és a kereső között, telefonon a kereső alatt | 11-20, 1.0.73–1.0.74 | K |
+| 43 | Adószám a céges vevők leveleiben, a köszönőoldalon és a fiókban | 11-26, 1.0.77 | K |
+| 44 | Ár-import: súly és dobozméret is cikkszám szerint (kg / g, cm / mm) | 11-26, 1.0.77 | K |
+| 45 | Cofidis: konstrukció termékenként (5 konstrukció), vegyes kosár szabálya (19,9% elsőbbség, különben a legrövidebb ingyenes), kizárt tartozékok, tájékoztatás kosárba tételkor / kosárban / pénztárban, hirdetmények | 11-26, 1.0.78 | K-K |
 
 ## E) Kért, de még nem készült el (ajánlat / döntés kell)
 
 | # | Kérés | Ki kérte | Megjegyzés |
 |---|---|---|---|
-| 43 | Gyorsfizetés: Apple Pay / Google Pay gomb a termékoldalon / kosárban | Dávid, 11-17 | Istvánhoz került ajánlatra; nagy (N) |
-| 44 | B2B kedvezmény kategóriánként, partnerenként egyedi | Dávid, 11-19 | a B2BKing ingyenes változata nem tudja; saját fejlesztés (N) |
-| 45 | Cedrus API: termékképek átvétele cikkszám szerint | Dávid, 11-20 | API-leírás kell; K-K–N az API-tól függően |
-| 46 | Stiga API | Dávid, 11-19 | nem tudom, mit ígértünk |
-| 47 | Cedrus termékszövegek (angol) MI-fordítása magyarra, feltöltés a webshopba | Dávid, 11-20 (csak kérdés) | most nem kell (Dávid, 11-23: a gépek szövegét maga írja); később, az alkatrészeknél jöhet (K-K) |
+| 46 | Gyorsfizetés: Apple Pay / Google Pay gomb a termékoldalon / kosárban | Dávid, 11-17 | Istvánhoz került ajánlatra; nagy (N) |
+| 47 | B2B kedvezmény kategóriánként, partnerenként egyedi | Dávid, 11-19 | a B2BKing ingyenes változata nem tudja; saját fejlesztés (N) |
+| 48 | Cedrus API: termékképek átvétele cikkszám szerint | Dávid, 11-20 | API-leírás kell; K-K–N az API-tól függően |
+| 49 | Stiga API | Dávid, 11-19 | nem tudom, mit ígértünk |
+| 50 | Cedrus termékszövegek (angol) MI-fordítása magyarra, feltöltés a webshopba | Dávid, 11-20 (csak kérdés) | most nem kell (Dávid, 11-23: a gépek szövegét maga írja); később, az alkatrészeknél jöhet (K-K) |
+| 51 | Cofidis: ajánló levél a sikeres hiteligénylés után (a géphez való tartozékok) | Dávid, 11-25 | még nem készült el (K-K) |
 
 ## Nem került a listára
 
