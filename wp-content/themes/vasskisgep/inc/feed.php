@@ -41,6 +41,27 @@ class Feed {
         foreach([ 'woocommerce_update_product', 'woocommerce_new_product', 'woocommerce_delete_product', 'woocommerce_trash_product' ] as $hook){
             add_action($hook, [__CLASS__, 'flush']);
         }
+        // Óránkénti frissítés a háttérben (az Árukereső / Merchant lekérése sosem vár az építésre; Árukereső, 2026-11-26:
+        // „Nem elérhető terméklista” – a lekérés közbeni újraépítés ~1900 terméknél túllépte a 60 mp-es futási korlátot).
+        add_action('vasskisgep_feed_refresh', [__CLASS__, 'refresh_all']);
+        add_action('init', function(){
+            if (!wp_next_scheduled('vasskisgep_feed_refresh')) wp_schedule_event(time() + 300, 'hourly', 'vasskisgep_feed_refresh');
+        });
+    }
+
+    /** Az elavult (vagy régi) feedek újraépítése, zárral; a háttérben fut (időzítő, illetve a válasz elküldése után). */
+    static function refresh_all($force = false){
+        foreach(self::TYPES as $type){
+            $file = self::file($type);
+            $fresh = is_file($file) && filemtime($file) > time() - self::MAX_AGE && !get_option(self::stale_key($type));
+            if ($fresh && !$force) continue;
+            $lock = 'vk_feed_'.$type.'_lock';
+            if (get_transient($lock)) continue;
+            set_transient($lock, 1, 15 * MINUTE_IN_SECONDS);
+            if (function_exists('set_time_limit')) @set_time_limit(600);
+            try { self::generate($type); } catch (\Throwable $e){ error_log('Termékfeed ('.$type.'): '.$e->getMessage()); }
+            delete_transient($lock);
+        }
     }
 
     const TYPES = [ 'arukereso', 'google' ];
@@ -89,16 +110,9 @@ class Feed {
         if (!in_array($type, self::TYPES, true)) return;
         $file = self::file($type);
         $fresh = is_file($file) && filemtime($file) > time() - self::MAX_AGE && !get_option(self::stale_key($type));
-        $lock = 'vk_feed_'.$type.'_lock';
-        if (!$fresh && !get_transient($lock)){
-            set_transient($lock, 1, 10 * MINUTE_IN_SECONDS);
-            try {
-                self::generate($type);
-            } catch (\Throwable $e){
-                error_log('Termékfeed ('.$type.'): '.$e->getMessage());
-            }
-            delete_transient($lock);
-        }
+        // Csak ha még egyáltalán nincs fájl, akkor épül a lekérés közben; különben a meglévő megy ki azonnal, és az
+        // újraépítés a válasz elküldése után fut (a lekérő nem vár rá).
+        if (!is_file($file)) self::refresh_all(true);
         if (!is_file($file)){
             status_header(503);
             header('Retry-After: 120');
@@ -110,6 +124,11 @@ class Feed {
         header('X-Robots-Tag: noindex');
         header('Content-Length: '.filesize($file));
         readfile($file);
+        if (!$fresh){
+            if (function_exists('fastcgi_finish_request')) fastcgi_finish_request();
+            ignore_user_abort(true);
+            self::refresh_all();
+        }
         exit;
     }
 

@@ -86,6 +86,7 @@ class Setup {
         67 => 'apple_pay_domain',
         68 => 'cedrus_categories',
         69 => 'promo_and_cedrus_blowers',
+        70 => 'search_visible',
     ];
 
     /**
@@ -2550,6 +2551,16 @@ class Setup {
         MegaMenu::flush();
         Shop::flush_block_cache();
         $this->log[] = 'Cedrus: Lombfúvók és lombszívók (csak gyártói oldal) – Kézi és háti lombfúvók '.$done[0].', Kerekes lombszívók és aprítók '.$done[1].' termék.';
+    }
+
+    /**
+     * 70. A keresők indexelhetik a webshopot (2026-11-26): élesen a „Keresőmotorok ne indexeljék” beállítás volt bekapcsolva
+     * (minden oldalon noindex, nofollow), a Search Console indexelési figyelmeztetést küldött.
+     */
+    function search_visible(){
+        if ((string)get_option('blog_public') === '1'){ $this->log[] = 'Keresők: az oldal már indexelhető.'; return; }
+        update_option('blog_public', '1');
+        $this->log[] = 'Keresők: a „Keresőmotorok ne indexeljék” beállítás kikapcsolva, az oldal indexelhető (Beállítások → Olvasás).';
     }
 
     function apple_pay_domain(){

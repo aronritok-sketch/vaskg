@@ -167,6 +167,18 @@ class MigrationData {
         global $wpdb;
         $q = $request instanceof \WP_REST_Request ? sanitize_text_field((string)$request->get_param('q')) : '';
         if ($q !== '') return [ 'lookup' => MigrationNewProducts::lookup($q) ];
+        // Megadott régi termékek átvétele (régi azonosítók vesszővel): newprod=4870,4871.
+        $only = $request instanceof \WP_REST_Request ? array_filter(array_map('intval', explode(',', (string)$request->get_param('newprod')))) : [];
+        if ($only){
+            $state = MigrationNewProducts::run(count($only), $only);
+            $out = [];
+            foreach($only as $id){
+                if (isset($state['imported'][$id])) $out[$id] = $state['imported'][$id];
+                elseif (isset($state['skipped'][$id])) $out[$id] = [ 'skipped' => $state['skipped'][$id] ];
+                else $out[$id] = [ 'skipped' => 'már megvan, vagy nem közzétett a régi boltban' ];
+            }
+            return [ 'newprod' => $out ];
+        }
         if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'nav') return Checkout::diagnose();
         if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'gls') return Gls::diagnose();
         if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'glsorders') return Gls::diagnose_orders();
@@ -217,6 +229,10 @@ class MigrationData {
                 'registered' => $u->user_registered, 'last_active' => get_user_meta($u->ID, 'wc_last_active', true) ? gmdate('Y-m-d H:i', (int)get_user_meta($u->ID, 'wc_last_active', true)) : null,
                 'persistent_cart_items' => is_array($cart) && isset($cart['cart']) ? count((array)$cart['cart']) : 0,
                 'hash_kind' => strpos($u->user_pass, '$wp$') === 0 ? 'wp-bcrypt' : (strpos($u->user_pass, '$P$') === 0 ? 'phpass' : (strpos($u->user_pass, '$2y$') === 0 ? 'bcrypt' : 'egyéb')) ];
+        }
+        if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'seo'){
+            $robots = function_exists('wp_robots') ? (array)apply_filters('wp_robots', []) : [];
+            return [ 'blog_public' => (string)get_option('blog_public'), 'front_robots' => $robots, 'home' => home_url('/'), 'sitemap' => home_url('/wp-sitemap.xml') ];
         }
         if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'oldcats') return self::oldcats();
         if ($request instanceof \WP_REST_Request && $request->get_param('diag') === 'oldprices') return self::oldprices();

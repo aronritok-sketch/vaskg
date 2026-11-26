@@ -91,6 +91,8 @@ class Shop {
         // Adószám (a keretrendszer pénztár-mezője): megjelenik a rendelésben és az e-mailekben.
         add_filter('woocommerce_order_get_formatted_billing_address', [$this, 'billing_tax_number'], 10, 3);
         add_action('woocommerce_admin_order_data_after_billing_address', [$this, 'admin_tax_number']);
+        add_filter('woocommerce_email_customer_details_fields', [$this, 'email_tax_number'], 10, 3);
+        add_action('woocommerce_order_details_after_customer_details', [$this, 'customer_tax_number']);
 
         add_action('wp_enqueue_scripts', [$this, 'enqueue'], 100);
     }
@@ -101,10 +103,33 @@ class Shop {
         return $address.'<br/>Adószám: '.esc_html($tax_number);
     }
 
+    /** A rendelés adószáma: a téma mezője vagy (élesen) a Számlázz.hu bővítményé. */
+    static function order_tax_number($order){
+        if (!$order instanceof \WC_Order) return '';
+        foreach([ '_billing_tax_number', '_billing_wc_szamlazz_adoszam', 'wc_szamlazz_adoszam', '_wc_szamlazz_adoszam', 'billing_tax_number' ] as $key){
+            $v = trim((string)$order->get_meta($key));
+            if ($v !== '') return $v;
+        }
+        return '';
+    }
+
     function admin_tax_number($order){
-        $tax_number = $order->get_meta('_billing_tax_number');
+        $tax_number = self::order_tax_number($order);
         if ($tax_number === '') return;
         echo '<p><strong>Adószám:</strong> '.esc_html($tax_number).'</p>';
+    }
+
+    /** A vásárlói és admin levelekben a vevőadatok között (Dávid, 2026-11-25: a cégek azt hitték, nem adták meg). */
+    function email_tax_number($fields, $sent_to_admin = false, $order = null){
+        $tax = self::order_tax_number($order);
+        if ($tax !== '') $fields['vk_tax_number'] = [ 'label' => 'Adószám', 'value' => $tax ];
+        return $fields;
+    }
+
+    /** Köszönőoldal és vásárlói fiók: a számlázási cím alatt. */
+    function customer_tax_number($order){
+        $tax = self::order_tax_number($order);
+        if ($tax !== '') echo '<p class="vk-order-tax-number"><strong>Adószám:</strong> '.esc_html($tax).'</p>';
     }
 
     function enqueue(){

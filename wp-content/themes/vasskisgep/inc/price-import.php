@@ -198,7 +198,30 @@ class PriceImport {
             'sku' => $find([ '/cikksz/u', '/^sku$/u', '/termékszám|termekszam|azonosító/u' ]),
             'sale' => $find([ '/kampány.*ár|kampanyar/u', '/akció.*ár|akcios/u', '/sale/u' ]),
             'regular' => -1,
+            // Súly és dobozméret (Dávid, 2026-11-26: a STIHL táblázatában ugyanitt van).
+            'weight' => $find([ '/súly|suly|tömeg|tomeg|weight/u' ]),
+            'length' => $find([ '/hossz|length/u' ]),
+            'width' => $find([ '/szélesség|szelesseg|width/u' ]),
+            'height' => $find([ '/magasság|magassag|height/u' ]),
+            'dims' => $find([ '/méret|meret|dimension|csomagolás/u' ]),
         ];
+    }
+
+    /** Súly kg-ban, méretek cm-ben a választott mértékegységből; a „Méret” oszlop „30x20x10” alakú is lehet. */
+    private static function measures(array $line, array $cols){
+        $w = $cols['weight'] >= 0 ? self::number($line[$cols['weight']] ?? '') : null;
+        if ($w !== null && $w > 0 && ($cols['wunit'] ?? 'kg') === 'g') $w = $w / 1000;
+        $d = [];
+        foreach([ 'length', 'width', 'height' ] as $k) $d[$k] = $cols[$k] >= 0 ? self::number($line[$cols[$k]] ?? '') : null;
+        if ($cols['dims'] >= 0 && $d['length'] === null && preg_match_all('/\d+(?:[.,]\d+)?/', (string)($line[$cols['dims']] ?? ''), $m) && count($m[0]) >= 3){
+            [$d['length'], $d['width'], $d['height']] = array_map(function($v){ return (float)str_replace(',', '.', $v); }, array_slice($m[0], 0, 3));
+        }
+        foreach($d as $k => $v){
+            if ($v === null || $v <= 0){ $d[$k] = null; continue; }
+            if (($cols['dunit'] ?? 'cm') === 'mm') $v = $v / 10;
+            $d[$k] = round($v, 1);
+        }
+        return [ 'weight' => $w !== null && $w > 0 ? round($w, 3) : null ] + $d;
     }
 
     /** Az előnézet sorai a választott oszlopokkal és móddal. */
@@ -215,6 +238,7 @@ class PriceImport {
             $item = [ 'sku' => $sku, 'name' => (string)($line[1] ?? ''), 'id' => (int)($map[$key] ?? 0), 'sale' => null, 'regular' => null, 'note' => '', 'ok' => false ];
             if ($cols['sale'] >= 0) { $n = self::number($line[$cols['sale']] ?? ''); $item['sale'] = $n !== null && $n > 0 ? round($n) : null; }
             if ($cols['regular'] >= 0) { $n = self::number($line[$cols['regular']] ?? ''); $item['regular'] = $n !== null && $n > 0 ? round($n) : null; }
+            $item += self::measures($line, $cols);
             if (!$item['id']){ $item['note'] = 'Nincs ilyen cikkszámú termék a webshopban.'; $out[] = $item; continue; }
             $product = wc_get_product($item['id']);
             if (!$product){ $item['note'] = 'A termék nem olvasható.'; $out[] = $item; continue; }
@@ -228,10 +252,19 @@ class PriceImport {
                 $item['ok'] = $item['cur_sale'] !== '';
                 $item['note'] = $item['ok'] ? 'Az akciós ár törlődik.' : 'Nincs rajta akció.';
             } elseif ($mode === 'sale'){
-                if ($item['sale'] === null && $item['regular'] === null){ $item['note'] = 'Ebben a sorban nincs akciós ár.'; }
-                elseif ($item['sale'] !== null && $regular > 0 && $item['sale'] >= $regular){ $item['note'] = 'Az akciós ár nem kisebb a rendes árnál – kimarad.'; }
-                elseif (($item['sale'] === null || (string)$item['sale'] === (string)$item['cur_sale']) && ($item['regular'] === null || (string)$item['regular'] === (string)$item['cur_regular'])){ $item['note'] = 'Nincs változás.'; }
-                else $item['ok'] = true;
+                $price_ok = false;
+                if ($item['sale'] === null && $item['regular'] === null){ $item['note'] = 'Ebben a sorban nincs ár.'; }
+                elseif ($item['sale'] !== null && $regular > 0 && $item['sale'] >= $regular){ $item['note'] = 'Az akciós ár nem kisebb a rendes árnál – az ár kimarad.'; $item['sale'] = null; }
+                elseif (($item['sale'] === null || (string)$item['sale'] === (string)$item['cur_sale']) && ($item['regular'] === null || (string)$item['regular'] === (string)$item['cur_regular'])){ $item['note'] = 'Az ár nem változik.'; }
+                else $price_ok = true;
+                // Súly és méret: csak ha van érték és eltér.
+                $cur = [ 'weight' => (float)$product->get_weight(), 'length' => (float)$product->get_length(), 'width' => (float)$product->get_width(), 'height' => (float)$product->get_height() ];
+                $item['measure_ok'] = false;
+                foreach($cur as $k => $v) if ($item[$k] !== null && abs((float)$item[$k] - $v) > 0.0001) $item['measure_ok'] = true;
+                if (!$price_ok && !empty($item['sale_blocked'])) $item['sale'] = null;
+                if (!$price_ok){ $item['regular'] = null; $item['sale'] = null; }
+                $item['ok'] = $price_ok || $item['measure_ok'];
+                if ($item['measure_ok']) $item['note'] = trim(($price_ok ? '' : $item['note'].' ').'Súly / méret frissül.');
             }
             $out[] = $item;
         }
@@ -249,6 +282,10 @@ class PriceImport {
                 $product->set_date_on_sale_from(null);
                 $product->set_date_on_sale_to(null);
             } else {
+                if (!empty($item['measure_ok'])){
+                    if ($item['weight'] !== null) $product->set_weight((string)$item['weight']);
+                    foreach([ 'length', 'width', 'height' ] as $k) if ($item[$k] !== null) $product->{'set_'.$k}((string)$item[$k]);
+                }
                 if ($item['regular'] !== null) $product->set_regular_price((string)$item['regular']);
                 if ($item['sale'] !== null){
                     $product->set_sale_price((string)$item['sale']);
@@ -294,6 +331,13 @@ class PriceImport {
                 'sku' => isset($_POST['vk_col_sku']) ? (int)$_POST['vk_col_sku'] : $guess['sku'],
                 'sale' => isset($_POST['vk_col_sale']) ? (int)$_POST['vk_col_sale'] : $guess['sale'],
                 'regular' => isset($_POST['vk_col_regular']) ? (int)$_POST['vk_col_regular'] : $guess['regular'],
+                'weight' => isset($_POST['vk_col_weight']) ? (int)$_POST['vk_col_weight'] : $guess['weight'],
+                'length' => isset($_POST['vk_col_length']) ? (int)$_POST['vk_col_length'] : $guess['length'],
+                'width' => isset($_POST['vk_col_width']) ? (int)$_POST['vk_col_width'] : $guess['width'],
+                'height' => isset($_POST['vk_col_height']) ? (int)$_POST['vk_col_height'] : $guess['height'],
+                'dims' => isset($_POST['vk_col_dims']) ? (int)$_POST['vk_col_dims'] : $guess['dims'],
+                'wunit' => ($_POST['vk_wunit'] ?? 'kg') === 'g' ? 'g' : 'kg',
+                'dunit' => ($_POST['vk_dunit'] ?? 'cm') === 'mm' ? 'mm' : 'cm',
             ];
             $mode = sanitize_key(wp_unslash($_POST['vk_mode'] ?? 'sale'));
             if (!in_array($mode, [ 'sale', 'clear' ], true)) $mode = 'sale';
@@ -307,7 +351,7 @@ class PriceImport {
                 $lock = !empty($_POST['vk_lock']) && $mode === 'sale';
                 $done = self::apply($plan, $mode, $from, $to, $lock);
                 delete_transient($key);
-                echo '<div class="notice notice-success"><p><strong>Kész: '.(int)$done.' termék ára frissült.</strong> '.($mode === 'clear' ? '(akciós ár törölve)' : '').($lock ? ' A saját ár zárolása bekapcsolva rajtuk.' : '').'</p></div>';
+                echo '<div class="notice notice-success"><p><strong>Kész: '.(int)$done.' termék frissült.</strong> '.($mode === 'clear' ? '(akciós ár törölve)' : '').($lock ? ' A saját ár zárolása bekapcsolva rajtuk.' : '').'</p></div>';
                 echo '<p><a class="button" href="'.esc_url(admin_url('edit.php?post_type=product&page='.self::PAGE)).'">Új fájl feltöltése</a></p></div>';
                 return;
             }
@@ -321,21 +365,25 @@ class PriceImport {
                 foreach($head as $i => $label) $h .= '<option value="'.(int)$i.'"'.selected($value, $i, false).'>'.esc_html(chr(65 + $i % 26).': '.$label).'</option>';
                 return $h.'</select>';
             };
-            echo '<table class="form-table"><tr><th>Mit csináljon?</th><td><label><input type="radio" name="vk_mode" value="sale"'.checked($mode, 'sale', false).'> Akciós ár beállítása (és ha kiválasztod, rendes ár)</label><br><label><input type="radio" name="vk_mode" value="clear"'.checked($mode, 'clear', false).'> Akció törlése a listában szereplő termékekről (kampány vége)</label></td></tr>';
+            echo '<table class="form-table"><tr><th>Mit csináljon?</th><td><label><input type="radio" name="vk_mode" value="sale"'.checked($mode, 'sale', false).'> Akciós ár beállítása (és ha kiválasztod, rendes ár, súly, dobozméret)</label><br><label><input type="radio" name="vk_mode" value="clear"'.checked($mode, 'clear', false).'> Akció törlése a listában szereplő termékekről (kampány vége)</label></td></tr>';
             echo '<tr><th>Cikkszám oszlop</th><td>'.$select('vk_col_sku', $cols['sku'], false).'</td></tr>';
             echo '<tr><th>Akciós ár oszlop</th><td>'.$select('vk_col_sale', $cols['sale'], true).' <span class="description">bruttó, Ft (pl. „Javasolt végfelhasználói bruttó kampányár”)</span></td></tr>';
             echo '<tr><th>Rendes ár oszlop</th><td>'.$select('vk_col_regular', $cols['regular'], true).' <span class="description">csak ha a rendes (lista) árat is frissíteni akarod – bruttó végfelhasználói ár, NEM a partner ár</span></td></tr>';
+            $unit = function($name, $value, $options){ $h = '<select name="'.esc_attr($name).'">'; foreach($options as $o) $h .= '<option value="'.esc_attr($o).'"'.selected($value, $o, false).'>'.esc_html($o).'</option>'; return $h.'</select>'; };
+            echo '<tr><th>Súly oszlop</th><td>'.$select('vk_col_weight', $cols['weight'], true).' '.$unit('vk_wunit', $cols['wunit'], [ 'kg', 'g' ]).' <span class="description">nem kötelező; csak ha a táblázatban van</span></td></tr>';
+            echo '<tr><th>Dobozméret oszlopok</th><td>Hossz '.$select('vk_col_length', $cols['length'], true).' Szélesség '.$select('vk_col_width', $cols['width'], true).' Magasság '.$select('vk_col_height', $cols['height'], true).' '.$unit('vk_dunit', $cols['dunit'], [ 'cm', 'mm' ]).'<br>vagy egy oszlopban („30x20x10”): '.$select('vk_col_dims', $cols['dims'], true).' <span class="description">nem kötelező</span></td></tr>';
             echo '<tr><th>Akció időszaka</th><td><input type="date" name="vk_from" value="'.esc_attr($from).'"> – <input type="date" name="vk_to" value="'.esc_attr($to).'"> <span class="description">nem kötelező; a záró nap után a WooCommerce magától visszaállítja a rendes árat</span></td></tr>';
             echo '<tr><th>Saját ár</th><td><label><input type="checkbox" name="vk_lock" value="1"'.checked(!empty($_POST['vk_lock']), true, false).'> Az átírt termékeken kapcsold be a saját ár zárolását</label><br><span class="description">pl. ha a gyártói ár alá viszitek: így az automatikus / gyártói árfrissítés nem írja vissza, amíg a terméknél ki nem kapcsoljátok</span></td></tr></table>';
             echo '<p><button class="button" name="vk_step" value="preview">Előnézet frissítése</button></p>';
             echo '<h2>Előnézet</h2><p><strong>'.(int)$ok.'</strong> termék változik, '.(int)$missing.' cikkszám nincs a webshopban.</p>';
-            echo '<table class="widefat striped"><thead><tr><th>Cikkszám</th><th>Termék</th><th>Jelenlegi rendes ár</th><th>Jelenlegi akciós ár</th><th>Új rendes ár</th><th>Új akciós ár</th><th>Megjegyzés</th></tr></thead><tbody>';
+            echo '<table class="widefat striped"><thead><tr><th>Cikkszám</th><th>Termék</th><th>Jelenlegi rendes ár</th><th>Jelenlegi akciós ár</th><th>Új rendes ár</th><th>Új akciós ár</th><th>Új súly / méret</th><th>Megjegyzés</th></tr></thead><tbody>';
             usort($plan, function($a, $b){ return [ empty($a['ok']), !$a['id'] ] <=> [ empty($b['ok']), !$b['id'] ]; });
             foreach($plan as $p){
                 $fmt = function($v){ return $v === null || $v === '' ? '–' : number_format((float)$v, 0, ',', ' ').' Ft'; };
                 echo '<tr'.(empty($p['ok']) ? ' style="opacity:.6"' : '').'><td>'.esc_html($p['sku']).'</td><td>'.($p['id'] ? '<a href="'.esc_url($p['link']).'" target="_blank">'.esc_html($p['product']).'</a>' : esc_html($p['name'])).'</td>'
                     .'<td>'.$fmt($p['cur_regular'] ?? null).'</td><td>'.$fmt($p['cur_sale'] ?? null).'</td>'
-                    .'<td>'.($mode === 'clear' ? '–' : $fmt($p['regular'])).'</td><td>'.($mode === 'clear' ? 'törlés' : $fmt($p['sale'])).'</td><td>'.esc_html($p['note']).(!empty($p['locked']) ? ' 🔒 saját ár' : '').'</td></tr>';
+                    .'<td>'.($mode === 'clear' ? '–' : $fmt($p['regular'])).'</td><td>'.($mode === 'clear' ? 'törlés' : $fmt($p['sale'])).'</td>'
+                    .'<td>'.(!empty($p['measure_ok']) ? esc_html(trim(($p['weight'] !== null ? str_replace('.', ',', (string)$p['weight']).' kg ' : '').(($p['length'] ?? null) !== null ? $p['length'].'×'.$p['width'].'×'.$p['height'].' cm' : ''))) : '–').'</td><td>'.esc_html($p['note']).(!empty($p['locked']) ? ' 🔒 saját ár' : '').'</td></tr>';
             }
             echo '</tbody></table>';
             if ($ok) echo '<p><button class="button button-primary" name="vk_step" value="apply" onclick="return confirm(\'Biztosan frissíted '.(int)$ok.' termék árát?\')">Árak frissítése ('.(int)$ok.' termék)</button></p>';

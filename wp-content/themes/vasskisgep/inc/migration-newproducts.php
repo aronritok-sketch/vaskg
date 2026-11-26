@@ -44,6 +44,30 @@ class MigrationNewProducts {
         return $out;
     }
 
+    /**
+     * Megadott régi termékek (régi azonosító szerint) a határnaptól függetlenül (Dávid, 2026-11-25: C-TUR-18D, C-TUR-A01 –
+     * a régi boltban közzétettek, de az átköltöztetésből kimaradtak). Ami már megvan (közzétett termék a régi
+     * azonosítóval vagy a cikkszámmal), kimarad.
+     */
+    static function items_by_ids(array $ids){
+        global $wpdb;
+        $ids = array_values(array_filter(array_map('intval', $ids)));
+        if (!$ids || !MigrationData::has('virtuemart_products')) return [];
+        $lang = MigrationData::lang_table('virtuemart_products');
+        $rows = $wpdb->get_results('SELECT p.virtuemart_product_id AS id, p.product_parent_id AS parent, p.product_sku AS sku, p.created_on AS created'
+            .($lang !== '' ? ', l.product_name AS name FROM '.MigrationData::t('virtuemart_products').' p LEFT JOIN '.MigrationData::t($lang).' l ON l.virtuemart_product_id = p.virtuemart_product_id' : ', \'\' AS name FROM '.MigrationData::t('virtuemart_products').' p')
+            .' WHERE p.published = 1 AND p.virtuemart_product_id IN ('.implode(',', $ids).')', ARRAY_A);
+        $out = [];
+        foreach((array)$rows as $row){
+            $id = (int)$row['id'];
+            $done = $wpdb->get_var($wpdb->prepare("SELECT p.ID FROM {$wpdb->postmeta} pm JOIN {$wpdb->posts} p ON p.ID = pm.post_id AND p.post_type = 'product' AND p.post_status = 'publish' WHERE pm.meta_key = '_vk_old_id' AND pm.meta_value = %s LIMIT 1", (string)$id));
+            $sku = trim((string)$row['sku']);
+            if ($done || ($sku !== '' && wc_get_product_id_by_sku($sku))) continue;
+            $out[] = [ 'id' => $id, 'name' => trim(wp_strip_all_tags((string)$row['name'])), 'sku' => $sku, 'created' => (string)$row['created'], 'parent' => (int)$row['parent'] ];
+        }
+        return $out;
+    }
+
     /** Hibakereséshez (állapotlap, ?q=): a régi termékek név / cikkszám szerint, és hogy miért nem hiányzónak számítanak. */
     static function lookup($q){
         global $wpdb;
@@ -248,11 +272,11 @@ class MigrationNewProducts {
     }
 
     /** A hiányzó termékek átvétele (egyszerre legfeljebb $limit). Visszaad: [ 'imported' => [...], 'skipped' => [...] ]. */
-    static function run($limit = 25){
+    static function run($limit = 25, array $only = []){
         @set_time_limit(300);
         $state = wp_parse_args((array)get_option(self::STATE, []), [ 'imported' => [], 'skipped' => [], 'runs' => 0 ]);
         $state['runs']++;
-        foreach(self::missing($limit) as $item){
+        foreach($only ? self::items_by_ids($only) : self::missing($limit) as $item){
             if ($item['parent']){
                 $state['skipped'][$item['id']] = $item['name'].' – méretváltozat, a szülője is hiányzik';
                 continue;

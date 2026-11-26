@@ -73,6 +73,10 @@ class OrderStatuses {
 
     function queue_new($order_id, $from, $to, $order = null){
         if ($from !== 'pending' || $to !== 'processing') return;
+        // Kézi átállítás az adminban (rendelés szerkesztése, lista, csoportművelet): a választott állapot marad
+        // (Dávid, 2026-11-25: „fizetés függőbenről feldolgozás alattira … új rendelésre helyezi át”). Az „Új rendelés”
+        // csak a pénztárból és a fizetési visszajelzésekből (Barion, Cofidis) jön.
+        if (is_admin() && is_user_logged_in() && current_user_can('edit_shop_orders')) return;
         $order = $order instanceof \WC_Order ? $order : wc_get_order($order_id);
         if (!$order || !in_array($order->get_created_via(), [ 'checkout', 'store-api' ], true)) return;
         self::$new_queue[(int)$order_id] = true;
