@@ -1,6 +1,6 @@
 # Vass Kisgép – egyedi kérések (plusz fejlesztések)
 
-> Élő lista (Áron, 2026-11-20): minden új egyedi kérés ide kerül, amikor elkészül vagy beérkezik. Utolsó frissítés: 2026-11-26.
+> Élő lista (Áron, 2026-11-20): minden új egyedi kérés ide kerül, amikor elkészül vagy beérkezik. Utolsó frissítés: 2026-11-27.
 
 Csak azok a tételek, amik **nem voltak a régi Joomla-boltban**, **nem javítások**, hanem az ügyfél (Dávid, Dani) **külön kérései**. Forrás: a vasskisgep téma változásnaplója (1.0.8–1.0.74) és az ügyfélkörök.
 
@@ -72,6 +72,7 @@ A **Méret** oszlop: **K** = kicsi (néhány óra), **K-K** = közepes (fél–e
 | 43 | Adószám a céges vevők leveleiben, a köszönőoldalon és a fiókban | 11-26, 1.0.77 | K |
 | 44 | Ár-import: súly és dobozméret is cikkszám szerint (kg / g, cm / mm) | 11-26, 1.0.77 | K |
 | 45 | Cofidis: konstrukció termékenként (5 konstrukció), vegyes kosár szabálya (19,9% elsőbbség, különben a legrövidebb ingyenes), kizárt tartozékok, tájékoztatás kosárba tételkor / kosárban / pénztárban, hirdetmények | 11-26, 1.0.78 | K-K |
+| 45b | Rendelés szerkesztése: a tételeknél a termék mérete és súlya a cikkszám alatt (összekészítéshez) | 11-27, 1.0.79 | K |
 
 ## E) Kért, de még nem készült el (ajánlat / döntés kell)
 

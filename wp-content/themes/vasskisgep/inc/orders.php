@@ -27,6 +27,8 @@ class Orders {
         // Rendelés szerkesztése: bruttó egységár és bruttó összeg a tételeknél (ügyfélkérés, 2026-11: „csak a nettót látjuk”).
         add_action('woocommerce_admin_order_item_headers', [$this, 'gross_headers']);
         add_action('woocommerce_admin_order_item_values', [$this, 'gross_values'], 10, 3);
+        // A tétel cikkszáma alatt a termék mérete és súlya (összekészítéshez; Dávid, 2026-11-27).
+        add_action('woocommerce_before_order_itemmeta', [$this, 'item_measures'], 10, 3);
         add_action('admin_footer', [$this, 'status_script']);
         add_action('wp_ajax_vk_orders_status', [$this, 'save_statuses']);
         add_action('init', [$this, 'analytics_import'], 99);
@@ -187,6 +189,16 @@ class Orders {
 
     function gross_headers($order){
         echo '<th class="vk-gross">Bruttó egységár</th><th class="vk-gross">Bruttó összeg</th>';
+    }
+
+    function item_measures($item_id, $item, $product){
+        if (!is_admin() || !$item instanceof \WC_Order_Item_Product || !$product instanceof \WC_Product) return;
+        $parts = [];
+        $dims = array_filter([ $product->get_length(), $product->get_width(), $product->get_height() ], function($v){ return $v !== '' && (float)$v > 0; });
+        if (count($dims) === 3) $parts[] = 'Méret: '.implode(' × ', array_map(function($v){ return wc_format_localized_decimal($v); }, $dims)).' '.get_option('woocommerce_dimension_unit', 'cm');
+        $weight = $product->get_weight();
+        if ($weight !== '' && (float)$weight > 0) $parts[] = 'Súly: '.wc_format_localized_decimal($weight).' '.get_option('woocommerce_weight_unit', 'kg');
+        if ($parts) echo '<div class="vk-item-measures" style="color:#646970;font-size:12px;margin-top:2px">'.esc_html(implode(' · ', $parts)).'</div>';
     }
 
     function gross_values($product, $item, $item_id = 0){
