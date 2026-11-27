@@ -195,9 +195,10 @@ class Orders {
         if (!is_admin() || !$item instanceof \WC_Order_Item_Product || !$product instanceof \WC_Product) return;
         $parts = [];
         $dims = array_filter([ $product->get_length(), $product->get_width(), $product->get_height() ], function($v){ return $v !== '' && (float)$v > 0; });
-        if (count($dims) === 3) $parts[] = 'Méret: '.implode(' × ', array_map(function($v){ return wc_format_localized_decimal($v); }, $dims)).' '.get_option('woocommerce_dimension_unit', 'cm');
+        // Egész számok, felfelé kerekítve (Dávid, 2026-11-27: a futárnak innen másolják át; kevesebbet ne adjanak meg).
+        if (count($dims) === 3) $parts[] = 'Méret: '.implode(' × ', array_map(function($v){ return (int)ceil((float)$v - 1e-9); }, $dims)).' '.get_option('woocommerce_dimension_unit', 'cm');
         $weight = $product->get_weight();
-        if ($weight !== '' && (float)$weight > 0) $parts[] = 'Súly: '.wc_format_localized_decimal($weight).' '.get_option('woocommerce_weight_unit', 'kg');
+        if ($weight !== '' && (float)$weight > 0) $parts[] = 'Súly: '.(int)ceil((float)$weight - 1e-9).' '.get_option('woocommerce_weight_unit', 'kg');
         if ($parts) echo '<div class="vk-item-measures" style="color:#646970;font-size:12px;margin-top:2px">'.esc_html(implode(' · ', $parts)).'</div>';
     }
 
